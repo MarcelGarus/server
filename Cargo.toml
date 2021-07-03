@@ -1,0 +1,9 @@
+[package]
+name = "server"
+version = "0.0.0"
+edition = "2018"
+
+[dependencies]
+simplelog = "0.10.0"
+tiny_http = "0.6"
+log = "0.4.14"

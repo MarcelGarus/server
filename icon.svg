@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 12.7 12.7">
+    <circle
+       style="fill:#ffffff;fill-opacity:1;stroke-width:2.27965"
+       cx="6.35"
+       cy="6.35"
+       r="6.0854168" />
+    <path
+       style="fill:#e80261;fill-opacity:1;stroke-width:8.616"
+       d="M 8 19 L 8 40.521484 A 23 23 0 0 0 24 47 A 23 23 0 0 0 40 40.521484 L 40 19 L 24 35 L 8 19 z "
+       transform="scale(0.26458333)" />
+</svg>
