@@ -4,6 +4,8 @@ use tiny_http::{Response, Server};
 use visits::*;
 
 mod handlers;
+mod shortcuts;
+mod utils;
 mod visits;
 
 const ADDRESS: &'static str = "0.0.0.0:8000";
@@ -16,21 +18,28 @@ fn main() {
         ColorChoice::Auto,
     )
     .expect("Couldn't initialize logging.");
+
     let server = Server::http(ADDRESS).unwrap();
     let mut visits = VisitsLog::new();
+    let mut root_handler = handlers::RootHandler::new();
     info!("The server is running at {}.", ADDRESS);
 
-    for request in server.incoming_requests() {
-        let visit = Visit::start(&request);
+    for tiny_request in server.incoming_requests() {
+        let visit = Visit::start(&tiny_request);
         info!("Incoming request: {:?}", visit);
 
-        let response = handlers::handle(&request);
-        let visit = visit.end(&response);
-
-        let response = Response::from_data(response.body).with_status_code(response.status_code);
-        if let Err(err) = request.respond(response) {
+        let request = match handlers::Request::from_tiny(&tiny_request) {
+            Some(request) => request,
+            None => continue,
+        };
+        let response = root_handler.handle(&request);
+        let tiny_response =
+            Response::from_data(response.body.clone()).with_status_code(response.status_code);
+        if let Err(err) = tiny_request.respond(tiny_response) {
             warn!("An error occurred while sending a response: {}", err);
         }
+
+        let visit = visit.end(&response);
         visits.register(visit);
     }
 }
