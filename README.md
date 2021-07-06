@@ -10,9 +10,9 @@ The goal for this server is to offer several services:
 * mgar.us/blog: An overview of articles that I wrote.
 * mgar.us/contact: Options to contact me.
 * mgar.us/pay: Redirects to PayPal, calculates result of path (e.g. mgar.us/pay?amount=13/3).
-* mgar.us/<article>: Each article has a custom URL.
-* mgar.us/<file>: A file I made publicly available.
-* mgar.us/go/<shortcut>: A shortcut to another website.
+* mgar.us/_article-id_: Each article has a custom URL.
+* mgar.us/_file-id_: A file I made publicly available.
+* mgar.us/go/_shortcut-id_: A shortcut to another website.
 * mgar.us/api/...: APIs are available here.
 
 Other domains redirect here:
