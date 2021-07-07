@@ -1,15 +1,10 @@
-use std::{
-    str::FromStr,
-    time::{Instant, SystemTime, UNIX_EPOCH},
-};
-
+use crate::handlers::{Request, Response, StatusCode};
 use log::info;
-use tiny_http::{HeaderField, Request};
-
-use crate::handlers::{Response, StatusCode};
+use serde::{Deserialize, Serialize};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 /// A recorded visit to the server.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Visit {
     pub timestamp: u64, // The moment the request came. Seconds since unix epoch in UTC.
     pub handling_duration: u128, // Time it took to handle the request in microseconds.
@@ -23,25 +18,16 @@ pub struct Visit {
 /// Functionality for easily tracing a visit.
 impl Visit {
     pub fn start(request: &Request) -> OngoingVisit {
-        fn get_header_value(request: &Request, field: &str) -> String {
-            request
-                .headers()
-                .iter()
-                .filter(|header| header.field == HeaderField::from_str(field).unwrap())
-                .next()
-                .map(|header| header.value.clone().into())
-                .unwrap_or("".into())
-        }
         OngoingVisit {
             timestamp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Time went backwards.")
                 .as_secs(),
             start: Instant::now(),
-            method: format!("{}", request.method()),
-            url: request.url().into(),
-            user_agent: get_header_value(&request, "User-Agent"),
-            language: get_header_value(&request, "Accept-Language"),
+            method: format!("{}", request.method),
+            url: request.path.join("/"),
+            user_agent: request.user_agent.clone(),
+            language: request.language.clone(),
         }
     }
 }
@@ -79,5 +65,9 @@ impl VisitsLog {
     pub fn register(&mut self, visit: Visit) {
         info!("Registered visit: {:?}", visit);
         self.visits.push(visit);
+    }
+
+    pub fn list(&self) -> Vec<Visit> {
+        self.visits.clone()
     }
 }

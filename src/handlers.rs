@@ -1,15 +1,22 @@
 use crate::shortcuts::*;
 use crate::utils::*;
+use crate::visits::Visit;
+use crate::visits::VisitsLog;
 use log::error;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
+use tiny_http::HeaderField;
 use tiny_http::Method;
 use url::Url;
 
+#[derive(Debug)]
 pub struct Request {
-    method: Method,
-    path: Vec<String>, // The path segments
-    querystring: String,
-    is_admin: bool,
+    pub method: Method,
+    pub path: Vec<String>, // The path segments
+    pub query_string: String,
+    pub user_agent: String,
+    pub language: String,
+    pub is_admin: bool,
 }
 impl Request {
     pub fn from_tiny(request: &tiny_http::Request) -> Option<Self> {
@@ -26,17 +33,34 @@ impl Request {
                 return None;
             }
         };
+
+        fn get_header_value(request: &tiny_http::Request, field: &str) -> String {
+            request
+                .headers()
+                .iter()
+                .filter(|header| header.field == HeaderField::from_str(field).unwrap())
+                .next()
+                .map(|header| header.value.clone().into())
+                .unwrap_or("".into())
+        }
+
         Some(Self {
             method: request.method().clone(),
             path: url
                 .path_segments()
-                .map(|segments| segments.map(|segment| segment.to_owned()).collect())
-                .unwrap_or(vec![]),
-            querystring: url.query().unwrap_or("").to_owned(),
+                .unwrap_or("".split(' '))
+                .filter(|segment| !segment.is_empty())
+                .map(|segment| segment.to_owned())
+                .collect(),
+            query_string: url.query().unwrap_or("").to_owned(),
+            user_agent: get_header_value(request, "User-Agent"),
+            language: get_header_value(request, "Accept-Language"),
             is_admin: true, // TODO
         })
     }
 }
+
+#[derive(Debug)]
 pub struct Response {
     pub status_code: StatusCode,
     pub body: Vec<u8>,
@@ -61,19 +85,56 @@ impl Response {
 // subset of requests and return an `Option<Response>`.
 
 /// The public handle function that handles all requests.
+///
+/// # Visits API
+///
+/// The visits API looks like this (it's not exactly following the best practices for RESTful
+/// APIs, but having all parameters including the key in the querystrings allows for easier
+/// deserialization):
+///
+/// * GET /api/visits: Returns a list of all visits.
 pub struct RootHandler {
+    visits: VisitsLog,
     shortcuts: ShortcutsHandler,
 }
 impl RootHandler {
     pub fn new() -> Self {
         Self {
+            visits: VisitsLog::new(),
             shortcuts: ShortcutsHandler::new(),
         }
     }
     pub fn handle(&mut self, request: &Request) -> Response {
-        static_assets(request)
+        let visit = Visit::start(&request);
+
+        let response = static_assets(request)
+            .or_else(|| self.handle_visits_admin(request))
             .or_else(|| self.shortcuts.handle(request))
-            .unwrap_or_else(|| error_page(404, "Couldn't find the page you're looking for.".into()))
+            .unwrap_or_else(|| {
+                error_page(404, "Couldn't find the page you're looking for.".into())
+            });
+
+        let visit = visit.end(&response);
+        self.visits.register(visit);
+        response
+    }
+    pub fn handle_visits_admin(&mut self, request: &Request) -> Option<Response> {
+        if request.path.starts_with(vec!["api", "visits"]) {
+            let rest_of_path: Vec<String> = request.path.clone_except_first(2);
+            if !request.is_admin {
+                return Some(not_authenticated_page());
+            }
+            if request.method == Method::Get && rest_of_path.is_empty() {
+                return Some(match serde_json::to_string(&self.visits.list()) {
+                    Ok(json) => Response::ok(json.into_bytes()),
+                    Err(err) => {
+                        server_error_page(&format!("Couldn't serialize visits to JSON: {}", err))
+                    }
+                });
+            }
+        }
+
+        None
     }
 }
 
@@ -93,8 +154,9 @@ fn static_assets(request: &Request) -> Option<Response> {
 /// Shortcuts look like this: GET /go/some-shortcut-key
 ///
 /// The shortcuts API looks like this (it's not exactly following the best practices for RESTful
-/// APIs, but having all parameters including the key in the querystrings allows for easier
+/// APIs, but having all parameters – including the key – in the query string allows for easier
 /// deserialization):
+///
 /// * GET /api/shortcuts: Returns a list of shortcuts.
 /// * POST /api/shortcuts/set?key=foo&url=some-url: Sets a shortcut.
 /// * POST /api/shortcuts/delete?key=foo: Deletes a shortcut.
@@ -134,7 +196,7 @@ impl ShortcutsHandler {
                 });
             }
             if request.method == Method::Post && rest_of_path == vec!["set"] {
-                return Some(match serde_qs::from_str(&request.querystring) {
+                return Some(match serde_qs::from_str(&request.query_string) {
                     Ok(shortcut) => {
                         self.db.register(shortcut);
                         Response::ok(vec![])
@@ -143,7 +205,7 @@ impl ShortcutsHandler {
                 });
             }
             if request.method == Method::Post && rest_of_path == vec!["delete"] {
-                return Some(match serde_qs::from_str(&request.querystring) {
+                return Some(match serde_qs::from_str(&request.query_string) {
                     Ok(delete_request) => {
                         let delete_request: ShortcutDeleteRequest = delete_request;
                         self.db.delete(&delete_request.key);
