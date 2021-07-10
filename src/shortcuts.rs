@@ -1,4 +1,3 @@
-use crate::handlers::*;
 use crate::utils::*;
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -54,10 +53,10 @@ impl ShortcutsDb {
 /// * GET /api/shortcuts: Returns a list of shortcuts.
 /// * POST /api/shortcuts/set?key=foo&url=some-url: Sets a shortcut.
 /// * POST /api/shortcuts/delete?key=foo: Deletes a shortcut.
-pub struct ShortcutsHandler {
+pub struct Handler {
     db: RwLock<ShortcutsDb>,
 }
-impl ShortcutsHandler {
+impl Handler {
     pub fn new() -> Self {
         Self {
             db: RwLock::new(ShortcutsDb::new()),
@@ -70,10 +69,17 @@ impl ShortcutsHandler {
             }
             let key: String = request.path.get(1).unwrap().into();
             let shortcut = self.db.read().unwrap().shortcut_for(&key)?;
-            return Some(Response {
-                status_code: 200,
-                body: format!("We should redirect to {}", shortcut.url).into_bytes(),
-            });
+            info!(
+                "Triggering shortcut {}, redirecting to: {}",
+                shortcut.key, shortcut.url
+            );
+            return Some(
+                hyper::Response::builder()
+                    .status(301)
+                    .header("Location", shortcut.url.clone())
+                    .body("".into())
+                    .unwrap(),
+            );
         }
 
         if request.path.starts_with(vec!["api", "shortcuts"]) {
@@ -84,7 +90,7 @@ impl ShortcutsHandler {
             if request.method == Method::GET && rest_of_path.is_empty() {
                 return Some(
                     match serde_json::to_string(&self.db.read().unwrap().list()) {
-                        Ok(json) => Response::ok(json.into_bytes()),
+                        Ok(json) => Response::builder().trusted_body(json.into()),
                         Err(err) => server_error_page(&format!(
                             "Couldn't serialize shortcuts to JSON: {}",
                             err
@@ -96,7 +102,7 @@ impl ShortcutsHandler {
                 return Some(match serde_qs::from_str(&request.query_string) {
                     Ok(shortcut) => {
                         self.db.write().unwrap().register(shortcut);
-                        Response::ok(vec![])
+                        Response::empty()
                     }
                     Err(err) => error_page(400, &format!("Invalid data: {}", err)),
                 });
@@ -106,7 +112,7 @@ impl ShortcutsHandler {
                     Ok(delete_request) => {
                         let delete_request: ShortcutDeleteRequest = delete_request;
                         self.db.write().unwrap().delete(&delete_request.key);
-                        Response::ok(vec![])
+                        Response::empty()
                     }
                     Err(err) => error_page(400, &format!("Invalid data: {}", err)),
                 });

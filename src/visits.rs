@@ -1,4 +1,3 @@
-use crate::handlers::*;
 use crate::utils::*;
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -12,7 +11,7 @@ use std::{
 pub struct Visit {
     pub timestamp: u64, // The moment the request came. Seconds since unix epoch in UTC.
     pub handling_duration: u128, // Time it took to handle the request in microseconds.
-    pub response_status_code: StatusCode,
+    pub response_status_code: u16,
     pub method: String,
     pub url: String,
     pub user_agent: String,
@@ -49,7 +48,7 @@ impl OngoingVisit {
         Visit {
             timestamp: self.timestamp,
             handling_duration: (Instant::now() - self.start).as_micros(),
-            response_status_code: response.status_code,
+            response_status_code: response.status().as_u16(),
             method: self.method,
             url: self.url,
             user_agent: self.user_agent,
@@ -84,7 +83,7 @@ pub fn handle(db: &RwLock<VisitsLog>, request: &Request) -> Option<Response> {
         }
         if request.method == Method::GET && rest_of_path.is_empty() {
             let json = serde_json::to_string(&db.read().unwrap().list()).unwrap();
-            return Some(Response::ok(json.into_bytes()));
+            return Some(Response::with_body(json.into()));
         }
     }
 

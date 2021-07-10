@@ -18,3 +18,116 @@ impl VecOfStrings for Vec<String> {
         self.iter().skip(n).map(|s| s.clone()).collect()
     }
 }
+
+pub use hyper::{Body, Method};
+use log::error;
+use url::Url;
+
+#[derive(Debug, Clone)]
+pub struct Request {
+    pub method: Method,
+    pub path: Vec<String>, // The path segments
+    pub query_string: String,
+    pub user_agent: String,
+    pub language: String,
+    pub is_admin: bool,
+}
+impl Request {
+    pub fn from(request: &hyper::Request<hyper::Body>) -> Option<Self> {
+        // The `request.url()` is a relative one, but the url package needs an absolute one, even
+        // though we are only interested in the relative parts. So, we prefix it with some URL known
+        // to be valid.
+        let url = Url::parse("https://example.net").unwrap().join(
+            request
+                .uri()
+                .path_and_query()
+                .map(|it| it.as_str())
+                .unwrap_or(""),
+        );
+        let url = match url {
+            Ok(url) => url,
+            Err(err) => {
+                error!("Couldn't parse URL \"{}\": {}", request.uri(), err);
+                return None;
+            }
+        };
+
+        fn get_header_value(request: &hyper::Request<hyper::Body>, field: &str) -> String {
+            request
+                .headers()
+                .get(field)
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or("")
+                .to_owned()
+        }
+
+        Some(Self {
+            method: request.method().clone(),
+            path: url
+                .path_segments()
+                .unwrap_or("".split(' '))
+                .filter(|segment| !segment.is_empty())
+                .map(|segment| segment.to_owned())
+                .collect(),
+            query_string: url.query().unwrap_or("").to_owned(),
+            user_agent: get_header_value(request, "user-agent"),
+            language: get_header_value(request, "accept-language"),
+            is_admin: true, // TODO
+        })
+    }
+}
+
+pub type Response = hyper::Response<Body>;
+pub trait FancyResponse {
+    fn builder() -> http::response::Builder;
+    fn with_body(body: Body) -> Self;
+    fn empty() -> Self;
+}
+impl FancyResponse for Response {
+    fn builder() -> http::response::Builder {
+        http::Response::builder()
+    }
+    fn with_body(body: Body) -> Self {
+        hyper::Response::builder().body(body).unwrap()
+    }
+    fn empty() -> Self {
+        Self::with_body("".into())
+    }
+}
+pub trait TrustedBuilder {
+    fn trusted_body(self, body: Body) -> Response;
+}
+impl TrustedBuilder for http::response::Builder {
+    fn trusted_body(self, body: Body) -> Response {
+        self.body(body).unwrap()
+    }
+}
+
+/// Simply returns the contents of a file as the response.
+pub fn file_content(path: &str) -> Response {
+    match std::fs::read(path) {
+        Ok(content) => Response::with_body(content.into()),
+        Err(_) => server_error_page(&format!("The file {} is missing.", path)),
+    }
+}
+
+pub fn not_authenticated_page() -> Response {
+    error_page(
+        401,
+        "This action requires authentication, which you don't have.".into(),
+    )
+}
+
+pub fn server_error_page(error: &str) -> Response {
+    error_page(500, &format!("This is an internal error: {}", error))
+}
+
+pub fn error_page(status: u16, description: &str) -> Response {
+    Response::builder().status(status).trusted_body(
+        format!(
+            "This is an ugly error page. This is the error: {}",
+            description
+        )
+        .into(),
+    )
+}

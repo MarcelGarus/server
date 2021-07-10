@@ -30,7 +30,8 @@ TODOs in no particular order:
 * [ ] redirect HTTP to HTTPS
 * [ ] shortcuts
   * [x] creating them
-  * [ ] using them
+  * [x] using them
+  * [ ] saving them across server restarts
   * [ ] write an app for it
   * [ ] make previews in social messenges beautiful
 * [ ] blog
