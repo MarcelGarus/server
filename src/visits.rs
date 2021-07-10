@@ -1,7 +1,11 @@
-use crate::handlers::{Request, Response, StatusCode};
+use crate::handlers::*;
+use crate::utils::*;
 use log::info;
 use serde::{Deserialize, Serialize};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::{
+    sync::RwLock,
+    time::{Instant, SystemTime, UNIX_EPOCH},
+};
 
 /// A recorded visit to the server.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -70,4 +74,19 @@ impl VisitsLog {
     pub fn list(&self) -> Vec<Visit> {
         self.visits.clone()
     }
+}
+
+pub fn handle(db: &RwLock<VisitsLog>, request: &Request) -> Option<Response> {
+    if request.path.starts_with(vec!["api", "visits"]) {
+        let rest_of_path: Vec<String> = request.path.clone_except_first(2);
+        if !request.is_admin {
+            return Some(not_authenticated_page());
+        }
+        if request.method == Method::GET && rest_of_path.is_empty() {
+            let json = serde_json::to_string(&db.read().unwrap().list()).unwrap();
+            return Some(Response::ok(json.into_bytes()));
+        }
+    }
+
+    None
 }

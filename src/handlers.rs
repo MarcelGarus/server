@@ -1,14 +1,19 @@
+///! In the context of this file, handlers are things that can handle requests to the server. There
+///! are two kinds of handlers:
+///!
+///! * Stateless handlers are just a single function.
+///! * Stateful handlers are a struct with a `new` and a `handle` function.
+///!
+///! Also, some handlers can handle all requests and return a `Response`, others can only handle a
+///! subset of requests and return an `Option<Response>`.
 use crate::shortcuts::*;
-use crate::utils::*;
-use crate::visits::Visit;
-use crate::visits::VisitsLog;
-use hyper::Method;
+use crate::visits::{Visit, VisitsLog};
+pub use hyper::Method;
 use log::error;
-use serde::{Deserialize, Serialize};
 use std::sync::RwLock;
 use url::Url;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Request {
     pub method: Method,
     pub path: Vec<String>, // The path segments
@@ -65,22 +70,13 @@ pub struct Response {
 }
 pub type StatusCode = u16;
 impl Response {
-    fn ok(body: Vec<u8>) -> Self {
+    pub fn ok(body: Vec<u8>) -> Self {
         Response {
             status_code: 200,
             body,
         }
     }
 }
-
-// In the context of this file, handlers are things that can handle requests to the server. There
-// are two kinds of handlers:
-//
-// * Stateless handlers are just a single function.
-// * Stateful handlers are a struct with a `new` and a `handle` function.
-//
-// Also, some handlers can handle all requests and return a `Response`, others can only handle a
-// subset of requests and return an `Option<Response>`.
 
 /// The public handle function that handles all requests.
 ///
@@ -106,7 +102,7 @@ impl RootHandler {
         let visit = Visit::start(&request);
 
         let response = static_assets(request)
-            .or_else(|| self.handle_visits_admin(request))
+            .or_else(|| crate::visits::handle(&self.visits, request))
             .or_else(|| self.shortcuts.handle(request))
             .unwrap_or_else(|| {
                 error_page(404, "Couldn't find the page you're looking for.".into())
@@ -115,20 +111,6 @@ impl RootHandler {
         let visit = visit.end(&response);
         self.visits.write().unwrap().register(visit);
         response
-    }
-    pub fn handle_visits_admin(&self, request: &Request) -> Option<Response> {
-        if request.path.starts_with(vec!["api", "visits"]) {
-            let rest_of_path: Vec<String> = request.path.clone_except_first(2);
-            if !request.is_admin {
-                return Some(not_authenticated_page());
-            }
-            if request.method == Method::GET && rest_of_path.is_empty() {
-                let json = serde_json::to_string(&self.visits.read().unwrap().list()).unwrap();
-                return Some(Response::ok(json.into_bytes()));
-            }
-        }
-
-        None
     }
 }
 
@@ -143,84 +125,6 @@ fn static_assets(request: &Request) -> Option<Response> {
     return None;
 }
 
-/// A handler for shortcuts.
-///
-/// Shortcuts look like this: GET /go/some-shortcut-key
-///
-/// The shortcuts API looks like this (it's not exactly following the best practices for RESTful
-/// APIs, but having all parameters – including the key – in the query string allows for easier
-/// deserialization):
-///
-/// * GET /api/shortcuts: Returns a list of shortcuts.
-/// * POST /api/shortcuts/set?key=foo&url=some-url: Sets a shortcut.
-/// * POST /api/shortcuts/delete?key=foo: Deletes a shortcut.
-struct ShortcutsHandler {
-    db: RwLock<ShortcutsDb>,
-}
-impl ShortcutsHandler {
-    fn new() -> Self {
-        Self {
-            db: RwLock::new(ShortcutsDb::new()),
-        }
-    }
-    fn handle(&self, request: &Request) -> Option<Response> {
-        if request.method == Method::GET && request.path.starts_with(vec!["go"]) {
-            if request.path.len() != 2 {
-                return None;
-            }
-            let key: String = request.path.get(1).unwrap().into();
-            let shortcut = self.db.read().unwrap().shortcut_for(&key)?;
-            return Some(Response {
-                status_code: 200,
-                body: format!("We should redirect to {}", shortcut.url).into_bytes(),
-            });
-        }
-
-        if request.path.starts_with(vec!["api", "shortcuts"]) {
-            let rest_of_path: Vec<String> = request.path.clone_except_first(2);
-            if !request.is_admin {
-                return Some(not_authenticated_page());
-            }
-            if request.method == Method::GET && rest_of_path.is_empty() {
-                return Some(
-                    match serde_json::to_string(&self.db.read().unwrap().list()) {
-                        Ok(json) => Response::ok(json.into_bytes()),
-                        Err(err) => server_error_page(&format!(
-                            "Couldn't serialize shortcuts to JSON: {}",
-                            err
-                        )),
-                    },
-                );
-            }
-            if request.method == Method::POST && rest_of_path == vec!["set"] {
-                return Some(match serde_qs::from_str(&request.query_string) {
-                    Ok(shortcut) => {
-                        self.db.write().unwrap().register(shortcut);
-                        Response::ok(vec![])
-                    }
-                    Err(err) => error_page(400, &format!("Invalid data: {}", err)),
-                });
-            }
-            if request.method == Method::POST && rest_of_path == vec!["delete"] {
-                return Some(match serde_qs::from_str(&request.query_string) {
-                    Ok(delete_request) => {
-                        let delete_request: ShortcutDeleteRequest = delete_request;
-                        self.db.write().unwrap().delete(&delete_request.key);
-                        Response::ok(vec![])
-                    }
-                    Err(err) => error_page(400, &format!("Invalid data: {}", err)),
-                });
-            }
-        }
-
-        None
-    }
-}
-#[derive(Serialize, Deserialize)]
-struct ShortcutDeleteRequest {
-    key: String,
-}
-
 /// Simply returns the contents of a file as the response.
 fn file_content(path: &str) -> Response {
     match std::fs::read(path) {
@@ -229,18 +133,18 @@ fn file_content(path: &str) -> Response {
     }
 }
 
-fn not_authenticated_page() -> Response {
+pub fn not_authenticated_page() -> Response {
     error_page(
         401,
         "This action requires authentication, which you don't have.".into(),
     )
 }
 
-fn server_error_page(error: &str) -> Response {
+pub fn server_error_page(error: &str) -> Response {
     error_page(500, &format!("This is an internal error: {}", error))
 }
 
-fn error_page(status_code: StatusCode, description: &str) -> Response {
+pub fn error_page(status_code: StatusCode, description: &str) -> Response {
     Response {
         status_code,
         body: format!(

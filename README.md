@@ -24,17 +24,18 @@ Other domains redirect here:
 
 TODOs in no particular order:
 
-* [ ] open-source this repo
+* [x] open-source this repo
 * [ ] actually host it
 * [ ] support HTTPS
 * [ ] redirect HTTP to HTTPS
+* [ ] shortcuts
+  * [ ] creating them
+  * [ ] using them
+  * [ ] write an app for it
+  * [ ] make previews in social messenges beautiful
 * [ ] blog
   * [ ] blog article pages
   * [ ] blog overview page
-* [ ] shortcuts
-  * [ ] creating them
-  * [ ] write an app for it
-  * [ ] make preview in messengers beautiful
 * [ ] contact
 * [ ] pay
   * [ ] redirect to PayPal
