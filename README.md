@@ -29,7 +29,7 @@ TODOs in no particular order:
 * [ ] support HTTPS
 * [ ] redirect HTTP to HTTPS
 * [ ] shortcuts
-  * [ ] creating them
+  * [x] creating them
   * [ ] using them
   * [ ] write an app for it
   * [ ] make previews in social messenges beautiful

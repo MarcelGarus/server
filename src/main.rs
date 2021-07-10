@@ -36,7 +36,9 @@ async fn main() {
         async move {
             let service = service_fn(|request| {
                 async move {
+                    info!("Original request: {:?}", request);
                     let request = handlers::Request::from(&request).unwrap(); // TODO
+                    info!("Request: {:?}", request);
                     let response = HANDLER.handle(&request);
                     let body: Body = response.body.into();
                     let response = Response::builder()

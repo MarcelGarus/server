@@ -27,9 +27,13 @@ impl Request {
         // The `request.url()` is a relative one, but the url package needs an absolute one, even
         // though we are only interested in the relative parts. So, we prefix it with some URL known
         // to be valid.
-        let url = Url::parse("https://example.net")
-            .unwrap()
-            .join(request.uri().path());
+        let url = Url::parse("https://example.net").unwrap().join(
+            request
+                .uri()
+                .path_and_query()
+                .map(|it| it.as_str())
+                .unwrap_or(""),
+        );
         let url = match url {
             Ok(url) => url,
             Err(err) => {
@@ -56,8 +60,8 @@ impl Request {
                 .map(|segment| segment.to_owned())
                 .collect(),
             query_string: url.query().unwrap_or("").to_owned(),
-            user_agent: get_header_value(request, "User-Agent"),
-            language: get_header_value(request, "Accept-Language"),
+            user_agent: get_header_value(request, "user-agent"),
+            language: get_header_value(request, "accept-language"),
             is_admin: true, // TODO
         })
     }
