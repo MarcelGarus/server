@@ -7,8 +7,7 @@ use hyper::{
 use lazy_static::lazy_static;
 use log::{info, LevelFilter};
 use simplelog::{ColorChoice, Config, TermLogger, TerminalMode};
-use std::{convert::Infallible, sync::Arc, time::Duration};
-use tokio::sync::Mutex;
+use std::{convert::Infallible, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 
@@ -20,8 +19,7 @@ mod visits;
 const ADDRESS: &'static str = "0.0.0.0:8000";
 
 lazy_static! {
-    static ref HANDLER: Arc<Mutex<handlers::RootHandler>> =
-        Arc::new(Mutex::new(handlers::RootHandler::new()));
+    static ref HANDLER: handlers::RootHandler = handlers::RootHandler::new();
 }
 
 #[tokio::main]
@@ -34,17 +32,12 @@ async fn main() {
     )
     .expect("Couldn't initialize logging.");
 
-    // let handler = handlers::RootHandler::new();
-
-    // TODO: Maybe find a way to not leak the box.
-    // It's not a tragedy that we leak the box here because it's okay to leak one single instance of
-    // the handler during the entire lifetime of the program.
     let make_service = make_service_fn(|_conn| {
         async move {
             let service = service_fn(|request| {
                 async move {
                     let request = handlers::Request::from(&request).unwrap(); // TODO
-                    let response = HANDLER.lock().await.handle(&request);
+                    let response = HANDLER.handle(&request);
                     let body: Body = response.body.into();
                     let response = Response::builder()
                         .status(response.status_code)
@@ -57,10 +50,6 @@ async fn main() {
             let service = ServiceBuilder::new()
                 .timeout(Duration::from_secs(10))
                 .layer(CompressionLayer::new())
-                // .layer(SetResponseHeaderLayer::<_, Request<Body>>::if_not_present(
-                //     header::CONTENT_TYPE,
-                //     HeaderValue::from_static("application/octet-stream"),
-                // ))
                 .service(service);
             Ok::<_, Infallible>(service)
         }

@@ -5,6 +5,7 @@ use crate::visits::VisitsLog;
 use hyper::Method;
 use log::error;
 use serde::{Deserialize, Serialize};
+use std::sync::RwLock;
 use url::Url;
 
 #[derive(Debug)]
@@ -91,17 +92,17 @@ impl Response {
 ///
 /// * GET /api/visits: Returns a list of all visits.
 pub struct RootHandler {
-    visits: VisitsLog,
+    visits: RwLock<VisitsLog>,
     shortcuts: ShortcutsHandler,
 }
 impl RootHandler {
     pub fn new() -> Self {
         Self {
-            visits: VisitsLog::new(),
+            visits: RwLock::new(VisitsLog::new()),
             shortcuts: ShortcutsHandler::new(),
         }
     }
-    pub fn handle(&mut self, request: &Request) -> Response {
+    pub fn handle(&self, request: &Request) -> Response {
         let visit = Visit::start(&request);
 
         let response = static_assets(request)
@@ -112,22 +113,18 @@ impl RootHandler {
             });
 
         let visit = visit.end(&response);
-        self.visits.register(visit);
+        self.visits.write().unwrap().register(visit);
         response
     }
-    pub fn handle_visits_admin(&mut self, request: &Request) -> Option<Response> {
+    pub fn handle_visits_admin(&self, request: &Request) -> Option<Response> {
         if request.path.starts_with(vec!["api", "visits"]) {
             let rest_of_path: Vec<String> = request.path.clone_except_first(2);
             if !request.is_admin {
                 return Some(not_authenticated_page());
             }
             if request.method == Method::GET && rest_of_path.is_empty() {
-                return Some(match serde_json::to_string(&self.visits.list()) {
-                    Ok(json) => Response::ok(json.into_bytes()),
-                    Err(err) => {
-                        server_error_page(&format!("Couldn't serialize visits to JSON: {}", err))
-                    }
-                });
+                let json = serde_json::to_string(&self.visits.read().unwrap().list()).unwrap();
+                return Some(Response::ok(json.into_bytes()));
             }
         }
 
@@ -158,21 +155,21 @@ fn static_assets(request: &Request) -> Option<Response> {
 /// * POST /api/shortcuts/set?key=foo&url=some-url: Sets a shortcut.
 /// * POST /api/shortcuts/delete?key=foo: Deletes a shortcut.
 struct ShortcutsHandler {
-    db: ShortcutsDb,
+    db: RwLock<ShortcutsDb>,
 }
 impl ShortcutsHandler {
     fn new() -> Self {
         Self {
-            db: ShortcutsDb::new(),
+            db: RwLock::new(ShortcutsDb::new()),
         }
     }
-    fn handle(&mut self, request: &Request) -> Option<Response> {
+    fn handle(&self, request: &Request) -> Option<Response> {
         if request.method == Method::GET && request.path.starts_with(vec!["go"]) {
             if request.path.len() != 2 {
                 return None;
             }
             let key: String = request.path.get(1).unwrap().into();
-            let shortcut = self.db.shortcut_for(&key)?;
+            let shortcut = self.db.read().unwrap().shortcut_for(&key)?;
             return Some(Response {
                 status_code: 200,
                 body: format!("We should redirect to {}", shortcut.url).into_bytes(),
@@ -185,17 +182,20 @@ impl ShortcutsHandler {
                 return Some(not_authenticated_page());
             }
             if request.method == Method::GET && rest_of_path.is_empty() {
-                return Some(match serde_json::to_string(&self.db.list()) {
-                    Ok(json) => Response::ok(json.into_bytes()),
-                    Err(err) => {
-                        server_error_page(&format!("Couldn't serialize shortcuts to JSON: {}", err))
-                    }
-                });
+                return Some(
+                    match serde_json::to_string(&self.db.read().unwrap().list()) {
+                        Ok(json) => Response::ok(json.into_bytes()),
+                        Err(err) => server_error_page(&format!(
+                            "Couldn't serialize shortcuts to JSON: {}",
+                            err
+                        )),
+                    },
+                );
             }
             if request.method == Method::POST && rest_of_path == vec!["set"] {
                 return Some(match serde_qs::from_str(&request.query_string) {
                     Ok(shortcut) => {
-                        self.db.register(shortcut);
+                        self.db.write().unwrap().register(shortcut);
                         Response::ok(vec![])
                     }
                     Err(err) => error_page(400, &format!("Invalid data: {}", err)),
@@ -205,7 +205,7 @@ impl ShortcutsHandler {
                 return Some(match serde_qs::from_str(&request.query_string) {
                     Ok(delete_request) => {
                         let delete_request: ShortcutDeleteRequest = delete_request;
-                        self.db.delete(&delete_request.key);
+                        self.db.write().unwrap().delete(&delete_request.key);
                         Response::ok(vec![])
                     }
                     Err(err) => error_page(400, &format!("Invalid data: {}", err)),
