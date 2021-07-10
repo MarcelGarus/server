@@ -24,22 +24,23 @@ Other domains redirect here:
 
 TODOs in no particular order:
 
-* [x] open-source this repo
-* [ ] actually host it
-* [ ] support HTTPS
-* [ ] redirect HTTP to HTTPS
-* [ ] shortcuts
-  * [x] creating them
-  * [x] using them
-  * [ ] saving them across server restarts
-  * [ ] write an app for it
-  * [ ] make previews in social messenges beautiful
-* [ ] blog
-  * [ ] blog article pages
-  * [ ] blog overview page
-* [ ] contact
-* [ ] pay
-  * [ ] redirect to PayPal
-  * [ ] calculate amount
-* [ ] files
-* [ ] statistics about which pages were visited how often
+* actually host the server
+* HTTPS
+  * support HTTPS
+  * redirect HTTP to HTTPS
+* visits
+  * save them across server restarts
+  * write an app for it
+  * statistics about which pages were visited how often
+* shortcuts
+  * saving them across server restarts
+  * write an app for it
+  * make previews in social messenges beautiful
+* blog
+  * blog article pages
+  * blog overview page
+* contact
+* pay
+  * redirect to PayPal
+  * calculate amount
+* files
