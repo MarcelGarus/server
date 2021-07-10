@@ -2,11 +2,9 @@ use crate::shortcuts::*;
 use crate::utils::*;
 use crate::visits::Visit;
 use crate::visits::VisitsLog;
+use hyper::Method;
 use log::error;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
-use tiny_http::HeaderField;
-use tiny_http::Method;
 use url::Url;
 
 #[derive(Debug)]
@@ -19,29 +17,28 @@ pub struct Request {
     pub is_admin: bool,
 }
 impl Request {
-    pub fn from_tiny(request: &tiny_http::Request) -> Option<Self> {
+    pub fn from(request: &hyper::Request<hyper::Body>) -> Option<Self> {
         // The `request.url()` is a relative one, but the url package needs an absolute one, even
         // though we are only interested in the relative parts. So, we prefix it with some URL known
         // to be valid.
         let url = Url::parse("https://example.net")
             .unwrap()
-            .join(request.url());
+            .join(request.uri().path());
         let url = match url {
             Ok(url) => url,
             Err(err) => {
-                error!("Couldn't parse URL \"{}\": {}", request.url(), err);
+                error!("Couldn't parse URL \"{}\": {}", request.uri(), err);
                 return None;
             }
         };
 
-        fn get_header_value(request: &tiny_http::Request, field: &str) -> String {
+        fn get_header_value(request: &hyper::Request<hyper::Body>, field: &str) -> String {
             request
                 .headers()
-                .iter()
-                .filter(|header| header.field == HeaderField::from_str(field).unwrap())
-                .next()
-                .map(|header| header.value.clone().into())
-                .unwrap_or("".into())
+                .get(field)
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or("")
+                .to_owned()
         }
 
         Some(Self {
@@ -124,7 +121,7 @@ impl RootHandler {
             if !request.is_admin {
                 return Some(not_authenticated_page());
             }
-            if request.method == Method::Get && rest_of_path.is_empty() {
+            if request.method == Method::GET && rest_of_path.is_empty() {
                 return Some(match serde_json::to_string(&self.visits.list()) {
                     Ok(json) => Response::ok(json.into_bytes()),
                     Err(err) => {
@@ -140,10 +137,10 @@ impl RootHandler {
 
 /// A handler for general static assets, like the main landing page and the icon.
 fn static_assets(request: &Request) -> Option<Response> {
-    if request.method == Method::Get && request.path.is_empty() {
+    if request.method == Method::GET && request.path.is_empty() {
         return Some(file_content("index.html"));
     }
-    if request.method == Method::Get && request.path == vec!["icon.png"] {
+    if request.method == Method::GET && request.path == vec!["icon.png"] {
         return Some(file_content("icon.png"));
     }
     return None;
@@ -170,7 +167,7 @@ impl ShortcutsHandler {
         }
     }
     fn handle(&mut self, request: &Request) -> Option<Response> {
-        if request.method == Method::Get && request.path.starts_with(vec!["go"]) {
+        if request.method == Method::GET && request.path.starts_with(vec!["go"]) {
             if request.path.len() != 2 {
                 return None;
             }
@@ -187,7 +184,7 @@ impl ShortcutsHandler {
             if !request.is_admin {
                 return Some(not_authenticated_page());
             }
-            if request.method == Method::Get && rest_of_path.is_empty() {
+            if request.method == Method::GET && rest_of_path.is_empty() {
                 return Some(match serde_json::to_string(&self.db.list()) {
                     Ok(json) => Response::ok(json.into_bytes()),
                     Err(err) => {
@@ -195,7 +192,7 @@ impl ShortcutsHandler {
                     }
                 });
             }
-            if request.method == Method::Post && rest_of_path == vec!["set"] {
+            if request.method == Method::POST && rest_of_path == vec!["set"] {
                 return Some(match serde_qs::from_str(&request.query_string) {
                     Ok(shortcut) => {
                         self.db.register(shortcut);
@@ -204,7 +201,7 @@ impl ShortcutsHandler {
                     Err(err) => error_page(400, &format!("Invalid data: {}", err)),
                 });
             }
-            if request.method == Method::Post && rest_of_path == vec!["delete"] {
+            if request.method == Method::POST && rest_of_path == vec!["delete"] {
                 return Some(match serde_qs::from_str(&request.query_string) {
                     Ok(delete_request) => {
                         let delete_request: ShortcutDeleteRequest = delete_request;
