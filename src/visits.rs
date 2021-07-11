@@ -2,6 +2,8 @@ use crate::utils::*;
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::{
+    fs::OpenOptions,
+    io::Write,
     sync::RwLock,
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
@@ -57,10 +59,17 @@ impl OngoingVisit {
     }
 }
 
+/// A log of visits that maintains some statistics.
+///
+/// It simply stores all visits in a vector. When that becomes too large, some
+/// are dumped to disk.
 pub struct VisitsLog {
     visits: Vec<Visit>,
 }
 impl VisitsLog {
+    const NUM_BUFFER_MIN: usize = 100;
+    const NUM_BUFFER_MAX: usize = 1000;
+
     pub fn new() -> Self {
         Self { visits: vec![] }
     }
@@ -68,10 +77,33 @@ impl VisitsLog {
     pub fn register(&mut self, visit: Visit) {
         info!("Registered visit: {:?}", visit);
         self.visits.push(visit);
+
+        if self.visits.len() > Self::NUM_BUFFER_MAX {
+            info!("Dumping visits to disk.");
+            let rest = self
+                .visits
+                .split_off(Self::NUM_BUFFER_MAX - Self::NUM_BUFFER_MIN);
+            let to_disk = std::mem::replace(&mut self.visits, rest);
+
+            let mut file = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open("visits.jsonl")
+                .unwrap();
+            for visit in to_disk {
+                let json = serde_json::to_string(&visit).unwrap();
+                file.write(json.as_bytes()).unwrap();
+                file.write(&[10]).unwrap(); // '\n'
+            }
+        }
     }
 
-    pub fn list(&self) -> Vec<Visit> {
-        self.visits.clone()
+    fn last_100(&self) -> &[Visit] {
+        if self.visits.len() < 100 {
+            &self.visits[..]
+        } else {
+            &self.visits[self.visits.len() - 100..]
+        }
     }
 }
 
@@ -81,8 +113,8 @@ pub fn handle(db: &RwLock<VisitsLog>, request: &Request) -> Option<Response> {
         if !request.is_admin {
             return Some(not_authenticated_page());
         }
-        if request.method == Method::GET && rest_of_path.is_empty() {
-            let json = serde_json::to_string(&db.read().unwrap().list()).unwrap();
+        if request.method == Method::GET && rest_of_path == vec!["last"] {
+            let json = serde_json::to_string(&db.read().unwrap().last_100()).unwrap();
             return Some(Response::with_body(json.into()));
         }
     }

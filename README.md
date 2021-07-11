@@ -28,12 +28,12 @@ TODOs in no particular order:
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
+* provide favicon.ico
+* authenticate admin
 * visits
-  * save them across server restarts
   * write an app for it
   * statistics about which pages were visited how often
 * shortcuts
-  * saving them across server restarts
   * write an app for it
   * make previews in social messenges beautiful
 * blog

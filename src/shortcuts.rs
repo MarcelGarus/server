@@ -1,7 +1,7 @@
 use crate::utils::*;
 use log::info;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::RwLock};
+use std::{collections::HashMap, fs::File, sync::RwLock};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Shortcut {
@@ -9,15 +9,29 @@ pub struct Shortcut {
     pub url: String,
 }
 
+/// A database for shortcuts. It simply saves shortcuts into a file.
 #[derive(Serialize, Deserialize)]
 pub struct ShortcutsDb {
     shortcuts: HashMap<String, Shortcut>,
 }
 impl ShortcutsDb {
     pub fn new() -> Self {
-        Self {
-            shortcuts: Default::default(),
+        let mut shortcuts: HashMap<String, Shortcut> = Default::default();
+        if let Ok(json) = std::fs::read_to_string("shortcuts.json") {
+            let shortcuts_vec: Vec<Shortcut> = serde_json::from_str(&json).unwrap();
+            for shortcut in shortcuts_vec {
+                shortcuts.insert(shortcut.key.clone(), shortcut);
+            }
         }
+        Self { shortcuts }
+    }
+
+    fn save(&self) {
+        std::fs::write(
+            "shortcuts.json",
+            serde_json::to_string(&self.shortcuts.values().collect::<Vec<_>>()).unwrap(),
+        )
+        .unwrap()
     }
 
     pub fn shortcut_for(&self, key: &str) -> Option<Shortcut> {
@@ -37,10 +51,12 @@ impl ShortcutsDb {
             serde_json::to_string(&self.shortcuts).unwrap()
         );
         self.shortcuts.insert(shortcut.key.clone(), shortcut);
+        self.save();
     }
 
     pub fn delete(&mut self, key: &str) {
         self.shortcuts.remove(key);
+        self.save();
     }
 }
 
