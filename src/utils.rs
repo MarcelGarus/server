@@ -1,9 +1,11 @@
-pub trait VecOfStrings {
+// General utilities.
+
+pub trait VecStringExt {
     fn clone_first_n(&self, n: usize) -> Option<Vec<String>>;
     fn starts_with(&self, other: Vec<&str>) -> bool;
     fn clone_except_first(&self, n: usize) -> Vec<String>;
 }
-impl VecOfStrings for Vec<String> {
+impl VecStringExt for Vec<String> {
     fn clone_first_n(&self, n: usize) -> Option<Vec<String>> {
         if self.len() < n {
             None
@@ -19,6 +21,30 @@ impl VecOfStrings for Vec<String> {
     }
 }
 
+/// Fetches the body from a URL. It should return a 200 code and valid UTF-8 content.
+pub async fn download(url: &str) -> Result<String, String> {
+    let response = reqwest::get(url)
+        .await
+        .map_err(|err| format!("Couldn't get {}: {:?}", url, err))?;
+    if response.status() != StatusCode::OK {
+        return Err(format!(
+            "Getting {} returned a non-200 code: {}",
+            url,
+            response.status()
+        ));
+    }
+    let content = response
+        .bytes()
+        .await
+        .map_err(|err| format!("Body of {} has invalid bytes: {}.", url, err))?;
+    let content = String::from_utf8(content.to_vec())
+        .map_err(|_| format!("Body of {} is not UTF-8.", url))?;
+    Ok(content)
+}
+
+// Stuff for handlers.
+
+use http::StatusCode;
 pub use hyper::{Body, Method};
 use log::error;
 use url::Url;
@@ -104,25 +130,27 @@ impl TrustedBuilder for http::response::Builder {
 }
 
 /// Simply returns the contents of a file as the response.
-pub fn file_content(path: &str) -> Response {
+pub async fn file_content(path: &str) -> Response {
+    // TODO: Make this async
     match std::fs::read(path) {
         Ok(content) => Response::with_body(content.into()),
-        Err(_) => server_error_page(&format!("The file {} is missing.", path)),
+        Err(_) => server_error_page(&format!("The file {} is missing.", path)).await,
     }
 }
 
-pub fn not_authenticated_page() -> Response {
+pub async fn not_authenticated_page() -> Response {
     error_page(
         401,
         "This action requires authentication, which you don't have.".into(),
     )
+    .await
 }
 
-pub fn server_error_page(error: &str) -> Response {
-    error_page(500, &format!("This is an internal error: {}", error))
+pub async fn server_error_page(error: &str) -> Response {
+    error_page(500, &format!("This is an internal error: {}", error)).await
 }
 
-pub fn error_page(status: u16, description: &str) -> Response {
+pub async fn error_page(status: u16, description: &str) -> Response {
     Response::builder().status(status).trusted_body(
         format!(
             "This is an ugly error page. This is the error: {}",

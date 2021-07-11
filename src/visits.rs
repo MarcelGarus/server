@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::{
     fs::OpenOptions,
     io::Write,
-    sync::RwLock,
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
+use tokio::sync::RwLock;
 
 /// A recorded visit to the server.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -107,14 +107,14 @@ impl VisitsLog {
     }
 }
 
-pub fn handle(db: &RwLock<VisitsLog>, request: &Request) -> Option<Response> {
+pub async fn handle(db: &RwLock<VisitsLog>, request: &Request) -> Option<Response> {
     if request.path.starts_with(vec!["api", "visits"]) {
         let rest_of_path: Vec<String> = request.path.clone_except_first(2);
         if !request.is_admin {
-            return Some(not_authenticated_page());
+            return Some(not_authenticated_page().await);
         }
         if request.method == Method::GET && rest_of_path == vec!["last"] {
-            let json = serde_json::to_string(&db.read().unwrap().last_100()).unwrap();
+            let json = serde_json::to_string(&db.read().await.last_100()).unwrap();
             return Some(Response::with_body(json.into()));
         }
     }
