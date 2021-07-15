@@ -25,6 +25,7 @@ Other domains redirect here:
 TODOs in no particular order:
 
 * actually host the server
+* switch to main branch
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
@@ -39,8 +40,10 @@ TODOs in no particular order:
 * blog
   * blog article pages
   * blog overview page
+  * add `link` tags to previous and next article
 * contact
 * pay
   * redirect to PayPal
   * calculate amount
 * files
+* set up uptime monitoring using statuscake

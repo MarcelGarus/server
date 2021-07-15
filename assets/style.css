@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&family=Roboto:wght@200&display=swap");
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #222222;
+    color: white;
+  }
+}
+
+::selection {
+  color: white;
+  background: #e80261;
+}
+
+h1 {
+  margin: 0.5em 0 0.3em 0;
+  font-family: "Josefin Sans", sans-serif;
+  font-size: 3em;
+}
+
+a {
+  font-family: "Josefin Sans", sans-serif;
+  color: #e80261 !important;
+}
+@media (prefers-color-scheme: dark) {
+  a {
+    color: #ff2f85 !important;
+  }
+}
+
+footer {
+  bottom: 1em;
+  font-size: 0.8em;
+  width: 100%;
+  opacity: 0.4;
+  transition: all 0.2s cubic-bezier(0.5, 0, 0, 1);
+}
+
+footer:hover {
+  opacity: 1;
+}
