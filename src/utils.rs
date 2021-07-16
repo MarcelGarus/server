@@ -21,6 +21,15 @@ impl VecStringExt for Vec<String> {
     }
 }
 
+pub trait Utf8OrPanicVecExt {
+    fn utf8_or_panic(self) -> String;
+}
+impl Utf8OrPanicVecExt for Vec<u8> {
+    fn utf8_or_panic(self) -> String {
+        String::from_utf8(self).unwrap()
+    }
+}
+
 /// Fetches the body from a URL. It should return a 200 code and valid UTF-8 content.
 pub async fn download(url: &str) -> Result<String, String> {
     let response = reqwest::get(url)

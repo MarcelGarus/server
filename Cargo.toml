@@ -4,6 +4,7 @@ version = "0.0.0"
 edition = "2018"
 
 [dependencies]
+comrak = "0.9"
 hyper = { version = "0.14.4", features = ["full"] }
 log = "0.4.14"
 serde = { version = "1.0", features = ["derive"] }

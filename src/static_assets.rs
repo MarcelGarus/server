@@ -6,16 +6,10 @@ pub async fn handle(request: &Request) -> Option<Response> {
         return Some(file_content("assets/index.html").await);
     }
 
-    let static_assets = vec![
-        vec!["article.html"],
-        vec!["footer.html"],
-        vec!["icon.png"],
-        vec!["scripts.js"],
-        vec!["style.css"],
-    ];
+    let static_assets = vec!["article.html", "icon.png", "style.css"];
     for asset in static_assets {
-        if request.method == Method::GET && request.path == asset {
-            return Some(file_content(&format!("assets/{}", itertools::join(asset, "/"))).await);
+        if request.method == Method::GET && request.path == vec![asset] {
+            return Some(file_content(&format!("assets/{}", asset)).await);
         }
     }
 
