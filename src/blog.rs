@@ -91,27 +91,56 @@ impl Article {
         let arena = Arena::new();
         let root = parse_document(&arena, markdown, &ComrakOptions::default());
 
-        let content = {
-            let mut html = vec![];
-            root.to_html(&mut html);
-            itertools::join(html, "")
-        };
         Self {
             key,
-            title: "The Title".into(),
+            title: root.find_title().expect("Blog contains no title"),
             published: date,
-            content,
+            content: root.to_html(),
         }
     }
 }
+trait FindTitle<'a> {
+    fn find_title(&'a self) -> Option<String>;
+}
+impl<'a> FindTitle<'a> for AstNode<'a> {
+    fn find_title(&'a self) -> Option<String> {
+        if let NodeValue::Heading(heading) = self.data.borrow().value.clone() {
+            if heading.level == 1 {
+                let mut output = vec![];
+                self.children().to_html_parts(&mut output);
+                return Some(itertools::join(output, ""));
+            }
+        }
+        self.children().find_title()
+    }
+}
+trait FindTitleInChildren<'a> {
+    fn find_title(self) -> Option<String>;
+}
+impl<'a> FindTitleInChildren<'a> for Children<'a, RefCell<Ast>> {
+    fn find_title(self) -> Option<String> {
+        for child in self.collect::<Vec<_>>().clone() {
+            if let Some(title) = child.find_title() {
+                return Some(title);
+            }
+        }
+        None
+    }
+}
 trait ToHtml<'a> {
-    fn to_html(&'a self, output: &mut Vec<String>);
+    fn to_html(&'a self) -> String;
+    fn to_html_parts(&'a self, output: &mut Vec<String>);
 }
 impl<'a> ToHtml<'a> for AstNode<'a> {
-    fn to_html(&'a self, output: &mut Vec<String>) {
+    fn to_html(&'a self) -> String {
+        let mut html = vec![];
+        self.to_html_parts(&mut html);
+        itertools::join(html, "")
+    }
+    fn to_html_parts(&'a self, output: &mut Vec<String>) {
         use NodeValue::*;
         match self.data.borrow().value.clone() {
-            Document => self.children().to_html(output),
+            Document => self.children().to_html_parts(output),
             Heading(heading) => {
                 if heading.level == 1 {
                     return; // The title of the entire article is treated separately.
@@ -123,7 +152,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             }
             Paragraph => {
                 output.start_tag("p");
-                self.children().to_html(output);
+                self.children().to_html_parts(output);
                 output.end_tag("p");
             }
             // TODO: Html-encode content
@@ -132,12 +161,12 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             LineBreak => output.push("<br />".into()),
             Emph => {
                 output.start_tag("em");
-                self.children().to_html(output);
+                self.children().to_html_parts(output);
                 output.end_tag("em");
             }
             Strong => {
                 output.start_tag("strong");
-                self.children().to_html(output);
+                self.children().to_html_parts(output);
                 output.end_tag("strong");
             }
             List(list) => {
@@ -147,12 +176,12 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 }
                 .to_owned();
                 output.start_tag(&tag);
-                self.children().to_html(output);
+                self.children().to_html_parts(output);
                 output.end_tag(&tag);
             }
             Item(_) => {
                 output.start_tag("li");
-                self.children().to_html(output);
+                self.children().to_html_parts(output);
                 output.end_tag("li");
             }
             HtmlBlock(it) => output.push(format!("{}", it.literal.utf8_or_panic())),
@@ -160,7 +189,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             Link(link) => {
                 output.start_tag(&format!("a href=\"{}\"", link.url.utf8_or_panic(),));
                 output.push(link.title.utf8_or_panic());
-                self.children().to_html(output);
+                self.children().to_html_parts(output);
                 output.end_tag("a");
             }
             Image(image) => {
@@ -193,13 +222,13 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
         }
     }
 }
-trait ChildrenToHtml<'a> {
-    fn to_html(self, output: &mut Vec<String>);
+trait ChildrenToHtmlParts<'a> {
+    fn to_html_parts(self, output: &mut Vec<String>);
 }
-impl<'a> ChildrenToHtml<'a> for Children<'a, RefCell<Ast>> {
-    fn to_html(self, output: &mut Vec<String>) {
+impl<'a> ChildrenToHtmlParts<'a> for Children<'a, RefCell<Ast>> {
+    fn to_html_parts(self, output: &mut Vec<String>) {
         for child in self.collect::<Vec<_>>().clone() {
-            child.to_html(output)
+            child.to_html_parts(output)
         }
     }
 }
