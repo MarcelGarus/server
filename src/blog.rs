@@ -193,11 +193,13 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 output.end_tag("a");
             }
             Image(image) => {
+                output.start_tag("center");
                 output.push(format!(
                     "<img src=\"{}\" alt=\"{}\" />",
                     image.url.utf8_or_panic(),
                     image.title.utf8_or_panic()
                 ));
+                output.end_tag("center");
             }
             Code(code) => {
                 output.start_tag("code");
