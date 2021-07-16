@@ -5,6 +5,9 @@ pub async fn handle(request: &Request) -> Option<Response> {
     if request.method == Method::GET && request.path.is_empty() {
         return Some(file_content("assets/index.html").await);
     }
+    if request.method == Method::GET && request.path == vec!["favicon.ico"] {
+        return Some(file_content("assets/icon.ico").await);
+    }
 
     let static_assets = vec![
         "article.html",
