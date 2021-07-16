@@ -155,8 +155,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 self.children().to_html_parts(output);
                 output.end_tag("p");
             }
-            // TODO: Html-encode content
-            Text(text) => output.push(text.utf8_or_panic()),
+            Text(text) => output.push(text.utf8_or_panic().html_encode()),
             SoftBreak => output.push(" ".into()),
             LineBreak => output.push("<br />".into()),
             Emph => {
@@ -188,7 +187,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             ThematicBreak => output.push("<hr />".into()),
             Link(link) => {
                 output.start_tag(&format!("a href=\"{}\"", link.url.utf8_or_panic(),));
-                output.push(link.title.utf8_or_panic());
+                output.push(link.title.utf8_or_panic().html_encode());
                 self.children().to_html_parts(output);
                 output.end_tag("a");
             }
@@ -210,8 +209,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                     (code, "text")
                 };
                 output.start_tag(&format!("code class=\"language-{}\"", language));
-                // TODO: Html-encode content
-                output.push(code);
+                output.push(code.html_encode());
                 output.end_tag("code");
             }
             CodeBlock(code) => {
@@ -223,8 +221,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                         other_language => other_language,
                     },
                 ));
-                // TODO: Html-encode content
-                output.push(format!("{}", code.literal.utf8_or_panic()));
+                output.push(code.literal.utf8_or_panic().html_encode());
                 output.end_tag("code");
                 output.end_tag("pre");
             }
