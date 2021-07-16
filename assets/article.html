@@ -33,15 +33,15 @@
             }
 
             /* Instead of having a fixed amount of margin on the left and right of the article
-            content, the article elements have that margin themselves. Some elements don't, so code
-            blocks and images stretch from edge to edge on small displays. */
-            article > h1, article > h2, article > h3, article > h4, article > h5, article > h6,
-            .published,
-            article > p,
-            article > ul, article > ol,
-            footer {
+            content, the article elements have that margin themselves. This way, we can add
+            exceptions. For example, on small displays, code blocks and images stretch from edge to
+            edge. */
+            article > *, footer {
                 margin-left: 4mm;
                 margin-right: 4mm;
+            }
+            article > pre, article > center {
+                margin: 0;
             }
 
             h2, h3, h4, h5, h6, strong {
