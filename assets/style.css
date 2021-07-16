@@ -38,10 +38,12 @@ a {
 
 footer {
   font-size: 0.8em;
-  opacity: 0.4;
-  transition: all 0.2s cubic-bezier(0.5, 0, 0, 1);
 }
 
-footer:hover {
+.secondary {
+  opacity: 0.4;
+  transition: opacity 0.2s cubic-bezier(0.5, 0, 0, 1);
+}
+.secondary:hover {
   opacity: 1;
 }
