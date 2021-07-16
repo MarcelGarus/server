@@ -46,17 +46,17 @@ chunky.transaction((transaction) {
 
 ## So, how does it actually work?
 
-When you call `Chunky('🌮.chest')`, Chunky looks for a file named `🌮.chest` and opens it.
+When you call `dart:Chunky('🌮.chest')`, Chunky looks for a file named `🌮.chest` and opens it.
 
-Calling `chunky.transaction(...)`
+Calling `dart:chunky.transaction(...)`
 
 1. waits for all former transactions to finish and then
-2. actually starts the transaction by creating a `Transaction` and calling the callback.
+2. actually starts the transaction by creating a `dart:Transaction` and calling the callback.
 
-A `Transaction` buffers all the chunks accessed during that transaction – that's both the original chunk as well as the current version of the chunk.
-Accessing chunks loads the original chunk from disk and saves a snapshot of it. After that, it creates a copy, wraps it into a `TransactionChunk` and then returns that.
+A `dart:Transaction` buffers all the chunks accessed during that transaction – that's both the original chunk as well as the current version of the chunk.
+Accessing chunks loads the original chunk from disk and saves a snapshot of it. After that, it creates a copy, wraps it into a `dart:TransactionChunk` and then returns that.
 
-A `TransactionChunk` is used to track dirtiness: It contains an `isDirty` property and if any `set...` method is called, for example `setUint8(0, 42)`, the `isDirty` property is set to `true`.
+A `dart:TransactionChunk` is used to track dirtiness: It contains an `dart:isDirty` property and if any `dart:set...` method is called, for example `dart:setUint8(0, 42)`, the `dart:isDirty` property is set to `dart:true`.
 
 When a transaction is over, the accessed chunks are diffed with the original version.
 Here's the code snippet doing just that:
@@ -71,10 +71,10 @@ final differentChunks = _newChunks.entries
 
 First, the chunks are filtered to
 
-- the ones that were newly added by calling `reserve()` on the transaction and
-- the dirty ones (as in, a `set...` method has been called).
+- the ones that were newly added by calling `dart:reserve()` on the transaction and
+- the dirty ones (as in, a `dart:set...` method has been called).
 
-Then, those chunks are compared with the original chunks – after all, if `set...` is called with the same value that's already stored or it's called multiple times, the value might be the same as the beginning of the transaction.
+Then, those chunks are compared with the original chunks – after all, if `dart:set...` is called with the same value that's already stored or it's called multiple times, the value might be the same as the beginning of the transaction.
 
 So, how are the ACID goals achieved?
 
