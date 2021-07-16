@@ -18,10 +18,8 @@
 
             main {
                 margin: auto;
-                width: calc(100% - 2em);
+                width: 100%;
                 max-width: 40em;
-                padding-left: 1em;
-                padding-right: 1em;
             }
 
             article {
@@ -32,6 +30,18 @@
                 opacity: 0.4;
                 font-size: 0.8em;
                 margin-bottom: 2em;
+            }
+
+            /* Instead of having a fixed amount of margin on the left and right of the article
+            content, the article elements have that margin themselves. Some elements don't, so code
+            blocks and images stretch from edge to edge on small displays. */
+            article > h1, article > h2, article > h3, article > h4, article > h5, article > h6,
+            .published,
+            article > p,
+            article > ul, article > ol,
+            footer {
+                margin-left: 4mm;
+                margin-right: 4mm;
             }
 
             h2, h3, h4, h5, h6, strong {
@@ -60,9 +70,7 @@
             <article>
                 <h1>{{title}}</h1>
                 <div class="published">published on {{publish-date}}</div>
-                <div class="text">
-                    {{body}}
-                </div>
+                {{body}}
             </article>
             <footer>
                 By the way: This website doesn't track you and doesn't use cookies, but feel free to <a href="https://zahl.marcel.jetzt/1€">buy me one</a>. 🍪
