@@ -29,7 +29,6 @@ TODOs in no particular order:
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
-* provide favicon.ico
 * authenticate admin
 * visits
   * write an app for it
