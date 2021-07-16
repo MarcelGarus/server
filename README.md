@@ -26,6 +26,7 @@ TODOs in no particular order:
 
 * actually host the server
 * switch to main branch
+* use proper mime types
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
@@ -37,6 +38,7 @@ TODOs in no particular order:
   * write an app for it
   * make previews in social messenges beautiful
 * blog
+  * html-encode content
   * blog overview page
   * add `link` tags to previous and next article
 * contact
