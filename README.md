@@ -38,7 +38,6 @@ TODOs in no particular order:
   * write an app for it
   * make previews in social messenges beautiful
 * blog
-  * blog article pages
   * blog overview page
   * add `link` tags to previous and next article
 * contact
