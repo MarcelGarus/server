@@ -145,10 +145,10 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 if heading.level == 1 {
                     return; // The title of the entire article is treated separately.
                 }
-                heading.level;
-                output.start_tag("h2");
-                self.children().to_html(output);
-                output.end_tag("h2");
+                let tag = format!("h{}", heading.level);
+                output.start_tag(&tag);
+                self.children().to_html_parts(output);
+                output.end_tag(&tag);
             }
             Paragraph => {
                 output.start_tag("p");
