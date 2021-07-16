@@ -25,7 +25,6 @@ Other domains redirect here:
 TODOs in no particular order:
 
 * actually host the server
-* switch to main branch
 * use proper mime types
 * HTTPS
   * support HTTPS
