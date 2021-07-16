@@ -202,16 +202,26 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 output.end_tag("center");
             }
             Code(code) => {
-                output.start_tag("code");
+                let code = code.utf8_or_panic();
+                let (code, language) = if code.split(":").count() >= 2 {
+                    let language = code.split(":").next().unwrap();
+                    (code[language.len() + 1..].into(), language)
+                } else {
+                    (code, "text")
+                };
+                output.start_tag(&format!("code class=\"language-{}\"", language));
                 // TODO: Html-encode content
-                output.push(format!("{}", code.utf8_or_panic()));
+                output.push(code);
                 output.end_tag("code");
             }
             CodeBlock(code) => {
                 output.start_tag("pre");
                 output.start_tag(&format!(
                     "code class=\"language-{}\"",
-                    code.info.utf8_or_panic()
+                    match code.info.utf8_or_panic().as_ref() {
+                        "" => "text".into(),
+                        other_language => other_language,
+                    },
                 ));
                 // TODO: Html-encode content
                 output.push(format!("{}", code.literal.utf8_or_panic()));
