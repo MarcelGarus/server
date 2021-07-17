@@ -25,24 +25,21 @@ Other domains redirect here:
 TODOs in no particular order:
 
 * actually host the server
-* use proper mime types
+* set up uptime monitoring using statuscake
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
 * authenticate admin
-* visits
-  * write an app for it
+* app
+  * visits
   * statistics about which pages were visited how often
-* shortcuts
-  * write an app for it
-  * make previews in social messenges beautiful
-* blog
-  * html-encode content
-  * blog overview page
-  * add `link` tags to previous and next article
+  * shortcuts
 * contact
+* use proper mime types
+* files
+* blog
+  * add `link` tags to previous and next article
 * pay
   * redirect to PayPal
   * calculate amount
-* files
-* set up uptime monitoring using statuscake
+* make shortcut previews in social messenges beautiful
