@@ -9,13 +9,7 @@ pub async fn handle(request: &Request) -> Option<Response> {
         return Some(file_content("assets/icon.ico").await);
     }
 
-    let static_assets = vec![
-        "article.html",
-        "icon.png",
-        "style.css",
-        "prism.css",
-        "prism.js",
-    ];
+    let static_assets = vec!["icon.png", "prism.css", "prism.js"];
     for asset in static_assets {
         if request.method == Method::GET && request.path == vec![asset] {
             return Some(file_content(&format!("assets/{}", asset)).await);

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Blog – Marcel Garus</title>
+    <meta charset="utf-8" />
+    <meta name="description"
+        content="Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e80261" />
+    <link rel="icon" type="image/png" href="icon.png" />
+    <link href="prism.css" rel="stylesheet" />
+    <script src="prism.js"></script>
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&family=Roboto:wght@200&family=JetBrains+Mono&display=swap");
+
+        /* general styles */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+
+            font-family: "Roboto", sans-serif;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #222222;
+                color: white;
+            }
+        }
+
+        .secondary {
+            opacity: 0.4;
+            transition: opacity 0.2s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .secondary:hover {
+            opacity: 1;
+        }
+
+        a {
+            font-family: "Josefin Sans", sans-serif;
+        }
+
+        h1 {
+            margin: 1em 0 0 0;
+
+            font-family: "Josefin Sans", sans-serif;
+            font-size: 3em;
+            line-height: 1;
+        }
+
+        /* styles for the side bar */
+        aside {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: calc(30% - 2em);
+            min-width: 10em;
+            padding: 0 4mm;
+
+            background-color: #f97191;
+            text-align: right;
+        }
+        @media (max-width: 700px) {
+            aside {
+                position: relative;
+                width: calc(100% - 8mm);
+
+                text-align: center;
+                padding-top: 3em;
+                padding-bottom: 1em;
+            }
+            aside h1 {
+                margin: 0;
+            }
+            aside .content {
+                margin: auto !important;
+            }
+        }
+        aside .content {
+            margin: auto;
+            margin-right: 0;
+            
+            max-width: 25em;
+        }
+        aside ::selection {
+            color: white;
+            background: #000000;
+        }
+        aside a {
+            color: #ffffff !important;
+        }
+        aside p {
+            margin-top: 1em;
+        }
+
+        /* styles for the main part */
+        main {
+            margin-left: 30%;
+            width: 70%;
+        }
+        @media (max-width: 700px) {
+            main {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+        main .content {
+            width: 100%;
+            max-width: 40em;
+            margin: auto;
+        }
+        main ::selection {
+            color: white;
+            background: #f97191;
+        }
+        main a {
+            color: #f97191 !important;
+        }
+
+        article {
+            line-height: 1.7;
+            font-size: 1em;
+        }
+
+        article .published {
+            font-size: 0.8em;
+        }
+
+        /* Instead of having a fixed amount of margin on the left and right of the article
+            content, the article elements have that margin themselves. This way, we can add
+            exceptions. For example, on small displays, code blocks and images stretch from edge to
+            edge. */
+        article>*, footer {
+            margin-left: 4mm;
+            margin-right: 4mm;
+        }
+
+        article>pre, article>center {
+            margin: 0;
+        }
+
+        h2, h3, h4, h5, h6,
+        strong {
+            font-family: 'Josefin Sans';
+        }
+
+        code {
+            font-family: 'JetBrains Mono';
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 30em;
+        }
+
+        footer {
+            font-size: 0.8em;
+            margin-bottom: 2em;
+        }
+    </style>
+</head>
+
+<body>
+    <aside>
+        <div class="content">
+            <h1>Marcel Garus</h1>
+            <p>
+                Hello, world! 👋🏻
+                I&nbsp;develop <a href="https://github.com/marcelgarus">open source thingies</a>.
+                <a href="https://schreib.marcel.jetzt">Wanna&nbsp;talk?</a>
+            </p>
+        </div>
+    </aside>
+    <main>
+        <div class="content">
+            {{content}}
+            <footer class="secondary">
+                By the way: This website doesn't track you and doesn't use cookies, but feel free to <a
+                    href="https://zahl.marcel.jetzt/1€">buy me one</a>. 🍪
+                Other stuff: <a href="https://github.com/marcelgarus/website">Source code</a> + <a
+                    href="https://github.com/marcelgarus/website/blob/main/imprint.md">Imprint</a> + <a
+                    href="https://github.com/marcelgarus/website/blob/main/privacy_policy.md">Privacy policy</a>
+            </footer>
+        </div>
+    </main>
+</body>
+
+</html>

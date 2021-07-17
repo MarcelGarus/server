@@ -6,7 +6,8 @@ use comrak::{
     parse_document, Arena, ComrakOptions,
 };
 use log::{info, warn};
-use std::{cell::RefCell, collections::HashMap, sync::RwLock};
+use std::{cell::RefCell, collections::HashMap};
+use tokio::sync::RwLock;
 
 #[derive(Clone, Debug)]
 pub struct Article {
@@ -14,6 +15,7 @@ pub struct Article {
     pub title: String,
     pub published: Date<Utc>,
     pub content: String,
+    pub teaser: String,
 }
 
 /// A database for articles. It gets articles from the GitHub repo.
@@ -89,13 +91,23 @@ impl ArticleDb {
 impl Article {
     fn from_key_and_date_and_markdown(key: String, date: Date<Utc>, markdown: &str) -> Self {
         let arena = Arena::new();
-        let root = parse_document(&arena, markdown, &ComrakOptions::default());
+        let root = parse_document(
+            &arena,
+            &markdown.replace("--snip--", ""),
+            &ComrakOptions::default(),
+        );
 
         Self {
             key,
             title: root.find_title().expect("Blog contains no title"),
             published: date,
             content: root.to_html(),
+            teaser: parse_document(
+                &arena,
+                markdown.split("--snip--").next().unwrap(),
+                &ComrakOptions::default(),
+            )
+            .to_html(),
         }
     }
 }
@@ -296,20 +308,53 @@ impl Handler {
                 return None;
             }
             let key: String = request.path.get(0).unwrap().into();
-            let article = self.db.read().unwrap().article_for(&key)?;
-            info!("Reading article {}", article.key);
-            let template: String =
-                String::from_utf8(std::fs::read("assets/article.html").unwrap()).unwrap();
-            let article = template
-                .replace("{{title}}", &article.title)
-                .replace(
-                    "{{publish-date}}",
-                    &format!("{}", article.published.format("%Y-%m-%d")),
-                )
-                .replace("{{body}}", &article.content);
-            return Some(hyper::Response::with_body(article.into()));
+
+            if &key == "blog" {
+                let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
+                let article_template = std::fs::read("assets/article-teaser.html")
+                    .unwrap()
+                    .utf8_or_panic();
+                let mut articles = self.db.read().await.list();
+                articles.sort_by(|a, b| b.published.cmp(&a.published));
+                let articles = articles
+                    .into_iter()
+                    .map(|article| article_template.fill_in_article(&article))
+                    .collect::<Vec<_>>();
+                let page = page_template.fill_in_content(&itertools::join(articles, "\n"));
+                return Some(hyper::Response::with_body(page.into()));
+            } else {
+                let article = self.db.read().await.article_for(&key)?;
+                info!("Reading article {}", article.key);
+                let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
+                let article_template = std::fs::read("assets/article-full.html")
+                    .unwrap()
+                    .utf8_or_panic();
+                let article = article_template.fill_in_article(&article);
+                let page = page_template.fill_in_content(&article);
+                return Some(hyper::Response::with_body(page.into()));
+            }
         }
 
         None
+    }
+}
+
+trait FillInArticleStringExt {
+    fn fill_in_article(&self, article: &Article) -> Self;
+    fn fill_in_content(&self, content: &String) -> Self;
+}
+impl FillInArticleStringExt for String {
+    fn fill_in_article(&self, article: &Article) -> Self {
+        self.replace("{{key}}", &article.key)
+            .replace("{{title}}", &article.title)
+            .replace(
+                "{{publish-date}}",
+                &format!("{}", article.published.format("%Y-%m-%d")),
+            )
+            .replace("{{teaser}}", &article.teaser)
+            .replace("{{body}}", &article.content)
+    }
+    fn fill_in_content(&self, content: &String) -> Self {
+        self.replace("{{content}}", content)
     }
 }
