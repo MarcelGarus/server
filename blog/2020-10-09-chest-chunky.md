@@ -5,7 +5,7 @@ In the end, all data should somehow be stored in a file, something like `🌮.ch
 
 A key question is how to deal with mutating data: If we need to insert some data "in the middle" of the database, we don't want to re-write everything that comes after it. Files are a linear stream of bytes and that doesn't quite fit our use case. So, the Chunky layer offers an abstraction from that.
 
----
+--snip--
 
 Also, writing to the file might fail for various reasons – whether the OS kills our program, the user plugs out the storage medium, the power supply vanishes, or a black hole consumes the earth. Chunky also ensures that we handle such cases gracefully by fulfilling the four ACID goals:
 
