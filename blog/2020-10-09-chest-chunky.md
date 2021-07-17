@@ -1,9 +1,11 @@
-# Chunky
+# Chunky: A Database Layer
 
 Chest's lowest abstraction layer is called *Chunky*.
 In the end, all data should somehow be stored in a file, something like `🌮.chest` (yes, the taco emoji is a great name for a database). The Chunky framework will take care of managing access to that file.
 
 A key question is how to deal with mutating data: If we need to insert some data "in the middle" of the database, we don't want to re-write everything that comes after it. Files are a linear stream of bytes and that doesn't quite fit our use case. So, the Chunky layer offers an abstraction from that.
+
+---
 
 Also, writing to the file might fail for various reasons – whether the OS kills our program, the user plugs out the storage medium, the power supply vanishes, or a black hole consumes the earth. Chunky also ensures that we handle such cases gracefully by fulfilling the four ACID goals:
 

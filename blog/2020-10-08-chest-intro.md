@@ -1,8 +1,10 @@
-# Intro to Chest
+# Chest: A New Database
 
 Databases are a fundamental part of most modern applications.
 Studying [Hive](https://hivedb.dev) got me interested in database design, so I decided to implement my own database – called *Chest*.  
 It's initially intended as a research project, but I'd also be happy if I produce something useful.
+
+---
 
 These are the goals:
 
