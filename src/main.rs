@@ -21,7 +21,7 @@ mod static_assets;
 mod utils;
 mod visits;
 
-const ADDRESS: &'static str = "0.0.0.0:8000";
+const ADDRESS: &'static str = "0.0.0.0:80";
 
 lazy_static! {
     static ref ADMIN_KEY: String = std::fs::read_to_string("adminkey.txt")
