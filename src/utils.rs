@@ -77,7 +77,7 @@ pub struct Request {
     pub is_admin: bool,
 }
 impl Request {
-    pub fn from(request: &hyper::Request<hyper::Body>) -> Option<Self> {
+    pub fn from(request: &hyper::Request<hyper::Body>, admin_key: &str) -> Option<Self> {
         // The `request.url()` is a relative one, but the url package needs an absolute one, even
         // though we are only interested in the relative parts. So, we prefix it with some URL known
         // to be valid.
@@ -116,7 +116,10 @@ impl Request {
             query_string: url.query().unwrap_or("").to_owned(),
             user_agent: get_header_value(request, "user-agent"),
             language: get_header_value(request, "accept-language"),
-            is_admin: true, // TODO
+            is_admin: consistenttime::ct_u8_slice_eq(
+                get_header_value(request, "admin-key").as_bytes(),
+                admin_key.as_bytes(),
+            ),
         })
     }
 }

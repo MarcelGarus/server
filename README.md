@@ -29,7 +29,6 @@ TODOs in no particular order:
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
-* authenticate admin
 * app
   * visits
   * statistics about which pages were visited how often

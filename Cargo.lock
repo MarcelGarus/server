@@ -262,6 +262,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "consistenttime"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a079bddaa385eab2a88dc5816a378921852ab3af6646748da14681b2facf502"
+
+[[package]]
 name = "core-foundation"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1409,6 +1415,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "comrak",
+ "consistenttime",
  "http",
  "hyper",
  "itertools",

@@ -24,6 +24,10 @@ mod visits;
 const ADDRESS: &'static str = "0.0.0.0:8000";
 
 lazy_static! {
+    static ref ADMIN_KEY: String = std::fs::read_to_string("adminkey.txt")
+        .expect("No admin key file found at adminkey.txt.")
+        .trim()
+        .to_owned();
     static ref HANDLER: Arc<RwLock<Option<RootHandler>>> = Default::default();
 }
 
@@ -36,6 +40,7 @@ async fn main() {
         ColorChoice::Auto,
     )
     .expect("Couldn't initialize logging.");
+    &ADMIN_KEY;
 
     {
         let mut handler = HANDLER.write().await;
@@ -46,7 +51,7 @@ async fn main() {
         async move {
             let service = service_fn(|request| {
                 async move {
-                    let request = Request::from(&request).unwrap(); // TODO
+                    let request = Request::from(&request, &ADMIN_KEY).unwrap(); // TODO
                     info!("Request: {:?}", request);
                     let response = HANDLER
                         .read()
