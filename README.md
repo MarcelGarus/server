@@ -40,6 +40,8 @@ TODOs in no particular order:
 * blog
   * estimate read time
   * add `link` tags to previous and next article
+  * don't show all articles on the main page, but the recent ones
+  * add article overview page with all articles
 * pay
   * redirect to PayPal
   * calculate amount
