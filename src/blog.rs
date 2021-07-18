@@ -303,13 +303,12 @@ impl Handler {
         }
     }
     pub async fn handle(&self, request: &Request) -> Option<Response> {
-        if request.method == Method::GET {
-            if request.path.len() != 1 {
-                return None;
-            }
-            let key: String = request.path.get(0).unwrap().into();
-
-            if &key == "blog" {
+        if request.method != Method::GET {
+            return None;
+        }
+        match request.path.len() {
+            0 => {
+                // Visitors of mgar.us get a list of all articles.
                 let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
                 let article_template = std::fs::read("assets/article-teaser.html")
                     .unwrap()
@@ -321,8 +320,11 @@ impl Handler {
                     .map(|article| article_template.fill_in_article(&article))
                     .collect::<Vec<_>>();
                 let page = page_template.fill_in_content(&itertools::join(articles, "\n"));
-                return Some(hyper::Response::with_body(page.into()));
-            } else {
+                Some(hyper::Response::with_body(page.into()))
+            }
+            1 => {
+                // Visitors of mgar.us/<valid-article-id> get the corresponding articles.
+                let key: String = request.path.get(0).unwrap().into();
                 let article = self.db.read().await.article_for(&key)?;
                 info!("Reading article {}", article.key);
                 let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
@@ -331,11 +333,10 @@ impl Handler {
                     .utf8_or_panic();
                 let article = article_template.fill_in_article(&article);
                 let page = page_template.fill_in_content(&article);
-                return Some(hyper::Response::with_body(page.into()));
+                Some(hyper::Response::with_body(page.into()))
             }
+            _ => None, // Longer paths are not handled by the blog.
         }
-
-        None
     }
 }
 
