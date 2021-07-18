@@ -40,7 +40,7 @@ async fn main() {
         ColorChoice::Auto,
     )
     .expect("Couldn't initialize logging.");
-    &ADMIN_KEY;
+    info!("The admin key is {}.", &ADMIN_KEY.to_owned());
 
     {
         let mut handler = HANDLER.write().await;
