@@ -23,8 +23,7 @@ pub struct ArticleDb {
     articles: HashMap<String, Article>,
 }
 impl ArticleDb {
-    const BASE_URL: &'static str =
-        "https://raw.githubusercontent.com/marcelgarus/server/master/blog";
+    const BASE_URL: &'static str = "https://raw.githubusercontent.com/marcelgarus/server/main/blog";
 
     pub async fn new() -> Self {
         let mut db = Self {
