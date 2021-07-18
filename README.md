@@ -24,8 +24,6 @@ Other domains redirect here:
 
 TODOs in no particular order:
 
-* actually host the server
-* set up uptime monitoring using statuscake
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
