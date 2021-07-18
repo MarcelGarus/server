@@ -29,6 +29,7 @@ TODOs in no particular order:
 * HTTPS
   * support HTTPS
   * redirect HTTP to HTTPS
+* beautiful error page
 * app
   * visits
   * statistics about which pages were visited how often
@@ -37,6 +38,7 @@ TODOs in no particular order:
 * use proper mime types
 * files
 * blog
+  * estimate read time
   * add `link` tags to previous and next article
 * pay
   * redirect to PayPal
