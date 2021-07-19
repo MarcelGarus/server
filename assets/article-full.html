@@ -1,5 +1,23 @@
 <article>
-    <h1>{{title}}</h1>
+    <h1 id="title">{{title}}</h1>
     <div class="published secondary">{{publish-date}} · 5 minute read</div>
     {{body}}
+    <script>
+        // For enabling seamless replacement of pages, a "title-at" anchor is
+        // supported: "mgar.us/some-article#title-at--10" should adjust the
+        // scrolling position so that the title is at position -10 in the
+        // viewport.
+        var desiredScrollingPosition = 0;
+        window.addEventListener('load', (event) => {
+            const urlParts = document.URL.split("#");
+            if (urlParts == 1) return;
+            const anchor = urlParts[1];
+            if (!anchor.startsWith("title-at-")) return;
+            const desiredTitlePosition = parseInt(anchor.substring("title-at-".length));
+            if (Number.isNaN(desiredTitlePosition)) return;
+            const actualTitlePosition = document.getElementById("title").getBoundingClientRect().top;
+            desiredScrollPosition = -(window.scrollY - actualTitlePosition + desiredTitlePosition);
+            window.scrollTo(window.scrollX, desiredScrollPosition);
+        });
+    </script>
 </article>
