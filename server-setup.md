@@ -54,6 +54,47 @@ Later on, updates can be applied like this:
 git pull && cargo run
 ```
 
+## Run the server across restarts
+
+List services via
+
+```bash
+systemctl list-units --type=service
+```
+
+Compile the server into an optimized executable:
+
+```bash
+cargo build --release
+```
+
+This repo contains a `server.service` file, which is a systemd service description.
+Copy it to the system service directory:
+
+```bash
+sudo cp server.service /etc/systemd/system
+```
+
+Then, reload the available services and enable our server service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable server.service
+```
+
+Finally, start the service:
+
+```bash
+sudo systemctl start server.service
+sudo systemctl status server.service
+```
+
+Viewing logs works like this:
+
+```bash
+journalctl -f -u server.service
+```
+
 ## Setup DynDNS to route mgar.us traffic here (DynDNS via Namecheap)
 
 ```bash
@@ -93,7 +134,7 @@ To test if it works:
 ddclient -daemon=0 -noquiet -debug
 ```
 
-Make ddclient start when the system is booted:
+Make `ddclient` start when the system is booted:
 
 ```bash
 sudo update-rc.d ddclient defaults
