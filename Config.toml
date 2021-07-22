@@ -1,0 +1,5 @@
+address = "0.0.0.0:80"
+
+# [certficate]
+# cert = "/etc/letsencrypt/live/mgar.us/fullchain.pem"
+# key  = "/etc/letsencrypt/live/mgar.us/privkey.pem"

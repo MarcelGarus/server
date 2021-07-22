@@ -23,3 +23,8 @@ chrono = "0.4.19"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 nom = "6.2.1"
 itertools = "0.10.1"
+toml = "0.5.8"
+rustls = "0.19.1"
+tokio-rustls = "0.22.0"
+async-stream = "0.3.2"
+futures-util = "0.3.15"
