@@ -1,56 +1,63 @@
 use crate::utils::*;
+use actix_web::dev::{ServiceRequest, ServiceResponse};
+use chrono::{DateTime, Utc};
 use log::info;
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, skip_serializing_none, DurationMicroSeconds, TimestampSeconds};
 use std::{
+    collections::VecDeque,
     fs::OpenOptions,
     io::Write,
-    time::{Instant, SystemTime, UNIX_EPOCH},
+    sync::Arc,
+    time::{Duration, Instant},
 };
 use tokio::sync::RwLock;
 
 /// A recorded visit to the server.
+#[serde_as]
+#[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Visit {
-    pub timestamp: u64, // The moment the request came. Seconds since unix epoch in UTC.
-    pub handling_duration: u128, // Time it took to handle the request in microseconds.
-    pub response_status_code: u16,
+    #[serde_as(as = "TimestampSeconds")]
+    pub timestamp: DateTime<Utc>,
+    #[serde_as(as = "DurationMicroSeconds")]
+    pub handling_duration: Duration,
+    pub response_status: Result<u16, String>,
     pub method: String,
     pub url: String,
-    pub user_agent: String,
-    pub language: String,
+    pub user_agent: Option<String>,
+    pub language: Option<String>,
 }
-
-/// Functionality for easily tracing a visit.
 impl Visit {
-    pub fn start(request: &Request) -> OngoingVisit {
+    pub fn for_request(req: &ServiceRequest) -> OngoingVisit {
         OngoingVisit {
-            timestamp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("Time went backwards.")
-                .as_secs(),
-            start: Instant::now(),
-            method: format!("{}", request.method),
-            url: request.path.join("/"),
-            user_agent: request.user_agent.clone(),
-            language: request.language.clone(),
+            timestamp: Utc::now(),
+            handling_start: Instant::now(),
+            method: req.method().to_string(),
+            url: req.path().to_owned(),
+            user_agent: req.headers().get_utf8("user-agent"),
+            language: req.headers().get_utf8("language"),
         }
     }
 }
-#[derive(Debug)]
 pub struct OngoingVisit {
-    timestamp: u64,
-    start: Instant,
-    method: String,
-    url: String,
-    user_agent: String,
-    language: String,
+    pub timestamp: DateTime<Utc>,
+    pub handling_start: Instant,
+    pub method: String,
+    pub url: String,
+    pub user_agent: Option<String>,
+    pub language: Option<String>,
 }
 impl OngoingVisit {
-    pub fn end(self, response: &Response) -> Visit {
+    pub fn finish(self, res: &Result<ServiceResponse, actix_web::Error>) -> Visit {
         Visit {
             timestamp: self.timestamp,
-            handling_duration: (Instant::now() - self.start).as_micros(),
-            response_status_code: response.status().as_u16(),
+            handling_duration: Instant::now() - self.handling_start,
+            response_status: match res {
+                Ok(res) => Ok(res.status().as_u16()),
+                Err(err) => Err(format!("{:?}", err)),
+            },
             method: self.method,
             url: self.url,
             user_agent: self.user_agent,
@@ -63,61 +70,59 @@ impl OngoingVisit {
 ///
 /// It simply stores all visits in a vector. When that becomes too large, some
 /// are dumped to disk.
+#[derive(Default, Clone)]
 pub struct VisitsLog {
-    visits: Vec<Visit>,
+    /// The ground truth of all visits. It's simply filled up to `BUFFER_SIZE`
+    /// and then flushed to disk.
+    buffer: Arc<RwLock<Vec<Visit>>>,
+
+    /// A deque containing the last `TAIL_SIZE` visits.
+    tail: Arc<RwLock<VecDeque<Visit>>>,
 }
 impl VisitsLog {
-    const NUM_BUFFER_MIN: usize = 100;
-    const NUM_BUFFER_MAX: usize = 1000;
+    const BUFFER_SIZE: usize = 1000;
+    const TAIL_SIZE: usize = 100;
 
     pub fn new() -> Self {
-        Self { visits: vec![] }
-    }
-
-    pub fn register(&mut self, visit: Visit) {
-        info!("Registered visit: {:?}", visit);
-        self.visits.push(visit);
-
-        if self.visits.len() > Self::NUM_BUFFER_MAX {
-            info!("Dumping visits to disk.");
-            let rest = self
-                .visits
-                .split_off(Self::NUM_BUFFER_MAX - Self::NUM_BUFFER_MIN);
-            let to_disk = std::mem::replace(&mut self.visits, rest);
-
-            let mut file = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open("visits.jsonl")
-                .unwrap();
-            for visit in to_disk {
-                let json = serde_json::to_string(&visit).unwrap();
-                file.write(json.as_bytes()).unwrap();
-                file.write(&[10]).unwrap(); // '\n'
-            }
+        Self {
+            buffer: Default::default(),
+            tail: Default::default(),
         }
     }
 
-    fn last_100(&self) -> &[Visit] {
-        if self.visits.len() < 100 {
-            &self.visits[..]
-        } else {
-            &self.visits[self.visits.len() - 100..]
-        }
-    }
-}
+    pub async fn register(&self, visit: Visit) {
+        info!("Registering visit: {:?}", visit);
 
-pub async fn handle(db: &RwLock<VisitsLog>, request: &Request) -> Option<Response> {
-    if request.path.starts_with(vec!["api", "visits"]) {
-        let rest_of_path: Vec<String> = request.path.clone_except_first(2);
-        if !request.is_admin {
-            return Some(not_authenticated_page().await);
+        let mut buffer = self.buffer.write().await;
+        buffer.push(visit.clone());
+        if buffer.len() > Self::BUFFER_SIZE {
+            self.flush().await
         }
-        if request.method == Method::GET && rest_of_path == vec!["last"] {
-            let json = serde_json::to_string(&db.read().await.last_100()).unwrap();
-            return Some(Response::with_body(json.into()));
+
+        let mut tail = self.tail.write().await;
+        tail.push_back(visit);
+        if tail.len() > Self::TAIL_SIZE {
+            tail.pop_front();
         }
     }
 
-    None
+    async fn flush(&self) {
+        info!("Flushing visits to disk.");
+        let buffer = std::mem::replace(&mut *self.buffer.write().await, vec![]);
+
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("visits.jsonl")
+            .unwrap();
+        for visit in buffer {
+            let json = serde_json::to_string(&visit).unwrap();
+            file.write(json.as_bytes()).unwrap();
+            file.write(&[10]).unwrap(); // '\n'
+        }
+    }
+
+    pub async fn get_tail(&self) -> Vec<Visit> {
+        self.tail.read().await.clone().into_iter().rev().collect()
+    }
 }

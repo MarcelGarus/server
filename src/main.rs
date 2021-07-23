@@ -1,242 +1,233 @@
 #![feature(async_closure)]
 
+use crate::shortcuts::ShortcutDb;
 use crate::utils::*;
 use crate::visits::{Visit, VisitsLog};
-use futures_util::{Stream, TryFutureExt};
-use hyper::{
-    service::{make_service_fn, service_fn},
-    Server,
+use actix_service::Service;
+use actix_web::dev::HttpServiceFactory;
+use actix_web::{
+    delete, get, guard, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
+use blog::{Blog, FillInArticleStringExt};
+use futures::future::FutureExt;
 use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
-use rustls::internal::pemfile;
-use simplelog::{ColorChoice, Config, TermLogger, TerminalMode};
-use std::fs::File;
+use shortcuts::Shortcut;
+use simplelog::{ColorChoice, TermLogger, TerminalMode};
 use std::net::SocketAddr;
-use std::pin::Pin;
 use std::sync::Arc;
-use std::task::{Context, Poll};
-use std::{convert::Infallible, time::Duration};
-use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::RwLock;
-use tokio_rustls::server::TlsStream;
-use tokio_rustls::TlsAcceptor;
-use tower::ServiceBuilder;
-use tower_http::compression::CompressionLayer;
 
 mod blog;
 mod shortcuts;
-mod static_assets;
 mod utils;
 mod visits;
 
 lazy_static! {
+    // TODO: Put this in the Config.toml
     static ref ADMIN_KEY: String = std::fs::read_to_string("adminkey.txt")
         .expect("No admin key file found at adminkey.txt.")
         .trim()
         .to_owned();
-    static ref HANDLER: Arc<RwLock<Option<RootHandler>>> = Default::default();
+    // static ref HANDLER: Arc<RwLock<Option<RootHandler>>> = Default::default();
 }
 
-#[tokio::main]
-async fn main() {
+#[derive(Clone)]
+struct Config {
+    address: SocketAddr,
+    tls_config: Option<TlsConfig>,
+}
+#[derive(Clone)]
+struct TlsConfig {
+    certificate: String,
+    key: String,
+}
+impl Config {
+    fn load() -> Self {
+        let config = std::fs::read_to_string("Config.toml")
+            .unwrap()
+            .parse::<toml::Value>()
+            .unwrap();
+        Self {
+            address: config["address"].as_str().unwrap().parse().unwrap(),
+            tls_config: config
+                .get("certificate")
+                .and_then(|it| it.as_table())
+                .map(|cert_info| TlsConfig {
+                    certificate: cert_info["certificate"].as_str().unwrap().into(),
+                    key: cert_info["key"].as_str().unwrap().into(),
+                }),
+        }
+    }
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
     TermLogger::init(
         LevelFilter::Info,
-        Config::default(),
+        simplelog::Config::default(),
         TerminalMode::Mixed,
         ColorChoice::Auto,
     )
     .expect("Couldn't initialize logging.");
     info!("The admin key is {}.", &ADMIN_KEY.to_owned());
 
-    // Load the config file. It includes the address and certificate information.
-    let config = std::fs::read_to_string("Config.toml")
+    let config = web::Data::new(Config::load());
+    let visits_log = web::Data::new(VisitsLog::new());
+    let blog = web::Data::new(Blog::new().await);
+    let shortcut_db = web::Data::new(ShortcutDb::new());
+    let address = config.address.clone();
+
+    // TODO: Enable compression?
+    HttpServer::new(move || {
+        let log = Arc::new(visits_log.clone());
+        App::new()
+            .app_data(config.clone())
+            .app_data(visits_log.clone())
+            .app_data(blog.clone())
+            .app_data(shortcut_db.clone())
+            .wrap_fn(move |req, srv| {
+                let log = log.clone();
+                let visit = Visit::for_request(&req);
+                srv.call(req).then(async move |res| {
+                    println!("Fn: Hi from response");
+                    log.register(visit.finish(&res)).await;
+                    res
+                })
+            })
+            // .wrap(middleware::NormalizePath::default())
+            .service(index)
+            .service(go_shortcut)
+            .service(api())
+            .service(key)
+            .default_service(web::route().to(default_handler))
+    })
+    .bind(address)?
+    .run()
+    .await?;
+
+    Ok(())
+}
+
+// Visitors of mgar.us get a list of all articles.
+#[get("/")]
+async fn index(blog: web::Data<Blog>) -> impl Responder {
+    let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
+    let article_template = std::fs::read("assets/article-teaser.html")
         .unwrap()
-        .parse::<toml::Value>()
-        .unwrap();
-    let address: SocketAddr = config["address"].as_str().unwrap().parse().unwrap();
-    let tls_config = config
-        .get("certificate")
-        .and_then(|it| it.as_table())
-        .map(|cert_info| {
-            let certs = load_certs(cert_info["certificate"].as_str().unwrap());
-            let key = load_private_key(cert_info["key"].as_str().unwrap());
-            let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
-            cfg.set_single_cert(certs, key).unwrap();
-            // Configure ALPN to accept HTTP/2, HTTP/1.1 in that order.
-            cfg.set_protocols(&[b"h2".to_vec(), b"http/1.1".to_vec()]);
-            std::sync::Arc::new(cfg)
-        });
-
-    // Start the handler. It downloads the newest articles, loads shortcuts etc.
-    {
-        let mut handler = HANDLER.write().await;
-        *handler = Some(RootHandler::new().await);
-    }
-
-    // Start the server.
-    // TODO: Deduplicate
-    if let Some(tls_config) = tls_config {
-        let make_service = make_service_fn(|_conn| {
-            async move {
-                let service = service_fn(|request| {
-                    async move {
-                        let request = Request::from(&request, &ADMIN_KEY).unwrap(); // TODO
-                        info!("Request: {:?}", request);
-                        let response = HANDLER
-                            .read()
-                            .await
-                            .as_ref()
-                            .unwrap()
-                            .handle(&request)
-                            .await;
-                        let result: Result<Response, Infallible> = Ok(response);
-                        result
-                    }
-                });
-                let service = ServiceBuilder::new()
-                    .timeout(Duration::from_secs(10))
-                    .layer(CompressionLayer::new())
-                    .service(service);
-                Ok::<_, Infallible>(service)
-            }
-        });
-
-        let tcp = TcpListener::bind(&address)
-            .await
-            .expect("Couldn't bind to socket.");
-        let tls_acceptor = TlsAcceptor::from(tls_config);
-        // Prepare a long-running future stream to accept and serve clients.
-        let incoming_tls_stream = async_stream::stream! {
-            loop {
-                let (socket, _) = tcp.accept().await?;
-                let stream = tls_acceptor.accept(socket).map_err(|e| {
-                    error!("Voluntary server halt due to client-connection error...");
-                    // TODO: Errors should be handled here, instead of server aborting.
-                    // Ok(None)
-                    std::io::Error::new(std::io::ErrorKind::Other, format!("TLS Error: {:?}", e))
-                });
-                yield stream.await;
-            }
-        };
-        let server = Server::builder(HyperAcceptor {
-            acceptor: Box::pin(incoming_tls_stream),
-        })
-        .serve(make_service);
-        info!("Listening on https://{}", address);
-        server.await.expect("Error while running the server.");
-    } else {
-        // Create a lambda that can create new services on demand, using the handler.
-        let make_service = make_service_fn(|_conn| {
-            async move {
-                let service = service_fn(|request| {
-                    async move {
-                        let request = Request::from(&request, &ADMIN_KEY).unwrap(); // TODO
-                        info!("Request: {:?}", request);
-                        let response = HANDLER
-                            .read()
-                            .await
-                            .as_ref()
-                            .unwrap()
-                            .handle(&request)
-                            .await;
-                        let result: Result<Response, Infallible> = Ok(response);
-                        result
-                    }
-                });
-                let service = ServiceBuilder::new()
-                    .timeout(Duration::from_secs(10))
-                    .layer(CompressionLayer::new())
-                    .service(service);
-                Ok::<_, Infallible>(service)
-            }
-        });
-
-        let server = Server::bind(&address).serve(make_service);
-        info!("Listening on http://{}", address);
-        server.await.expect("Error while running the server.");
-    }
+        .utf8_or_panic();
+    let mut articles = blog.list().await;
+    articles.sort_by(|a, b| b.published.cmp(&a.published));
+    let articles = articles
+        .into_iter()
+        .map(|article| article_template.fill_in_article(&article))
+        .collect::<Vec<_>>();
+    let page = page_template.fill_in_content(&itertools::join(articles, "\n"));
+    HttpResponse::Ok().body(page)
 }
 
-// Load public certificate from file.
-fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
-    let certfile = File::open(filename).expect("Failed to open certfile.");
-    let mut reader = std::io::BufReader::new(certfile);
-    pemfile::certs(&mut reader).expect("Failed to load the certificate.")
-}
+/// For brevity, most URLs consist of a single key.
+#[get("/{key}")]
+async fn key(req: HttpRequest, path: web::Path<(String,)>) -> impl Responder {
+    let (key,) = path.into_inner();
+    info!("Request: {:?}", req);
+    info!("Key: {:?}", key);
 
-// Load private key from file.
-fn load_private_key(filename: &str) -> rustls::PrivateKey {
-    let keyfile = std::fs::File::open(filename).expect("Failed to open key file.");
-    let mut reader = std::io::BufReader::new(keyfile);
-    let keys = pemfile::rsa_private_keys(&mut reader).expect("Failed to load private key.");
-    if keys.len() != 1 {
-        panic!("Expected a single private key.");
-    }
-    keys[0].clone()
-}
-
-struct HyperAcceptor<'a> {
-    acceptor: Pin<Box<dyn Stream<Item = Result<TlsStream<TcpStream>, std::io::Error>> + 'a>>,
-}
-
-impl hyper::server::accept::Accept for HyperAcceptor<'_> {
-    type Conn = TlsStream<TcpStream>;
-    type Error = std::io::Error;
-
-    fn poll_accept(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context,
-    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
-        Pin::new(&mut self.acceptor).poll_next(cx)
-    }
-}
-
-/// The public handle function that handles all requests.
-///
-/// # Visits API
-///
-/// The visits API looks like this (it's not exactly following the best practices for RESTful
-/// APIs, but having all parameters including the key in the querystrings allows for easier
-/// deserialization):
-///
-/// * GET /api/visits: Returns a list of all visits.
-struct RootHandler {
-    visits: RwLock<VisitsLog>,
-    shortcuts: shortcuts::Handler,
-    blog: blog::Handler,
-}
-impl RootHandler {
-    async fn new() -> Self {
-        Self {
-            visits: RwLock::new(VisitsLog::new()),
-            shortcuts: shortcuts::Handler::new(),
-            blog: blog::Handler::new().await,
+    // Check if this is one of the static assets.
+    let static_assets = vec!["favicon.ico", "icon.png", "prism.css", "prism.js"];
+    for asset in static_assets {
+        if key == asset {
+            // TODO: Make this async
+            return match std::fs::read(&format!("assets/{}", asset)) {
+                Ok(content) => HttpResponse::Ok().body(content),
+                Err(_) => panic!("The file is missing."),
+            };
         }
     }
-    async fn handle(&self, request: &Request) -> Response {
-        let visit = Visit::start(&request);
 
-        let response = {
-            let mut response = static_assets::handle(request).await;
-            if let None = response {
-                response = self.shortcuts.handle(request).await;
-            }
-            if let None = response {
-                response = self.blog.handle(request).await;
-                info!("Blog handler returned {:?}.", response);
-            }
-            if let None = response {
-                response = crate::visits::handle(&self.visits, request).await;
-            }
-            match response {
-                Some(response) => response,
-                None => error_page(404, "Couldn't find the page you're looking for.".into()).await,
-            }
-        };
-
-        let visit = visit.end(&response);
-        self.visits.write().await.register(visit);
-        response
+    // Or maybe it's a blog article?
+    let blog = req.app_data::<web::Data<Blog>>().unwrap();
+    if let Some(article) = blog.article_for(&key).await {
+        let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
+        let article_template = std::fs::read("assets/article-full.html")
+            .unwrap()
+            .utf8_or_panic();
+        let article = article_template.fill_in_article(&article);
+        let page = page_template.fill_in_content(&article);
+        return HttpResponse::Ok().body(page);
     }
+
+    HttpResponse::Ok().body("Unknown key!")
+}
+
+/// Shortcuts are not content of the website itself. Rather, they redirect to somewhere else.
+#[get("/go/{shortcut}")]
+async fn go_shortcut(
+    path: web::Path<(String,)>,
+    shortcut_db: web::Data<ShortcutDb>,
+) -> impl Responder {
+    let (shortcut,) = path.into_inner();
+    if let Some(shortcut) = shortcut_db.shortcut_for(&shortcut).await {
+        return HttpResponse::Found()
+            .append_header(("Location", shortcut.url.clone()))
+            .body("");
+    }
+
+    info!("Shortcut handler, but shortcut not found!");
+    HttpResponse::Ok().body("Shortcut")
+}
+
+fn api() -> impl HttpServiceFactory {
+    web::scope("/api")
+        .guard(guard::Header("admin-key", "hey")) // TODO: Check key
+        .service(
+            web::scope("/shortcuts")
+                .service(shortcuts_api::list)
+                .service(shortcuts_api::update)
+                .service(shortcuts_api::remove),
+        )
+        .service(web::scope("/visits").service(visits_api::tail))
+}
+
+mod shortcuts_api {
+    use super::*;
+
+    #[get("/")]
+    async fn list(shortcut_db: web::Data<ShortcutDb>) -> impl Responder {
+        let shortcuts = shortcut_db.list().await;
+        HttpResponse::Ok().json(shortcuts)
+    }
+
+    #[post("/")]
+    async fn update(
+        shortcut: web::Json<Shortcut>,
+        shortcut_db: web::Data<ShortcutDb>,
+    ) -> impl Responder {
+        shortcut_db.register(shortcut.0).await;
+        HttpResponse::Ok().body("Added shortcut.")
+    }
+
+    #[delete("/{shortcut}")]
+    async fn remove(
+        path: web::Path<(String,)>,
+        shortcut_db: web::Data<ShortcutDb>,
+    ) -> impl Responder {
+        let (shortcut,) = path.into_inner();
+        shortcut_db.delete(&shortcut).await;
+        HttpResponse::Ok().body("Deleted shortcut.")
+    }
+}
+
+mod visits_api {
+    use super::*;
+
+    #[get("/tail")]
+    async fn tail(visits_log: web::Data<VisitsLog>) -> impl Responder {
+        HttpResponse::Ok().json(visits_log.get_tail().await)
+    }
+}
+
+async fn default_handler(req: HttpRequest) -> impl Responder {
+    error!("Default handler invoked.");
+    info!("Request: {:?}", req);
+    HttpResponse::NotFound().body("Sadly, nothing to see here!")
 }

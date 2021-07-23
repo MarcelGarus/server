@@ -1,7 +1,6 @@
-use crate::utils::*;
 use log::info;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -11,9 +10,9 @@ pub struct Shortcut {
 }
 
 /// A database for shortcuts. It simply saves shortcuts into a file.
-#[derive(Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct ShortcutDb {
-    shortcuts: HashMap<String, Shortcut>,
+    shortcuts: Arc<RwLock<HashMap<String, Shortcut>>>,
 }
 impl ShortcutDb {
     pub fn new() -> Self {
@@ -28,120 +27,52 @@ impl ShortcutDb {
             "Loaded shortcuts: {}",
             itertools::join(shortcuts.keys(), ", ")
         );
-        Self { shortcuts }
+        Self {
+            shortcuts: Arc::new(RwLock::new(shortcuts)),
+        }
     }
 
-    fn save(&self) {
+    async fn save(&self) {
+        // TODO: Make async
         std::fs::write(
             "shortcuts.json",
-            serde_json::to_string(&self.shortcuts.values().collect::<Vec<_>>()).unwrap(),
+            serde_json::to_string(&self.shortcuts.read().await.values().collect::<Vec<_>>())
+                .unwrap(),
         )
         .unwrap()
     }
 
-    pub fn shortcut_for(&self, key: &str) -> Option<Shortcut> {
-        self.shortcuts.get(key).map(|shortcut| shortcut.clone())
+    pub async fn shortcut_for(&self, key: &str) -> Option<Shortcut> {
+        self.shortcuts
+            .read()
+            .await
+            .get(key)
+            .map(|shortcut| shortcut.clone())
     }
 
-    pub fn list(&self) -> Vec<Shortcut> {
+    pub async fn list(&self) -> Vec<Shortcut> {
         self.shortcuts
+            .read()
+            .await
             .values()
             .map(|shortcut| shortcut.clone())
             .collect()
     }
 
-    pub fn register(&mut self, shortcut: Shortcut) {
+    pub async fn register(&self, shortcut: Shortcut) {
+        self.shortcuts
+            .write()
+            .await
+            .insert(shortcut.key.clone(), shortcut);
         info!(
-            "The shortcuts in JSON are {}.",
-            serde_json::to_string(&self.shortcuts).unwrap()
+            "The shortcuts are now {}.",
+            serde_json::to_string(&self.shortcuts.read().await.clone()).unwrap()
         );
-        self.shortcuts.insert(shortcut.key.clone(), shortcut);
-        self.save();
+        self.save().await;
     }
 
-    pub fn delete(&mut self, key: &str) {
-        self.shortcuts.remove(key);
-        self.save();
+    pub async fn delete(&self, key: &str) {
+        self.shortcuts.write().await.remove(key);
+        self.save().await;
     }
-}
-
-/// Shortcuts look like this: GET /go/some-shortcut-key
-///
-/// The shortcuts API looks like this (it's not exactly following the best practices for RESTful
-/// APIs, but having all parameters – including the key – in the query string allows for easier
-/// deserialization):
-///
-/// * GET /api/shortcuts: Returns a list of shortcuts.
-/// * POST /api/shortcuts/set?key=foo&url=some-url: Sets a shortcut.
-/// * POST /api/shortcuts/delete?key=foo: Deletes a shortcut.
-pub struct Handler {
-    db: RwLock<ShortcutDb>,
-}
-impl Handler {
-    pub fn new() -> Self {
-        Self {
-            db: RwLock::new(ShortcutDb::new()),
-        }
-    }
-    pub async fn handle(&self, request: &Request) -> Option<Response> {
-        if request.method == Method::GET && request.path.starts_with(vec!["go"]) {
-            if request.path.len() != 2 {
-                return None;
-            }
-            let key: String = request.path.get(1).unwrap().into();
-            let shortcut = self.db.read().await.shortcut_for(&key)?;
-            info!(
-                "Triggering shortcut {}, redirecting to: {}",
-                shortcut.key, shortcut.url
-            );
-            return Some(
-                hyper::Response::builder()
-                    .status(301)
-                    .header("Location", shortcut.url.clone())
-                    .body("".into())
-                    .unwrap(),
-            );
-        }
-
-        if request.path.starts_with(vec!["api", "shortcuts"]) {
-            let rest_of_path: Vec<String> = request.path.clone_except_first(2);
-            if !request.is_admin {
-                return Some(not_authenticated_page().await);
-            }
-            if request.method == Method::GET && rest_of_path.is_empty() {
-                return Some(match serde_json::to_string(&self.db.read().await.list()) {
-                    Ok(json) => Response::builder().trusted_body(json.into()),
-                    Err(err) => {
-                        server_error_page(&format!("Couldn't serialize shortcuts to JSON: {}", err))
-                            .await
-                    }
-                });
-            }
-            if request.method == Method::POST && rest_of_path == vec!["set"] {
-                return Some(match serde_qs::from_str(&request.query_string) {
-                    Ok(shortcut) => {
-                        self.db.write().await.register(shortcut);
-                        Response::empty()
-                    }
-                    Err(err) => error_page(400, &format!("Invalid data: {}", err)).await,
-                });
-            }
-            if request.method == Method::POST && rest_of_path == vec!["delete"] {
-                return Some(match serde_qs::from_str(&request.query_string) {
-                    Ok(delete_request) => {
-                        let delete_request: ShortcutDeleteRequest = delete_request;
-                        self.db.write().await.delete(&delete_request.key);
-                        Response::empty()
-                    }
-                    Err(err) => error_page(400, &format!("Invalid data: {}", err)).await,
-                });
-            }
-        }
-
-        None
-    }
-}
-#[derive(Serialize, Deserialize)]
-struct ShortcutDeleteRequest {
-    key: String,
 }

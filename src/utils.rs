@@ -1,4 +1,5 @@
-// General utilities.
+use actix_web::http::HeaderMap;
+use http::{HeaderValue, StatusCode};
 
 pub trait VecStringExt {
     fn clone_first_n(&self, n: usize) -> Option<Vec<String>>;
@@ -21,12 +22,41 @@ impl VecStringExt for Vec<String> {
     }
 }
 
-pub trait Utf8OrPanicVecExt {
+pub trait Utf8OrPanicExt {
     fn utf8_or_panic(self) -> String;
 }
-impl Utf8OrPanicVecExt for Vec<u8> {
+impl Utf8OrPanicExt for Vec<u8> {
     fn utf8_or_panic(self) -> String {
         String::from_utf8(self).unwrap()
+    }
+}
+impl Utf8OrPanicExt for &[u8] {
+    fn utf8_or_panic(self) -> String {
+        String::from_utf8(self.to_vec()).unwrap()
+    }
+}
+
+pub trait GetUtf8HeaderExt {
+    fn get_utf8(&self, key: &str) -> Option<String>;
+}
+impl GetUtf8HeaderExt for HeaderMap {
+    fn get_utf8(&self, key: &str) -> Option<String> {
+        self.get(key)
+            .and_then(|value| String::from_utf8(value.as_bytes().to_vec()).ok())
+    }
+}
+
+pub trait Utf8OrNoneExt {
+    fn utf8_or_none(&self) -> Option<String>;
+}
+impl Utf8OrNoneExt for HeaderValue {
+    fn utf8_or_none(&self) -> Option<String> {
+        String::from_utf8(self.as_bytes().to_vec()).ok()
+    }
+}
+impl Utf8OrNoneExt for Option<&HeaderValue> {
+    fn utf8_or_none(&self) -> Option<String> {
+        self.and_then(|value| value.utf8_or_none())
     }
 }
 
@@ -58,125 +88,4 @@ pub async fn download(url: &str) -> Result<String, String> {
     let content = String::from_utf8(content.to_vec())
         .map_err(|_| format!("Body of {} is not UTF-8.", url))?;
     Ok(content)
-}
-
-// Stuff for handlers.
-
-use http::StatusCode;
-pub use hyper::{Body, Method};
-use log::error;
-use url::Url;
-
-#[derive(Debug, Clone)]
-pub struct Request {
-    pub method: Method,
-    pub path: Vec<String>, // The path segments
-    pub query_string: String,
-    pub user_agent: String,
-    pub language: String,
-    pub is_admin: bool,
-}
-impl Request {
-    pub fn from(request: &hyper::Request<hyper::Body>, admin_key: &str) -> Option<Self> {
-        // The `request.url()` is a relative one, but the url package needs an absolute one, even
-        // though we are only interested in the relative parts. So, we prefix it with some URL known
-        // to be valid.
-        let url = Url::parse("https://example.net").unwrap().join(
-            request
-                .uri()
-                .path_and_query()
-                .map(|it| it.as_str())
-                .unwrap_or(""),
-        );
-        let url = match url {
-            Ok(url) => url,
-            Err(err) => {
-                error!("Couldn't parse URL \"{}\": {}", request.uri(), err);
-                return None;
-            }
-        };
-
-        fn get_header_value(request: &hyper::Request<hyper::Body>, field: &str) -> String {
-            request
-                .headers()
-                .get(field)
-                .and_then(|value| value.to_str().ok())
-                .unwrap_or("")
-                .to_owned()
-        }
-
-        Some(Self {
-            method: request.method().clone(),
-            path: url
-                .path_segments()
-                .unwrap_or("".split(' '))
-                .filter(|segment| !segment.is_empty())
-                .map(|segment| segment.to_owned())
-                .collect(),
-            query_string: url.query().unwrap_or("").to_owned(),
-            user_agent: get_header_value(request, "user-agent"),
-            language: get_header_value(request, "accept-language"),
-            is_admin: consistenttime::ct_u8_slice_eq(
-                get_header_value(request, "admin-key").as_bytes(),
-                admin_key.as_bytes(),
-            ),
-        })
-    }
-}
-
-pub type Response = hyper::Response<Body>;
-pub trait FancyResponse {
-    fn builder() -> http::response::Builder;
-    fn with_body(body: Body) -> Self;
-    fn empty() -> Self;
-}
-impl FancyResponse for Response {
-    fn builder() -> http::response::Builder {
-        http::Response::builder()
-    }
-    fn with_body(body: Body) -> Self {
-        hyper::Response::builder().body(body).unwrap()
-    }
-    fn empty() -> Self {
-        Self::with_body("".into())
-    }
-}
-pub trait TrustedBuilder {
-    fn trusted_body(self, body: Body) -> Response;
-}
-impl TrustedBuilder for http::response::Builder {
-    fn trusted_body(self, body: Body) -> Response {
-        self.body(body).unwrap()
-    }
-}
-
-/// Simply returns the contents of a file as the response.
-pub async fn file_content(path: &str) -> Response {
-    // TODO: Make this async
-    match std::fs::read(path) {
-        Ok(content) => Response::with_body(content.into()),
-        Err(_) => server_error_page(&format!("The file {} is missing.", path)).await,
-    }
-}
-
-pub async fn not_authenticated_page() -> Response {
-    error_page(
-        401,
-        "This action requires authentication, which you don't have.".into(),
-    )
-    .await
-}
-
-pub async fn server_error_page(error: &str) -> Response {
-    error_page(500, &format!("This is an internal error: {}", error)).await
-}
-
-pub async fn error_page(status: u16, description: &str) -> Response {
-    Response::builder().status(status).trusted_body(
-        format!(
-            "This is an ugly error page. This is the error: {}",
-            description
-        )
-        .into(),
-    )
 }

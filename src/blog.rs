@@ -6,7 +6,7 @@ use comrak::{
     parse_document, Arena, ComrakOptions,
 };
 use log::{info, warn};
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 
 #[derive(Clone, Debug)]
@@ -19,10 +19,11 @@ pub struct Article {
 }
 
 /// A database for articles. It gets articles from the GitHub repo.
-pub struct ArticleDb {
-    articles: HashMap<String, Article>,
+#[derive(Clone)]
+pub struct Blog {
+    articles: Arc<RwLock<HashMap<String, Article>>>,
 }
-impl ArticleDb {
+impl Blog {
     const BASE_URL: &'static str = "https://raw.githubusercontent.com/marcelgarus/server/main/blog";
 
     pub async fn new() -> Self {
@@ -71,16 +72,22 @@ impl ArticleDb {
             "Loaded articles: {}",
             itertools::join(articles.keys(), ", ")
         );
-        self.articles = articles;
+        *self.articles.write().await = articles;
         Ok(())
     }
 
-    pub fn article_for(&self, key: &str) -> Option<Article> {
-        self.articles.get(key).map(|article| article.clone())
+    pub async fn article_for(&self, key: &str) -> Option<Article> {
+        self.articles
+            .read()
+            .await
+            .get(key)
+            .map(|article| article.clone())
     }
 
-    pub fn list(&self) -> Vec<Article> {
+    pub async fn list(&self) -> Vec<Article> {
         self.articles
+            .read()
+            .await
             .values()
             .map(|article| article.clone())
             .collect()
@@ -290,56 +297,7 @@ mod article_line {
     }
 }
 
-/// Articles look like this: GET /article-key
-/// You can get an overview of all articles like this: GET/blog
-pub struct Handler {
-    db: RwLock<ArticleDb>,
-}
-impl Handler {
-    pub async fn new() -> Self {
-        Self {
-            db: RwLock::new(ArticleDb::new().await),
-        }
-    }
-    pub async fn handle(&self, request: &Request) -> Option<Response> {
-        if request.method != Method::GET {
-            return None;
-        }
-        match request.path.len() {
-            0 => {
-                // Visitors of mgar.us get a list of all articles.
-                let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
-                let article_template = std::fs::read("assets/article-teaser.html")
-                    .unwrap()
-                    .utf8_or_panic();
-                let mut articles = self.db.read().await.list();
-                articles.sort_by(|a, b| b.published.cmp(&a.published));
-                let articles = articles
-                    .into_iter()
-                    .map(|article| article_template.fill_in_article(&article))
-                    .collect::<Vec<_>>();
-                let page = page_template.fill_in_content(&itertools::join(articles, "\n"));
-                Some(hyper::Response::with_body(page.into()))
-            }
-            1 => {
-                // Visitors of mgar.us/<valid-article-id> get the corresponding articles.
-                let key: String = request.path.get(0).unwrap().into();
-                let article = self.db.read().await.article_for(&key)?;
-                info!("Reading article {}", article.key);
-                let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
-                let article_template = std::fs::read("assets/article-full.html")
-                    .unwrap()
-                    .utf8_or_panic();
-                let article = article_template.fill_in_article(&article);
-                let page = page_template.fill_in_content(&article);
-                Some(hyper::Response::with_body(page.into()))
-            }
-            _ => None, // Longer paths are not handled by the blog.
-        }
-    }
-}
-
-trait FillInArticleStringExt {
+pub trait FillInArticleStringExt {
     fn fill_in_article(&self, article: &Article) -> Self;
     fn fill_in_content(&self, content: &String) -> Self;
 }
