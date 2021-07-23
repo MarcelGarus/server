@@ -1,4 +1,5 @@
 address = "0.0.0.0:80"
+admin_key = "my-admin-key"
 
 # [certficate]
 # cert = "/etc/letsencrypt/live/mgar.us/fullchain.pem"

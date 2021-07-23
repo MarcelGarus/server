@@ -4,13 +4,12 @@ use crate::shortcuts::ShortcutDb;
 use crate::utils::*;
 use crate::visits::{Visit, VisitsLog};
 use actix_service::Service;
-use actix_web::dev::HttpServiceFactory;
+use actix_web::dev::{HttpServiceFactory, RequestHead};
 use actix_web::{
     delete, get, guard, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use blog::{Blog, FillInArticleStringExt};
 use futures::future::FutureExt;
-use lazy_static::lazy_static;
 use log::{error, info, LevelFilter};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
@@ -22,18 +21,10 @@ mod shortcuts;
 mod utils;
 mod visits;
 
-lazy_static! {
-    // TODO: Put this in the Config.toml
-    static ref ADMIN_KEY: String = std::fs::read_to_string("adminkey.txt")
-        .expect("No admin key file found at adminkey.txt.")
-        .trim()
-        .to_owned();
-    // static ref HANDLER: Arc<RwLock<Option<RootHandler>>> = Default::default();
-}
-
 #[derive(Clone)]
 struct Config {
     address: SocketAddr,
+    admin_key: String,
     tls_config: Option<TlsConfig>,
 }
 #[derive(Clone)]
@@ -49,6 +40,7 @@ impl Config {
             .unwrap();
         Self {
             address: config["address"].as_str().unwrap().parse().unwrap(),
+            admin_key: config["admin_key"].as_str().unwrap().into(),
             tls_config: config
                 .get("certificate")
                 .and_then(|it| it.as_table())
@@ -68,8 +60,7 @@ async fn main() -> std::io::Result<()> {
         TerminalMode::Mixed,
         ColorChoice::Auto,
     )
-    .expect("Couldn't initialize logging.");
-    info!("The admin key is {}.", &ADMIN_KEY.to_owned());
+    .unwrap();
 
     let config = web::Data::new(Config::load());
     let visits_log = web::Data::new(VisitsLog::new());
@@ -79,9 +70,9 @@ async fn main() -> std::io::Result<()> {
 
     // TODO: Enable compression?
     HttpServer::new(move || {
+        let config = Arc::new(config.clone());
         let log = Arc::new(visits_log.clone());
         App::new()
-            .app_data(config.clone())
             .app_data(visits_log.clone())
             .app_data(blog.clone())
             .app_data(shortcut_db.clone())
@@ -97,7 +88,7 @@ async fn main() -> std::io::Result<()> {
             // .wrap(middleware::NormalizePath::default())
             .service(index)
             .service(go_shortcut)
-            .service(api())
+            .service(api(&config.admin_key))
             .service(key)
             .default_service(web::route().to(default_handler))
     })
@@ -176,9 +167,9 @@ async fn go_shortcut(
     HttpResponse::Ok().body("Shortcut")
 }
 
-fn api() -> impl HttpServiceFactory {
+fn api(admin_key: &str) -> impl HttpServiceFactory {
     web::scope("/api")
-        .guard(guard::Header("admin-key", "hey")) // TODO: Check key
+        .guard(AuthGuard(admin_key.into()))
         .service(
             web::scope("/shortcuts")
                 .service(shortcuts_api::list)
@@ -186,6 +177,15 @@ fn api() -> impl HttpServiceFactory {
                 .service(shortcuts_api::remove),
         )
         .service(web::scope("/visits").service(visits_api::tail))
+}
+pub struct AuthGuard(String);
+impl guard::Guard for AuthGuard {
+    fn check(&self, req: &RequestHead) -> bool {
+        if let Some(val) = req.headers.get("admin-key") {
+            return consistenttime::ct_u8_slice_eq(val.as_bytes(), self.0.as_bytes());
+        }
+        false
+    }
 }
 
 mod shortcuts_api {
