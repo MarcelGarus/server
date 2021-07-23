@@ -42,15 +42,16 @@ impl Config {
             .unwrap()
             .parse::<toml::Value>()
             .unwrap();
+        info!("Config is {:?}", config);
         Self {
             address: config["address"].as_str().unwrap().parse().unwrap(),
             admin_key: config["admin_key"].as_str().unwrap().into(),
             tls_config: config
-                .get("certificate")
+                .get("https")
                 .and_then(|it| it.as_table())
                 .map(|cert_info| TlsConfig {
-                    certificate: cert_info["certificate"].as_str().unwrap().into(),
-                    key: cert_info["key"].as_str().unwrap().into(),
+                    certificate: cert_info["certificate_chain"].as_str().unwrap().into(),
+                    key: cert_info["private_key"].as_str().unwrap().into(),
                 }),
         }
     }
