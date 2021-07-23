@@ -11,8 +11,11 @@ use actix_web::{
 use blog::{Blog, FillInArticleStringExt};
 use futures::future::FutureExt;
 use log::{error, info, LevelFilter};
+use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
+use std::fs;
+use std::io::BufReader;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
@@ -68,8 +71,19 @@ async fn main() -> std::io::Result<()> {
     let shortcut_db = web::Data::new(ShortcutDb::new());
     let address = config.address.clone();
 
+    let tls_config = config.tls_config.clone().map(|config| {
+        let mut tls_config = ServerConfig::new(NoClientAuth::new());
+        tls_config
+            .set_single_cert(
+                load_certs(&config.certificate),
+                load_private_key(&config.key),
+            )
+            .unwrap();
+        tls_config
+    });
+
     // TODO: Enable compression?
-    HttpServer::new(move || {
+    let server = HttpServer::new(move || {
         let config = Arc::new(config.clone());
         let log = Arc::new(visits_log.clone());
         App::new()
@@ -89,14 +103,48 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(go_shortcut)
             .service(api(&config.admin_key))
-            .service(key)
+            .service(url_with_key)
             .default_service(web::route().to(default_handler))
-    })
-    .bind(address)?
-    .run()
-    .await?;
+    });
+
+    let server = if let Some(tls_config) = tls_config {
+        server.bind_rustls(address, tls_config)?
+    } else {
+        server.bind(address)?
+    };
+
+    server.run().await?;
 
     Ok(())
+}
+
+fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
+    let certfile = fs::File::open(filename).expect("cannot open certificate file");
+    let mut reader = BufReader::new(certfile);
+    rustls_pemfile::certs(&mut reader)
+        .unwrap()
+        .iter()
+        .map(|v| rustls::Certificate(v.clone()))
+        .collect()
+}
+
+fn load_private_key(filename: &str) -> rustls::PrivateKey {
+    let keyfile = fs::File::open(filename).expect("cannot open private key file");
+    let mut reader = BufReader::new(keyfile);
+
+    loop {
+        match rustls_pemfile::read_one(&mut reader).expect("cannot parse private key .pem file") {
+            Some(rustls_pemfile::Item::RSAKey(key)) => return rustls::PrivateKey(key),
+            Some(rustls_pemfile::Item::PKCS8Key(key)) => return rustls::PrivateKey(key),
+            None => break,
+            _ => {}
+        }
+    }
+
+    panic!(
+        "No keys found in {:?} (encrypted keys not supported)",
+        filename
+    );
 }
 
 // Visitors of mgar.us get a list of all articles.
@@ -118,7 +166,7 @@ async fn index(blog: web::Data<Blog>) -> impl Responder {
 
 /// For brevity, most URLs consist of a single key.
 #[get("/{key}")]
-async fn key(req: HttpRequest, path: web::Path<(String,)>) -> impl Responder {
+async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Responder {
     let (key,) = path.into_inner();
     info!("Request: {:?}", req);
     info!("Key: {:?}", key);
