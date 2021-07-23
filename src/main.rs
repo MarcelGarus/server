@@ -10,7 +10,7 @@ use actix_web::{
 };
 use blog::{Blog, FillInArticleStringExt};
 use futures::future::FutureExt;
-use log::{error, info, LevelFilter};
+use log::{error, info, warn, LevelFilter};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
@@ -107,8 +107,10 @@ async fn main() -> std::io::Result<()> {
     });
 
     let server = if let Some(builder) = tls_config {
+        info!("Binding using OpenSSL.");
         server.bind_openssl(address, builder)?
     } else {
+        warn!("Binding insecurely.");
         server.bind(address)?
     };
 
