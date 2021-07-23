@@ -11,6 +11,7 @@ use actix_web::{
 use blog::{Blog, FillInArticleStringExt};
 use futures::future::FutureExt;
 use log::{error, info, LevelFilter};
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
@@ -72,14 +73,12 @@ async fn main() -> std::io::Result<()> {
     let address = config.address.clone();
 
     let tls_config = config.tls_config.clone().map(|config| {
-        let mut tls_config = ServerConfig::new(NoClientAuth::new());
-        tls_config
-            .set_single_cert(
-                load_certs(&config.certificate),
-                load_private_key(&config.key),
-            )
+        let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+        builder
+            .set_private_key_file(&config.certificate, SslFiletype::PEM)
             .unwrap();
-        tls_config
+        builder.set_certificate_chain_file(&config.key).unwrap();
+        builder
     });
 
     // TODO: Enable compression?
@@ -107,8 +106,8 @@ async fn main() -> std::io::Result<()> {
             .default_service(web::route().to(default_handler))
     });
 
-    let server = if let Some(tls_config) = tls_config {
-        server.bind_rustls(address, tls_config)?
+    let server = if let Some(builder) = tls_config {
+        server.bind_openssl(address, builder)?
     } else {
         server.bind(address)?
     };
