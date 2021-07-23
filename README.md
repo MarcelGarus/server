@@ -34,14 +34,19 @@ TODOs in no particular order:
   * visits
   * statistics about which pages were visited how often
   * shortcuts
+* configure caching of items
+* catch internal server errors
+* flush visits to disk when the server is stopped
 * contact
 * use proper mime types
 * files
 * blog
   * estimate read time
   * add `link` tags to previous and next article
+  * remote re-fetching of articles
 * pay
   * redirect to PayPal
   * calculate amount
 * make shortcut previews in social messenges beautiful
 * make server restart-resistant
+* add an RSS feed
