@@ -1,0 +1,16 @@
+[Unit]
+Description=The server.
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/root/server/target/release/server
+WorkingDirectory=/root/server
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=%n
