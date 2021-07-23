@@ -28,8 +28,8 @@ rustls = "0.19.1"
 tokio-rustls = "0.22.0"
 async-stream = "0.3.2"
 futures-util = "0.3.15"
-actix-web = { version = "4.0.0-beta.8", features = ["openssl"] }
-openssl = "0.10"
+actix-web = { version = "4.0.0-beta.8", features = ["rustls"] }
+# openssl = "0.10"
 actix-service = "2.0.0"
 futures = "0.3.15"
 serde_with = { version = "1.9.4", features = ["chrono"] }

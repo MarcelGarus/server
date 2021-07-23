@@ -138,9 +138,9 @@ dependencies = [
  "futures-core",
  "http",
  "log",
- "openssl",
- "tokio-openssl",
+ "tokio-rustls",
  "tokio-util",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -1993,7 +1993,6 @@ dependencies = [
  "lazy_static",
  "log",
  "nom 6.2.1",
- "openssl",
  "reqwest",
  "rustls",
  "rustls-pemfile",
@@ -2342,18 +2341,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7d995660bd2b7f8c1568414c1126076c13fbb725c40112dc0120b78eb9b717b"
 dependencies = [
  "native-tls",
- "tokio",
-]
-
-[[package]]
-name = "tokio-openssl"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f24cddc8445a4dc8359cdd9e91c19d544fc95f672e32afe8945852b9381a09fe"
-dependencies = [
- "futures",
- "openssl",
- "openssl-sys",
  "tokio",
 ]
 
@@ -2804,6 +2791,15 @@ checksum = "b8e38c0608262c46d4a56202ebabdeb094cef7e560ca7a226c6bf055188aa4ea"
 dependencies = [
  "ring",
  "untrusted",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.21.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aabe153544e473b775453675851ecc86863d2a81d786d741f6b76778f2a48940"
+dependencies = [
+ "webpki",
 ]
 
 [[package]]
