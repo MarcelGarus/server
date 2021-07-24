@@ -18,7 +18,6 @@ use simplelog::{ColorChoice, TermLogger, TerminalMode};
 use std::collections::HashMap;
 use std::io::BufReader;
 use std::net::SocketAddr;
-use std::sync::Arc;
 use tokio::fs;
 
 mod blog;
@@ -86,15 +85,15 @@ async fn main() -> std::io::Result<()> {
     });
 
     // TODO: Enable compression?
+    let cloned_log = visits_log.clone();
     let server = HttpServer::new(move || {
-        let config = Arc::new(config.clone());
-        let log = Arc::new(visits_log.clone());
+        let cloned_log = cloned_log.clone();
         App::new()
-            .app_data(visits_log.clone())
+            .app_data(cloned_log.clone())
             .app_data(blog.clone())
             .app_data(shortcut_db.clone())
             .wrap_fn(move |req, srv| {
-                let log = log.clone();
+                let log = cloned_log.clone();
                 let visit = Visit::for_request(&req);
                 srv.call(req).then(async move |res| {
                     println!("Fn: Hi from response");
@@ -120,6 +119,10 @@ async fn main() -> std::io::Result<()> {
 
     server.run().await?;
 
+    info!("Server ended. Flushing visits log.");
+    visits_log.flush().await;
+
+    info!("Ending server executable.");
     Ok(())
 }
 

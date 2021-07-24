@@ -110,7 +110,7 @@ impl VisitsLog {
         }
     }
 
-    async fn flush(&self) {
+    pub async fn flush(&self) {
         info!("Flushing visits to disk.");
         let buffer = std::mem::replace(&mut *self.buffer.write().await, vec![]);
 

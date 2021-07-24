@@ -34,7 +34,6 @@ TODOs in no particular order:
   * shortcuts
 * configure caching of items
 * catch internal server errors
-* flush visits to disk when the server is stopped
 * files
 * blog
   * estimate read time
