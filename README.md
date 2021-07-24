@@ -36,11 +36,15 @@ TODOs in no particular order:
 * also host fonts
 * blog
   * add `link` tags to previous and next article
+  * improve how images are displayed
+  * review and improve articles
 * pay
   * redirect to PayPal
   * calculate amount
 * make shortcut previews in social messenges beautiful
 * add an RSS feed
+* treat paths as normalized
+* add compression
 
 # Setting up the server
 
