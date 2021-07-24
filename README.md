@@ -46,9 +46,7 @@ TODOs in no particular order:
   * redirect to PayPal
   * calculate amount
 * make shortcut previews in social messenges beautiful
-* make server restart-resistant
 * add an RSS feed
-* save referer
 * remove unused crates
 
 # Setting up the server
