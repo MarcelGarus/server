@@ -204,12 +204,13 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
         return HttpResponse::Ok().html(template::page().await.fill_in_content(&article_html));
     }
 
-    error_page_404().await
+    error_page_404(&req).await
 }
 
 /// Shortcuts are not content of the website itself. Rather, they redirect to somewhere else.
 #[get("/go/{shortcut}")]
 async fn go_shortcut(
+    req: HttpRequest,
     path: web::Path<(String,)>,
     shortcut_db: web::Data<ShortcutDb>,
 ) -> impl Responder {
@@ -220,7 +221,7 @@ async fn go_shortcut(
             .body("");
     }
 
-    error_page_404().await
+    error_page_404(&req).await
 }
 
 fn api(admin_key: &str) -> impl HttpServiceFactory {
@@ -297,14 +298,22 @@ mod visits_api {
 
 async fn default_handler(req: HttpRequest) -> impl Responder {
     warn!("Default handler invoked. The request was: {:?}", req);
-    error_page_404().await
+    error_page_404(&req).await
 }
 
-async fn error_page_404() -> HttpResponse {
+async fn error_page_404(req: &HttpRequest) -> HttpResponse {
+    info!("Headers: {:?}", req.headers());
+    let description = match req.headers().get_utf8("referer") {
+        Some(referer) => format!(
+            "Looks like you got here by following an invalid link from <code>{}</code> – there's no content here.",
+            referer.html_encode(),
+        ),
+        None => "Sadly, there's no content here. The URL is invalid.".into(),
+    };
     error_page(
         StatusCode::NOT_FOUND,
         "Nope-di-nope. Nothing to see here.",
-        "From whatever place you dug up that URL… it's doesn't link to any content.",
+        &description,
     )
     .await
 }
