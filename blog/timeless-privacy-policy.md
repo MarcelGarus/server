@@ -2,12 +2,12 @@
 
 The person responsible within the meaning of the data protection laws, in particular the GDPR, is me:
 
-Marcel Garus
+**Marcel Garus**
 
-Enfieldstr. 85
+Enfieldstr. 85  
 45966 Gladbeck
 
-marcel.garus@gmail.com
+marcel.garus@gmail.com  
 +49 15751770663
 
 ## Collection of General Information When You Visit My Website
@@ -16,9 +16,9 @@ marcel.garus@gmail.com
 When you access my website, the server automatically records [general information](https://github.com/marcelgarus/server/blob/main/src/visits.rs), which I statistically evaluate.
 In particular, I use them for the following purposes:
 
-* Administrative: Ensuring a problem-free use of my website and evaluating its stability and performance
-* Content statistics: Evaluating which content is popular
-* User statistics: Which browsers, operating systems, and languages are used
+* **Administrative**: Ensuring a problem-free use of my website and evaluating its stability and performance
+* **Content statistics**: Evaluating which content is popular
+* **User statistics**: Which browsers, operating systems, and languages are used
 
 **Legal basis**:
 The processing takes place in accordance with Art. 6 Paragraph 1 GDPR on the basis of my legitimate interest in improving the stability and functionality of our website and evaluating the content and audience.
@@ -44,4 +44,4 @@ The new privacy policy will then apply to your next visit.
 
 ## Questions to the Data Protection Officer
 
-If you have any questions about data protection, please [text me](/contacts).
+If you have any questions about data protection, please [text me](/contact).
