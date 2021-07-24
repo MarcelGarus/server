@@ -7,7 +7,7 @@
     <meta name="description"
         content="Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter." />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#e80261" />
+    <meta name="theme-color" content="#f97191" />
     <link rel="icon" type="image/png" href="icon.png" />
     <link href="prism.css" rel="stylesheet" />
     <script src="prism.js"></script>
@@ -25,21 +25,23 @@
         }
         @media (prefers-color-scheme: dark) {
             body {
-                background-color: #222222;
+                background-color: #222;
                 color: white;
             }
         }
 
         .secondary {
-            opacity: 0.4;
+            opacity: 0.5;
             transition: opacity 0.2s cubic-bezier(0.5, 0, 0, 1);
         }
-        .secondary:hover {
-            opacity: 1;
-        }
+        .secondary:hover { opacity: 1; }
 
         a {
             font-family: "Josefin Sans", sans-serif;
+            color: black;
+        }
+        @media (prefers-color-scheme:dark) {
+            a { color: white; }
         }
 
         h1 {
@@ -71,28 +73,24 @@
                 padding-top: 3em;
                 padding-bottom: 1em;
             }
-            aside h1 {
-                margin: 0;
-            }
-            aside .content {
-                margin: auto !important;
-            }
+            aside h1 { margin: 0; }
+            aside .content { margin: auto !important; }
         }
         aside .content {
             margin: auto;
             margin-right: 0;
-            
             max-width: 25em;
+            color: white;
         }
         aside ::selection {
             color: white;
-            background: #000000;
+            background: #222;
         }
-        aside a {
-            color: #ffffff !important;
-        }
-        aside p {
-            margin-top: 1em;
+        aside a { color: white; }
+        aside p { margin-top: 1em; }
+        @media (prefers-color-scheme:dark) {
+            aside .content { color: black; }
+            aside a { color: black; }
         }
 
         /* styles for the main part */
@@ -115,18 +113,14 @@
             color: white;
             background: #f97191;
         }
-        main a {
-            color: #f97191 !important;
-        }
+        main a { color: #f97191; }
 
         article {
             line-height: 1.7;
             font-size: 1em;
         }
 
-        article .published {
-            font-size: 0.8em;
-        }
+        article .published { font-size: 0.8em; }
 
         /* Instead of having a fixed amount of margin on the left and right of
             the article content, the article elements have that margin
@@ -140,14 +134,9 @@
             margin: 0;
         }
 
-        h2, h3, h4, h5, h6,
-        strong {
-            font-family: 'Josefin Sans';
-        }
+        h2, h3, h4, h5, h6, strong { font-family: 'Josefin Sans'; }
 
-        code {
-            font-family: 'JetBrains Mono';
-        }
+        code { font-family: 'JetBrains Mono'; }
 
         img {
             max-width: 100%;
