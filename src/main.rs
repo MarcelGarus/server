@@ -4,14 +4,16 @@ use crate::shortcuts::ShortcutDb;
 use crate::utils::*;
 use crate::visits::{Visit, VisitsLog};
 use actix_service::Service;
-use actix_web::dev::{HttpServiceFactory, RequestHead};
+use actix_web::body::AnyBody;
+use actix_web::dev::{self, HttpServiceFactory, RequestHead, ServiceResponse};
+use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{
     delete, get, guard, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use blog::Blog;
 use futures::future::FutureExt;
+use http::StatusCode;
 use log::{info, warn, LevelFilter};
-// use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
@@ -96,11 +98,13 @@ async fn main() -> std::io::Result<()> {
                 let log = cloned_log.clone();
                 let visit = Visit::for_request(&req);
                 srv.call(req).then(async move |res| {
-                    println!("Fn: Hi from response");
                     log.register(visit.finish(&res)).await;
                     res
                 })
             })
+            .wrap(
+                ErrorHandlers::new().handler(StatusCode::INTERNAL_SERVER_ERROR, error_500_handler),
+            )
             // .wrap(middleware::NormalizePath::default())
             .service(index)
             .service(go_shortcut)
@@ -119,7 +123,7 @@ async fn main() -> std::io::Result<()> {
 
     server.run().await?;
 
-    info!("Server ended. Flushing visits log.");
+    info!("Server ended.");
     visits_log.flush().await;
 
     info!("Ending server executable.");
@@ -166,7 +170,7 @@ async fn index(blog: web::Data<Blog>) -> impl Responder {
     let page = template::page()
         .await
         .fill_in_content(&itertools::join(articles, "\n"));
-    HttpResponse::Ok().content_type("text/html").body(page)
+    HttpResponse::Ok().html(page)
 }
 
 /// For brevity, most URLs consist of a single key.
@@ -197,14 +201,10 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     let blog = req.app_data::<web::Data<Blog>>().unwrap();
     if let Some(article) = blog.get(&key).await {
         let article_html = template::full_article().await.fill_in_article(&article);
-        return HttpResponse::Ok()
-            .content_type("text/html")
-            .body(template::page().await.fill_in_content(&article_html));
+        return HttpResponse::Ok().html(template::page().await.fill_in_content(&article_html));
     }
 
-    HttpResponse::Ok()
-        .content_type("text/html")
-        .body("Unknown key!") // TODO
+    error_page_404().await
 }
 
 /// Shortcuts are not content of the website itself. Rather, they redirect to somewhere else.
@@ -220,10 +220,7 @@ async fn go_shortcut(
             .body("");
     }
 
-    info!("Shortcut handler, but shortcut not found!");
-    HttpResponse::Ok()
-        .content_type("text/html")
-        .body("Shortcut") // TODO
+    error_page_404().await
 }
 
 fn api(admin_key: &str) -> impl HttpServiceFactory {
@@ -286,10 +283,36 @@ mod visits_api {
 }
 
 async fn default_handler(req: HttpRequest) -> impl Responder {
-    warn!("Default handler invoked.");
-    info!("Request: {:?}", req);
-    // TODO
-    HttpResponse::NotFound()
-        .content_type("text/html")
-        .body("Sadly, nothing to see here!")
+    warn!("Default handler invoked. The request was: {:?}", req);
+    error_page_404().await
+}
+
+async fn error_page_404() -> HttpResponse {
+    error_page(
+        StatusCode::NOT_FOUND,
+        "Nope-di-nope. Nothing to see here.",
+        "From whatever place you dug up that URL… it's doesn't link to any content.",
+    )
+    .await
+}
+
+async fn error_page(status: StatusCode, title: &str, description: &str) -> HttpResponse {
+    let error_html = template::error()
+        .await
+        .fill_in_error(status, title, description);
+    HttpResponse::Ok()
+        .status(status)
+        .html(template::page().await.fill_in_content(&error_html))
+}
+
+fn error_500_handler(
+    service_response: dev::ServiceResponse<AnyBody>,
+) -> actix_web::Result<ErrorHandlerResponse<AnyBody>> {
+    let req = service_response.request().clone();
+    Ok(ErrorHandlerResponse::Future(Box::pin(async {
+        Ok(ServiceResponse::new(
+            req,
+            error_page(StatusCode::INTERNAL_SERVER_ERROR, "", "").await,
+        ))
+    })))
 }

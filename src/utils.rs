@@ -1,4 +1,4 @@
-use actix_web::http::HeaderMap;
+use actix_web::{body::AnyBody, http::HeaderMap, HttpResponse, HttpResponseBuilder};
 use http::{HeaderValue, StatusCode};
 
 use crate::blog::Article;
@@ -108,13 +108,20 @@ pub mod template {
             .await
             .unwrap()
     }
+    pub async fn error() -> String {
+        fs::read_to_string("assets/error.html").await.unwrap()
+    }
 }
 
 pub trait FillInTemplateExt {
+    fn fill_in_content(&self, content: &str) -> Self;
     fn fill_in_article(&self, article: &Article) -> Self;
-    fn fill_in_content(&self, content: &String) -> Self;
+    fn fill_in_error(&self, status_code: StatusCode, title: &str, description: &str) -> Self;
 }
 impl FillInTemplateExt for String {
+    fn fill_in_content(&self, content: &str) -> Self {
+        self.replace("{{content}}", content)
+    }
     fn fill_in_article(&self, article: &Article) -> Self {
         self.replace("{{key}}", &article.key)
             .replace("{{title}}", &article.title)
@@ -125,7 +132,18 @@ impl FillInTemplateExt for String {
             .replace("{{teaser}}", &article.teaser)
             .replace("{{body}}", &article.content)
     }
-    fn fill_in_content(&self, content: &String) -> Self {
-        self.replace("{{content}}", content)
+    fn fill_in_error(&self, status_code: StatusCode, title: &str, description: &str) -> Self {
+        self.replace("{{title}}", title)
+            .replace("{{status}}", &format!("{}", status_code.as_u16()))
+            .replace("{{description}}", description)
+    }
+}
+
+pub trait HtmlResponse {
+    fn html<B: Into<AnyBody>>(&mut self, body: B) -> HttpResponse<AnyBody>;
+}
+impl HtmlResponse for HttpResponseBuilder {
+    fn html<B: Into<AnyBody>>(&mut self, body: B) -> HttpResponse<AnyBody> {
+        self.content_type("text/html").body(body)
     }
 }

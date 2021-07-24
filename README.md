@@ -27,7 +27,6 @@ For information on how to configure the server, the [server setup guide](server-
 TODOs in no particular order:
 
 * redirect HTTP to HTTPS
-* beautiful error page
 * app
   * visits
   * statistics about which pages were visited how often
