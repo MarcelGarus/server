@@ -1,24 +1,25 @@
 <article style="margin-bottom: 2em;">
-    <h1 id="title-of-{{key}}">{{title}}</h1>
+    <h1 id="title-of-{{key}}"><a href="{{key}}" data-read-more="{{key}}">{{title}}</a></h1>
     <div class="published secondary">{{publish-date}} · 5 minute read</div>
     {{teaser}}
-    <a id="read-more-of-{{key}}" href="{{key}}">Read more</a>
+    <a id="read-more-of-{{key}}" href="{{key}}" data-read-more="{{key}}">Read more</a>
     <script>
         // When you click a "Read more" link, the article content should
         // seamlessly expand. In particular, you shouldn't jump up to the
         // beginning of the article on the new page.
         // That's why the full-article page supports an anchor – you can
         // navigate to "mgar.us/some-article#title-at--10", and the page will
-        // try to adjust the scrolling position so that the title is at postiion
+        // try to adjust the scrolling position so that the title is at position
         // -10 in the viewport.
         // Using the following code, we intercept clicks on the "Read more"
         // button to append the anchor to the URL.
-        document.getElementById("read-more-of-{{key}}").addEventListener('click', (event) => {
-            const readMoreLink = document.getElementById("read-more-of-{{key}}");
-            event.preventDefault();
-            const title = document.getElementById("title-of-{{key}}");
-            const offset = title.getBoundingClientRect().top;
-            window.location.href = "{{key}}#title-at-" + Math.round(offset);
-        });
+        for (const link of document.querySelectorAll('[data-read-more="{{key}}"]')) {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const title = document.getElementById("title-of-{{key}}");
+                const offset = title.getBoundingClientRect().top;
+                window.location.href = "{{key}}#title-at-" + Math.round(offset);
+            });
+        }
     </script>
 </article>
