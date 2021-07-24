@@ -35,7 +35,6 @@ TODOs in no particular order:
 * files
 * also host fonts
 * blog
-  * estimate read time
   * add `link` tags to previous and next article
 * pay
   * redirect to PayPal

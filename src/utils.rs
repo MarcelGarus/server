@@ -127,7 +127,10 @@ impl FillInTemplateExt for String {
         if let Some(date) = article.published {
             infos.push(format!("{}", date.format("%Y-%m-%d")));
         }
-        infos.push("5 minute read".into());
+        infos.push(format!(
+            "{} minute read",
+            (((article.read_duration.as_secs() as f64) / 60.0).round() as u64).min(1),
+        ));
 
         self.replace("{{key}}", &article.key)
             .replace("{{title}}", &article.title)
