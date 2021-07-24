@@ -1,8 +1,8 @@
 <article style="margin-bottom: 2em;">
-    <h1 id="title-of-{{key}}"><a href="{{key}}" data-read-more="{{key}}">{{title}}</a></h1>
-    <div class="published secondary">{{publish-date}} · 5 minute read</div>
+    <h1 id="title-of-{{key}}"><a href="/{{key}}" data-read-more="{{key}}">{{title}}</a></h1>
+    <div class="infos secondary">{{info}}</div>
     {{teaser}}
-    <a id="read-more-of-{{key}}" href="{{key}}" data-read-more="{{key}}">Read more</a>
+    <a id="read-more-of-{{key}}" href="/{{key}}" data-read-more="{{key}}">Read more</a>
     <script>
         // When you click a "Read more" link, the article content should
         // seamlessly expand. In particular, you shouldn't jump up to the
@@ -18,7 +18,7 @@
                 event.preventDefault();
                 const title = document.getElementById("title-of-{{key}}");
                 const offset = title.getBoundingClientRect().top;
-                window.location.href = "{{key}}#title-at-" + Math.round(offset);
+                window.location.href = "/{{key}}#title-at-" + Math.round(offset);
             });
         }
     </script>

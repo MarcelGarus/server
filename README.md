@@ -32,13 +32,10 @@ TODOs in no particular order:
   * statistics about which pages were visited how often
   * shortcuts
 * configure caching of items
-* catch internal server errors
 * files
 * blog
   * estimate read time
   * add `link` tags to previous and next article
-  * add imprint and privacy policy as articles
-  * hide timeless articles like contacts, test, imprint, privacy policy in the main list
 * pay
   * redirect to PayPal
   * calculate amount

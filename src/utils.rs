@@ -123,12 +123,15 @@ impl FillInTemplateExt for String {
         self.replace("{{content}}", content)
     }
     fn fill_in_article(&self, article: &Article) -> Self {
+        let mut infos = vec![];
+        if let Some(date) = article.published {
+            infos.push(format!("{}", date.format("%Y-%m-%d")));
+        }
+        infos.push("5 minute read".into());
+
         self.replace("{{key}}", &article.key)
             .replace("{{title}}", &article.title)
-            .replace(
-                "{{publish-date}}",
-                &format!("{}", article.published.format("%Y-%m-%d")),
-            )
+            .replace("{{info}}", &itertools::join(infos.into_iter(), " · "))
             .replace("{{teaser}}", &article.teaser)
             .replace("{{body}}", &article.content)
     }

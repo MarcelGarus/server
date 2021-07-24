@@ -1,11 +1,11 @@
 use crate::utils::*;
-use chrono::{Date, Datelike, Utc};
+use chrono::{Date, Utc};
 use comrak::{
     arena_tree::Children,
     nodes::{Ast, AstNode, ListType, NodeValue},
     parse_document, Arena, ComrakOptions,
 };
-use log::{info, warn};
+use log::{error, info, warn};
 use std::{cell::RefCell, collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 
@@ -13,7 +13,7 @@ use tokio::sync::RwLock;
 pub struct Article {
     pub key: String,
     pub title: String,
-    pub published: Date<Utc>,
+    pub published: Option<Date<Utc>>,
     pub content: String,
     pub teaser: String,
 }
@@ -24,7 +24,8 @@ pub struct Blog {
     /// All articles by key.
     articles: Arc<RwLock<HashMap<String, Article>>>,
 
-    /// Article keys in the order that they appeared in the `published.md` file.
+    /// Keys of articles with timestamps in the order that they appeared in the
+    /// `published.md` file.
     article_keys: Arc<RwLock<Vec<String>>>,
 }
 impl Blog {
@@ -40,41 +41,42 @@ impl Blog {
     }
 
     pub async fn load(&self) -> Result<(), String> {
-        let keys_and_dates = download(&format!("{}/published.md", Self::BASE_URL))
+        let lines = download(&format!("{}/published.md", Self::BASE_URL))
             .await?
             .split('\n')
             .map(|line| line.trim())
             .filter(|line| !line.is_empty())
             .filter(|line| !line.starts_with('#'))
-            .filter_map(|line| match article_line::to_key_and_date(line) {
-                Ok(it) => Some(it),
-                Err(err) => {
-                    warn!("Invalid article line {}: {:?}", line, err);
-                    None
-                }
-            })
-            .collect::<Vec<(String, Date<Utc>)>>();
+            .map(|line| line.to_owned())
+            .collect::<Vec<String>>();
 
         let mut articles: HashMap<String, Article> = Default::default();
         let mut keys = vec![];
-        for (key, date) in keys_and_dates {
-            let git_url = format!(
-                "{}/{:04}-{:02}-{:02}-{}.md",
-                Self::BASE_URL,
-                date.year(),
-                date.month(),
-                date.day(),
-                key,
-            );
-            let content = download(&git_url).await?;
+        let mut timeless_keys = vec![];
+        for line in lines {
+            let (date, key) = match article_line::to_date_and_key(&line) {
+                Ok(it) => it,
+                Err(err) => {
+                    error!("Invalid article line {}: {:?}", line, err);
+                    continue;
+                }
+            };
+            let content = download(&format!("{}/{}.md", Self::BASE_URL, line)).await?;
             articles.insert(
                 key.clone(),
                 Article::from_key_and_date_and_markdown(key.clone(), date, &content),
             );
-            keys.push(key);
+            match date {
+                Some(_) => keys.push(key),
+                None => timeless_keys.push(key),
+            }
         }
 
         info!("Loaded articles: {}", itertools::join(&keys, ", "));
+        info!(
+            "Timeless articles: {}",
+            itertools::join(&timeless_keys, ", ")
+        );
         *self.articles.write().await = articles;
         *self.article_keys.write().await = keys;
         Ok(())
@@ -100,30 +102,48 @@ impl Blog {
 mod article_line {
     use chrono::{Date, TimeZone, Utc};
     use nom::{
-        bytes::complete::tag, character::complete::digit1, combinator::map_res, sequence::tuple,
+        bytes::complete::tag,
+        character::complete::digit1,
+        combinator::{map_res, opt},
+        sequence::tuple,
         IResult,
     };
 
-    pub fn to_key_and_date(line: &str) -> Result<(String, Date<Utc>), String> {
+    pub fn to_date_and_key(line: &str) -> Result<(Option<Date<Utc>>, String), String> {
         parse(line)
             .map(|it| it.1)
             .map_err(|err| format!("Error while parsing article id: {:?}", err))
     }
-    fn parse(input: &str) -> IResult<&str, (String, Date<Utc>)> {
-        let (input, (year, _, month, _, day, _)) = tuple((
+    fn parse(input: &str) -> IResult<&str, (Option<Date<Utc>>, String)> {
+        let (input, date) = opt(tuple((
             map_res(digit1, |it: &str| it.parse::<i32>()),
             tag("-"),
             map_res(digit1, |it: &str| it.parse::<u32>()),
             tag("-"),
             map_res(digit1, |it: &str| it.parse::<u32>()),
             tag("-"),
-        ))(input)?;
-        Ok(("", (input.to_owned(), Utc.ymd(year, month, day))))
+        )))(input)?;
+        Ok(match date {
+            Some((year, _, month, _, day, _)) => {
+                ("", (Some(Utc.ymd(year, month, day)), input.to_owned()))
+            }
+            None => {
+                if input.len() <= "timeless-".len() {
+                    ("", (None, input.to_owned()))
+                } else {
+                    ("", (None, input["timeless-".len()..].to_owned()))
+                }
+            }
+        })
     }
 }
 
 impl Article {
-    fn from_key_and_date_and_markdown(key: String, date: Date<Utc>, markdown: &str) -> Self {
+    fn from_key_and_date_and_markdown(
+        key: String,
+        date: Option<Date<Utc>>,
+        markdown: &str,
+    ) -> Self {
         let arena = Arena::new();
         let root = parse_document(
             &arena,
