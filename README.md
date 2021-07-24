@@ -26,9 +26,7 @@ For information on how to configure the server, the [server setup guide](server-
 
 TODOs in no particular order:
 
-* HTTPS
-  * support HTTPS
-  * redirect HTTP to HTTPS
+* redirect HTTP to HTTPS
 * beautiful error page
 * app
   * visits
