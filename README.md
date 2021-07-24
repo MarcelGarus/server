@@ -39,6 +39,7 @@ TODOs in no particular order:
   * estimate read time
   * add `link` tags to previous and next article
   * remote re-fetching of articles
+  * hide timeless articles like contacts, test, imprint, privacy policy in the main list
 * pay
   * redirect to PayPal
   * calculate amount
