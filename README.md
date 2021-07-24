@@ -37,7 +37,6 @@ TODOs in no particular order:
 * blog
   * estimate read time
   * add `link` tags to previous and next article
-  * remote re-fetching of articles
   * add imprint and privacy policy as articles
   * hide timeless articles like contacts, test, imprint, privacy policy in the main list
 * pay
