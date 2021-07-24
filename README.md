@@ -255,4 +255,4 @@ sudo chmod 755 /etc/letsencrypt/renewal-hooks/pre/server.sh
 sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
 ```
 
-In the `Config.toml` (not `Cargo.toml`) file, uncomment the `[certificate]` section.
+In the `Config.toml` file, add an `[https]` section.
