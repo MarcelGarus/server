@@ -33,6 +33,7 @@ TODOs in no particular order:
   * shortcuts
 * configure caching of items
 * files
+* also host fonts
 * blog
   * estimate read time
   * add `link` tags to previous and next article
