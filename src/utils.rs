@@ -1,6 +1,8 @@
 use actix_web::http::HeaderMap;
 use http::{HeaderValue, StatusCode};
 
+use crate::blog::Article;
+
 pub trait VecStringExt {
     fn clone_first_n(&self, n: usize) -> Option<Vec<String>>;
     fn starts_with(&self, other: Vec<&str>) -> bool;
@@ -76,7 +78,7 @@ pub async fn download(url: &str) -> Result<String, String> {
         .map_err(|err| format!("Couldn't get {}: {:?}", url, err))?;
     if response.status() != StatusCode::OK {
         return Err(format!(
-            "Getting {} returned a non-200 code: {}",
+            "Fetching {} returned a non-200 code: {}",
             url,
             response.status()
         ));
@@ -88,4 +90,42 @@ pub async fn download(url: &str) -> Result<String, String> {
     let content = String::from_utf8(content.to_vec())
         .map_err(|_| format!("Body of {} is not UTF-8.", url))?;
     Ok(content)
+}
+
+pub mod template {
+    use tokio::fs;
+
+    pub async fn page() -> String {
+        fs::read_to_string("assets/page.html").await.unwrap()
+    }
+    pub async fn article_teaser() -> String {
+        fs::read_to_string("assets/article-teaser.html")
+            .await
+            .unwrap()
+    }
+    pub async fn full_article() -> String {
+        fs::read_to_string("assets/article-full.html")
+            .await
+            .unwrap()
+    }
+}
+
+pub trait FillInTemplateExt {
+    fn fill_in_article(&self, article: &Article) -> Self;
+    fn fill_in_content(&self, content: &String) -> Self;
+}
+impl FillInTemplateExt for String {
+    fn fill_in_article(&self, article: &Article) -> Self {
+        self.replace("{{key}}", &article.key)
+            .replace("{{title}}", &article.title)
+            .replace(
+                "{{publish-date}}",
+                &format!("{}", article.published.format("%Y-%m-%d")),
+            )
+            .replace("{{teaser}}", &article.teaser)
+            .replace("{{body}}", &article.content)
+    }
+    fn fill_in_content(&self, content: &String) -> Self {
+        self.replace("{{content}}", content)
+    }
 }

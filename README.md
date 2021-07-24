@@ -35,8 +35,6 @@ TODOs in no particular order:
 * configure caching of items
 * catch internal server errors
 * flush visits to disk when the server is stopped
-* contact
-* use proper mime types
 * files
 * blog
   * estimate read time
@@ -47,7 +45,6 @@ TODOs in no particular order:
   * calculate amount
 * make shortcut previews in social messenges beautiful
 * add an RSS feed
-* remove unused crates
 
 # Setting up the server
 

@@ -1,7 +1,7 @@
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
-use tokio::sync::RwLock;
+use tokio::{fs, sync::RwLock};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Shortcut {
@@ -15,9 +15,9 @@ pub struct ShortcutDb {
     shortcuts: Arc<RwLock<HashMap<String, Shortcut>>>,
 }
 impl ShortcutDb {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         let mut shortcuts: HashMap<String, Shortcut> = Default::default();
-        if let Ok(json) = std::fs::read_to_string("shortcuts.json") {
+        if let Ok(json) = fs::read_to_string("shortcuts.json").await {
             let shortcuts_vec: Vec<Shortcut> = serde_json::from_str(&json).unwrap();
             for shortcut in shortcuts_vec {
                 shortcuts.insert(shortcut.key.clone(), shortcut);
@@ -33,12 +33,12 @@ impl ShortcutDb {
     }
 
     async fn save(&self) {
-        // TODO: Make async
-        std::fs::write(
+        fs::write(
             "shortcuts.json",
             serde_json::to_string(&self.shortcuts.read().await.values().collect::<Vec<_>>())
                 .unwrap(),
         )
+        .await
         .unwrap()
     }
 

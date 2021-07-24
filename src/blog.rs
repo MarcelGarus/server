@@ -21,7 +21,11 @@ pub struct Article {
 /// A database for articles. It gets articles from the GitHub repo.
 #[derive(Clone)]
 pub struct Blog {
+    /// All articles by key.
     articles: Arc<RwLock<HashMap<String, Article>>>,
+
+    /// Article keys in the order that they appeared in the `published.md` file.
+    article_keys: Arc<RwLock<Vec<String>>>,
 }
 impl Blog {
     const BASE_URL: &'static str = "https://raw.githubusercontent.com/marcelgarus/server/main/blog";
@@ -29,13 +33,14 @@ impl Blog {
     pub async fn new() -> Self {
         let mut db = Self {
             articles: Default::default(),
+            article_keys: Default::default(),
         };
         db.load().await.unwrap();
         db
     }
 
     async fn load(&mut self) -> Result<(), String> {
-        let keys = download(&format!("{}/published.md", Self::BASE_URL))
+        let keys_and_dates = download(&format!("{}/published.md", Self::BASE_URL))
             .await?
             .split('\n')
             .map(|line| line.trim())
@@ -51,32 +56,31 @@ impl Blog {
             .collect::<Vec<(String, Date<Utc>)>>();
 
         let mut articles: HashMap<String, Article> = Default::default();
-        for (key, date) in keys {
+        let mut keys = vec![];
+        for (key, date) in keys_and_dates {
             let git_url = format!(
                 "{}/{:04}-{:02}-{:02}-{}.md",
                 Self::BASE_URL,
                 date.year(),
                 date.month(),
                 date.day(),
-                key
+                key,
             );
-            info!("Fetching article from {}", git_url);
             let content = download(&git_url).await?;
             articles.insert(
                 key.clone(),
-                Article::from_key_and_date_and_markdown(key, date, &content),
+                Article::from_key_and_date_and_markdown(key.clone(), date, &content),
             );
+            keys.push(key);
         }
 
-        info!(
-            "Loaded articles: {}",
-            itertools::join(articles.keys(), ", ")
-        );
+        info!("Loaded articles: {}", itertools::join(&keys, ", "));
         *self.articles.write().await = articles;
+        *self.article_keys.write().await = keys;
         Ok(())
     }
 
-    pub async fn article_for(&self, key: &str) -> Option<Article> {
+    pub async fn get(&self, key: &str) -> Option<Article> {
         self.articles
             .read()
             .await
@@ -85,12 +89,36 @@ impl Blog {
     }
 
     pub async fn list(&self) -> Vec<Article> {
-        self.articles
-            .read()
-            .await
-            .values()
-            .map(|article| article.clone())
-            .collect()
+        let mut articles = vec![];
+        for key in self.article_keys.read().await.iter() {
+            articles.push(self.get(key).await.unwrap())
+        }
+        articles
+    }
+}
+
+mod article_line {
+    use chrono::{Date, TimeZone, Utc};
+    use nom::{
+        bytes::complete::tag, character::complete::digit1, combinator::map_res, sequence::tuple,
+        IResult,
+    };
+
+    pub fn to_key_and_date(line: &str) -> Result<(String, Date<Utc>), String> {
+        parse(line)
+            .map(|it| it.1)
+            .map_err(|err| format!("Error while parsing article id: {:?}", err))
+    }
+    fn parse(input: &str) -> IResult<&str, (String, Date<Utc>)> {
+        let (input, (year, _, month, _, day, _)) = tuple((
+            map_res(digit1, |it: &str| it.parse::<i32>()),
+            tag("-"),
+            map_res(digit1, |it: &str| it.parse::<u32>()),
+            tag("-"),
+            map_res(digit1, |it: &str| it.parse::<u32>()),
+            tag("-"),
+        ))(input)?;
+        Ok(("", (input.to_owned(), Utc.ymd(year, month, day))))
     }
 }
 
@@ -269,50 +297,5 @@ impl TagVecExt for Vec<String> {
     }
     fn end_tag(&mut self, tag: &str) {
         self.push(format!("</{}>", tag));
-    }
-}
-
-mod article_line {
-    use chrono::{Date, TimeZone, Utc};
-    use nom::{
-        bytes::complete::tag, character::complete::digit1, combinator::map_res, sequence::tuple,
-        IResult,
-    };
-
-    pub fn to_key_and_date(line: &str) -> Result<(String, Date<Utc>), String> {
-        parse(line)
-            .map(|it| it.1)
-            .map_err(|err| format!("Error while parsing article id: {:?}", err))
-    }
-    fn parse(input: &str) -> IResult<&str, (String, Date<Utc>)> {
-        let (input, (year, _, month, _, day, _)) = tuple((
-            map_res(digit1, |it: &str| it.parse::<i32>()),
-            tag("-"),
-            map_res(digit1, |it: &str| it.parse::<u32>()),
-            tag("-"),
-            map_res(digit1, |it: &str| it.parse::<u32>()),
-            tag("-"),
-        ))(input)?;
-        Ok(("", (input.to_owned(), Utc.ymd(year, month, day))))
-    }
-}
-
-pub trait FillInArticleStringExt {
-    fn fill_in_article(&self, article: &Article) -> Self;
-    fn fill_in_content(&self, content: &String) -> Self;
-}
-impl FillInArticleStringExt for String {
-    fn fill_in_article(&self, article: &Article) -> Self {
-        self.replace("{{key}}", &article.key)
-            .replace("{{title}}", &article.title)
-            .replace(
-                "{{publish-date}}",
-                &format!("{}", article.published.format("%Y-%m-%d")),
-            )
-            .replace("{{teaser}}", &article.teaser)
-            .replace("{{body}}", &article.content)
-    }
-    fn fill_in_content(&self, content: &String) -> Self {
-        self.replace("{{content}}", content)
     }
 }

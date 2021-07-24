@@ -8,17 +8,18 @@ use actix_web::dev::{HttpServiceFactory, RequestHead};
 use actix_web::{
     delete, get, guard, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
-use blog::{Blog, FillInArticleStringExt};
+use blog::Blog;
 use futures::future::FutureExt;
-use log::{error, info, warn, LevelFilter};
+use log::{info, warn, LevelFilter};
 // use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
-use std::fs;
+use std::collections::HashMap;
 use std::io::BufReader;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tokio::fs;
 
 mod blog;
 mod shortcuts;
@@ -37,12 +38,12 @@ struct TlsConfig {
     key: String,
 }
 impl Config {
-    fn load() -> Self {
-        let config = std::fs::read_to_string("Config.toml")
+    async fn load() -> Self {
+        let config = fs::read_to_string("Config.toml")
+            .await
             .unwrap()
             .parse::<toml::Value>()
             .unwrap();
-        info!("Config is {:?}", config);
         Self {
             address: config["address"].as_str().unwrap().parse().unwrap(),
             admin_key: config["admin_key"].as_str().unwrap().into(),
@@ -67,10 +68,10 @@ async fn main() -> std::io::Result<()> {
     )
     .unwrap();
 
-    let config = web::Data::new(Config::load());
+    let config = web::Data::new(Config::load().await);
     let visits_log = web::Data::new(VisitsLog::new());
     let blog = web::Data::new(Blog::new().await);
-    let shortcut_db = web::Data::new(ShortcutDb::new());
+    let shortcut_db = web::Data::new(ShortcutDb::new().await);
     let address = config.address.clone();
 
     let tls_config = config.tls_config.clone().map(|config| {
@@ -123,7 +124,7 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
-    let certfile = fs::File::open(filename).expect("Can' open the certificate file.");
+    let certfile = std::fs::File::open(filename).expect("Can't open the certificate file.");
     let mut reader = BufReader::new(certfile);
     rustls_pemfile::certs(&mut reader)
         .unwrap()
@@ -133,7 +134,7 @@ fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
 }
 
 fn load_private_key(filename: &str) -> rustls::PrivateKey {
-    let keyfile = fs::File::open(filename).expect("Can't open the private key file.");
+    let keyfile = std::fs::File::open(filename).expect("Can't open the private key file.");
     let mut reader = BufReader::new(keyfile);
 
     loop {
@@ -151,18 +152,18 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 // Visitors of mgar.us get a list of all articles.
 #[get("/")]
 async fn index(blog: web::Data<Blog>) -> impl Responder {
-    let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
-    let article_template = std::fs::read("assets/article-teaser.html")
-        .unwrap()
-        .utf8_or_panic();
-    let mut articles = blog.list().await;
-    articles.sort_by(|a, b| b.published.cmp(&a.published));
-    let articles = articles
+    let article_template = template::article_teaser().await;
+    let articles = blog
+        .list()
+        .await
         .into_iter()
+        .rev()
         .map(|article| article_template.fill_in_article(&article))
         .collect::<Vec<_>>();
-    let page = page_template.fill_in_content(&itertools::join(articles, "\n"));
-    HttpResponse::Ok().body(page)
+    let page = template::page()
+        .await
+        .fill_in_content(&itertools::join(articles, "\n"));
+    HttpResponse::Ok().content_type("text/html").body(page)
 }
 
 /// For brevity, most URLs consist of a single key.
@@ -171,30 +172,36 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     let (key,) = path.into_inner();
 
     // Check if this is one of the static assets.
-    let static_assets = vec!["favicon.ico", "icon.png", "prism.css", "prism.js"];
-    for asset in static_assets {
-        if key == asset {
-            // TODO: Make this async
-            return match std::fs::read(&format!("assets/{}", asset)) {
-                Ok(content) => HttpResponse::Ok().body(content),
-                Err(_) => panic!("The file is missing."),
-            };
-        }
+    let static_assets: HashMap<String, String> = vec![
+        ("favicon.ico", "image/vnd.microsoft.icon"),
+        ("icon.png", "image/png"),
+        ("prism.css", "text/css"),
+        ("prism.js", "text/javascript"),
+    ]
+    .into_iter()
+    .map(|(key, content_type)| (key.to_owned(), content_type.to_owned()))
+    .collect();
+    if let Some(content_type) = static_assets.get(&key) {
+        return match fs::read(&format!("assets/{}", key)).await {
+            Ok(content) => HttpResponse::Ok()
+                .content_type(content_type.to_owned())
+                .body(content),
+            Err(_) => panic!("The file is missing."),
+        };
     }
 
     // Or maybe it's a blog article?
     let blog = req.app_data::<web::Data<Blog>>().unwrap();
-    if let Some(article) = blog.article_for(&key).await {
-        let page_template = std::fs::read("assets/page.html").unwrap().utf8_or_panic();
-        let article_template = std::fs::read("assets/article-full.html")
-            .unwrap()
-            .utf8_or_panic();
-        let article = article_template.fill_in_article(&article);
-        let page = page_template.fill_in_content(&article);
-        return HttpResponse::Ok().body(page);
+    if let Some(article) = blog.get(&key).await {
+        let article_html = template::full_article().await.fill_in_article(&article);
+        return HttpResponse::Ok()
+            .content_type("text/html")
+            .body(template::page().await.fill_in_content(&article_html));
     }
 
-    HttpResponse::Ok().body("Unknown key!") // TODO
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .body("Unknown key!") // TODO
 }
 
 /// Shortcuts are not content of the website itself. Rather, they redirect to somewhere else.
@@ -211,7 +218,9 @@ async fn go_shortcut(
     }
 
     info!("Shortcut handler, but shortcut not found!");
-    HttpResponse::Ok().body("Shortcut") // TODO
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .body("Shortcut") // TODO
 }
 
 fn api(admin_key: &str) -> impl HttpServiceFactory {
@@ -276,5 +285,8 @@ mod visits_api {
 async fn default_handler(req: HttpRequest) -> impl Responder {
     warn!("Default handler invoked.");
     info!("Request: {:?}", req);
-    HttpResponse::NotFound().body("Sadly, nothing to see here!")
+    // TODO
+    HttpResponse::NotFound()
+        .content_type("text/html")
+        .body("Sadly, nothing to see here!")
 }
