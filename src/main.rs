@@ -232,6 +232,7 @@ fn api(admin_key: &str) -> impl HttpServiceFactory {
                 .service(shortcuts_api::update)
                 .service(shortcuts_api::remove),
         )
+        .service(web::scope("/blog").service(blog_api::refresh))
         .service(web::scope("/visits").service(visits_api::tail))
 }
 pub struct AuthGuard(String);
@@ -270,6 +271,18 @@ mod shortcuts_api {
         let (shortcut,) = path.into_inner();
         shortcut_db.delete(&shortcut).await;
         HttpResponse::Ok().body("Deleted shortcut.")
+    }
+}
+
+mod blog_api {
+    use super::*;
+
+    #[get("/refresh")]
+    pub async fn refresh(blog: web::Data<Blog>) -> impl Responder {
+        match blog.load().await {
+            Ok(_) => HttpResponse::Ok().body("Refreshed blog articles."),
+            Err(error) => HttpResponse::InternalServerError().body(error),
+        }
     }
 }
 

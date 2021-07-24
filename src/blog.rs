@@ -31,7 +31,7 @@ impl Blog {
     const BASE_URL: &'static str = "https://raw.githubusercontent.com/marcelgarus/server/main/blog";
 
     pub async fn new() -> Self {
-        let mut db = Self {
+        let db = Self {
             articles: Default::default(),
             article_keys: Default::default(),
         };
@@ -39,7 +39,7 @@ impl Blog {
         db
     }
 
-    async fn load(&mut self) -> Result<(), String> {
+    pub async fn load(&self) -> Result<(), String> {
         let keys_and_dates = download(&format!("{}/published.md", Self::BASE_URL))
             .await?
             .split('\n')
