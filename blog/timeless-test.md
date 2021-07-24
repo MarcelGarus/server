@@ -2,8 +2,6 @@
 
 This article only exists to test the capabilities of the blog.
 
---snip--
-
 Hello.
 
 - Some

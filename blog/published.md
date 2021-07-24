@@ -1,4 +1,6 @@
 timeless-contact
+timeless-imprint
+timeless-privacy-policy
 timeless-test
 
 2020-10-08-chest-intro

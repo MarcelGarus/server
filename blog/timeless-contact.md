@@ -2,8 +2,6 @@
 
 You want to talk? I'm open to getting to know new people.
 
---snip--
-
 These are ways to contact me, sorted in my preference order:
 
 * [Telegram](https://t.me/marcelgarus)
