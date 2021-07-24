@@ -74,13 +74,6 @@ async fn main() -> std::io::Result<()> {
     let address = config.address.clone();
 
     let tls_config = config.tls_config.clone().map(|config| {
-        // let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-        // builder
-        //     .set_private_key_file(&config.certificate, SslFiletype::PEM)
-        //     .unwrap();
-        // builder.set_certificate_chain_file(&config.key).unwrap();
-        // builder
-
         let mut tls_config = ServerConfig::new(NoClientAuth::new());
         tls_config
             .set_single_cert(
@@ -117,10 +110,10 @@ async fn main() -> std::io::Result<()> {
     });
 
     let server = if let Some(config) = tls_config {
-        info!("Binding using OpenSSL.");
+        info!("Binding using HTTPS.");
         server.bind_rustls(address, config)?
     } else {
-        warn!("Binding insecurely.");
+        warn!("Binding using insecure HTTP.");
         server.bind(address)?
     };
 
@@ -130,7 +123,7 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
-    let certfile = fs::File::open(filename).expect("cannot open certificate file");
+    let certfile = fs::File::open(filename).expect("Can' open the certificate file.");
     let mut reader = BufReader::new(certfile);
     rustls_pemfile::certs(&mut reader)
         .unwrap()
@@ -140,11 +133,11 @@ fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
 }
 
 fn load_private_key(filename: &str) -> rustls::PrivateKey {
-    let keyfile = fs::File::open(filename).expect("cannot open private key file");
+    let keyfile = fs::File::open(filename).expect("Can't open the private key file.");
     let mut reader = BufReader::new(keyfile);
 
     loop {
-        match rustls_pemfile::read_one(&mut reader).expect("cannot parse private key .pem file") {
+        match rustls_pemfile::read_one(&mut reader).expect("Can't parse the .pem file.") {
             Some(rustls_pemfile::Item::RSAKey(key)) => return rustls::PrivateKey(key),
             Some(rustls_pemfile::Item::PKCS8Key(key)) => return rustls::PrivateKey(key),
             None => break,
@@ -152,10 +145,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
         }
     }
 
-    panic!(
-        "No keys found in {:?} (encrypted keys not supported)",
-        filename
-    );
+    panic!("No keys found in {:?}.", filename);
 }
 
 // Visitors of mgar.us get a list of all articles.
@@ -179,8 +169,6 @@ async fn index(blog: web::Data<Blog>) -> impl Responder {
 #[get("/{key}")]
 async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Responder {
     let (key,) = path.into_inner();
-    info!("Request: {:?}", req);
-    info!("Key: {:?}", key);
 
     // Check if this is one of the static assets.
     let static_assets = vec!["favicon.ico", "icon.png", "prism.css", "prism.js"];
@@ -206,7 +194,7 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
         return HttpResponse::Ok().body(page);
     }
 
-    HttpResponse::Ok().body("Unknown key!")
+    HttpResponse::Ok().body("Unknown key!") // TODO
 }
 
 /// Shortcuts are not content of the website itself. Rather, they redirect to somewhere else.
@@ -223,7 +211,7 @@ async fn go_shortcut(
     }
 
     info!("Shortcut handler, but shortcut not found!");
-    HttpResponse::Ok().body("Shortcut")
+    HttpResponse::Ok().body("Shortcut") // TODO
 }
 
 fn api(admin_key: &str) -> impl HttpServiceFactory {
@@ -286,7 +274,7 @@ mod visits_api {
 }
 
 async fn default_handler(req: HttpRequest) -> impl Responder {
-    error!("Default handler invoked.");
+    warn!("Default handler invoked.");
     info!("Request: {:?}", req);
     HttpResponse::NotFound().body("Sadly, nothing to see here!")
 }

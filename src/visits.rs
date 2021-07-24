@@ -28,6 +28,7 @@ pub struct Visit {
     pub url: String,
     pub user_agent: Option<String>,
     pub language: Option<String>,
+    pub referer: Option<String>,
 }
 impl Visit {
     pub fn for_request(req: &ServiceRequest) -> OngoingVisit {
@@ -38,6 +39,7 @@ impl Visit {
             url: req.path().to_owned(),
             user_agent: req.headers().get_utf8("user-agent"),
             language: req.headers().get_utf8("language"),
+            referer: req.headers().get_utf8("referer"),
         }
     }
 }
@@ -48,6 +50,7 @@ pub struct OngoingVisit {
     pub url: String,
     pub user_agent: Option<String>,
     pub language: Option<String>,
+    pub referer: Option<String>,
 }
 impl OngoingVisit {
     pub fn finish(self, res: &Result<ServiceResponse, actix_web::Error>) -> Visit {
@@ -62,6 +65,7 @@ impl OngoingVisit {
             url: self.url,
             user_agent: self.user_agent,
             language: self.language,
+            referer: self.referer,
         }
     }
 }
