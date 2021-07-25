@@ -108,6 +108,12 @@ pub mod template {
             .await
             .unwrap()
     }
+    pub async fn rss_article() -> String {
+        fs::read_to_string("assets/rss-article.xml").await.unwrap()
+    }
+    pub async fn rss_feed() -> String {
+        fs::read_to_string("assets/rss-feed.xml").await.unwrap()
+    }
     pub async fn error() -> String {
         fs::read_to_string("assets/error.html").await.unwrap()
     }
@@ -123,9 +129,12 @@ impl FillInTemplateExt for String {
         self.replace("{{content}}", content)
     }
     fn fill_in_article(&self, article: &Article) -> Self {
+        let published = article
+            .published
+            .map(|date| format!("{}", date.format("%Y-%m-%d")));
         let mut infos = vec![];
-        if let Some(date) = article.published {
-            infos.push(format!("{}", date.format("%Y-%m-%d")));
+        if let Some(date) = published.clone() {
+            infos.push(date);
         }
         infos.push(format!(
             "{} minute read",
@@ -134,6 +143,7 @@ impl FillInTemplateExt for String {
 
         self.replace("{{key}}", &article.key)
             .replace("{{title}}", &article.title)
+            .replace("{{published}}", &published.unwrap_or("unknown".into()))
             .replace("{{info}}", &itertools::join(infos.into_iter(), " · "))
             .replace("{{teaser}}", &article.teaser)
             .replace("{{body}}", &article.content)

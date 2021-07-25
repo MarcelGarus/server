@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+        <title>Marcel's Blog</title>
+        <description>Sometimes, Marcel posts articles here.</description>
+        <link>http://marcelgarus.dev</link>
+        <copyright>2021 marcelgarus.dev · All rights reserved</copyright>
+        <ttl>1800</ttl>
+
+        {{content}}
+
+    </channel>
+</rss>

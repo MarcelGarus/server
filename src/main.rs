@@ -108,6 +108,7 @@ async fn main() -> std::io::Result<()> {
             // .wrap(middleware::NormalizePath::default())
             .service(index)
             .service(go_shortcut)
+            .service(rss)
             .service(api(&config.admin_key))
             .service(url_with_key)
             .default_service(web::route().to(default_handler))
@@ -213,6 +214,18 @@ async fn go_shortcut(
     }
 
     error_page_404(&req).await
+}
+
+#[get("/rss")]
+async fn rss(blog: web::Data<Blog>) -> impl Responder {
+    let mut items_xml = vec![];
+    for article in blog.list().await {
+        items_xml.push(template::rss_article().await.fill_in_article(&article));
+    }
+    let rss_xml = template::rss_feed()
+        .await
+        .fill_in_content(&itertools::join(items_xml, "\n"));
+    HttpResponse::Ok().content_type("text/xml").body(rss_xml)
 }
 
 fn api(admin_key: &str) -> impl HttpServiceFactory {

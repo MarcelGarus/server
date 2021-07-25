@@ -43,7 +43,6 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* add an RSS feed
 * treat paths as normalized
 * add compression
 
