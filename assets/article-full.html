@@ -22,6 +22,8 @@
         });
     </script>
 </article>
+
+<!-- Pagination to previous and next article -->
 <style>
     .pagination {
         display: flex;
@@ -68,6 +70,38 @@
         <div class="pagination-title">{{next-title}}</div>
     </a>
 </footer>
+
+<!-- Shortlink -->
+<script>
+    const shortlink = "mgar.us/{{key}}";
+    async function copyShortlink() {
+        await navigator.clipboard.writeText(shortlink);
+
+        let confirmationText = " Copied! ";
+        while (confirmationText.length < shortlink.length) {
+            confirmationText = confirmationText + "-";
+            if (confirmationText.length < shortlink.length) {
+                confirmationText = "-" + confirmationText;
+            }
+            console.log("Confirmation text is now " + confirmationText.length + " long.");
+        }
+        document.getElementById("shortlink").innerHTML = confirmationText;
+    }
+    function resetShortlink() {
+        document.getElementById("shortlink").innerHTML = shortlink;
+    }
+</script>
+<style>
+    #shortlink {
+        background-color: transparent;
+        color: inherit;
+        border: 0.1em solid #f97191;
+        border-radius: 0.2em;
+        cursor: pointer;
+        font-family: 'JetBrains Mono', monospace;
+    }
+</style>
 <footer class="secondary" style="margin-top: 2em;">
-    You liked this article? Feel free to share it using this shortlink: <code>mgar.us/{{key}}</code>
+    <span>You liked this article? Feel free to share it using this shortlink:</span>
+    <button id="shortlink" title="Click to copy the shortlink" onclick="copyShortlink()" onmouseout="resetShortlink()">mgar.us/{{key}}</button>
 </footer>
