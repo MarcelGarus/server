@@ -1,7 +1,7 @@
 # Chest: A New Database
 
 Databases are a fundamental part of most modern applications.
-Studying [Hive](https://hivedb.dev) got me interested in database design, so I decided to implement my own database – called *Chest*.  
+Studying [Hive](https://hivedb.dev) got me interested in database design, so I decided to implement my own database – called **Chest**.  
 It's initially intended as a research project, but I'd also be happy if I produce something useful.
 
 --snip--
@@ -16,9 +16,9 @@ These are the goals:
 
 These are non-goals:
 
-- Don't optimize for server use-cases, but focus on clients first.
-- Don't offer native sync capabilities with cloud services or peer-to-peer.
-- Don't focus on performance over everything else.
+- Don't optimize for server use-cases, but focus on **clients first**.
+- **Don't offer native sync capabilities** with cloud services or peer-to-peer.
+- **Don't focus on performance** over everything else.
 
 I want to especially emphasize the last non-goal.
 That's not to say I don't care about speed at all – I'll try to keep the time complexity to a minimum and create an architecture that's not inherently slow. But I'll postpone low-level performance optimizations to a (much) later date.

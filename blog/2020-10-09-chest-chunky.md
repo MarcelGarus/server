@@ -3,7 +3,9 @@
 Chest's lowest abstraction layer is called *Chunky*.
 In the end, all data should somehow be stored in a file, something like `🌮.chest` (yes, the taco emoji is a great name for a database). The Chunky framework will take care of managing access to that file.
 
-A key question is how to deal with mutating data: If we need to insert some data "in the middle" of the database, we don't want to re-write everything that comes after it. Files are a linear stream of bytes and that doesn't quite fit our use case. So, the Chunky layer offers an abstraction from that.
+A key question is how to deal with **mutating data**:
+If we need to insert some data "in the middle" of the database, we don't want to re-write everything that comes after it.
+Files are a linear stream of bytes and that doesn't quite fit our use case. So, the Chunky layer offers an abstraction from that.
 
 --snip--
 
@@ -78,12 +80,12 @@ First, the chunks are filtered to
 
 Then, those chunks are compared with the original chunks – after all, if `dart:set...` is called with the same value that's already stored or it's called multiple times, the value might be the same as the beginning of the transaction.
 
-So, how are the ACID goals achieved?
+## Okay. So, how are the ACID goals achieved?
 
 Because only one transaction is running at a time, the isolation goal is automatically fulfilled.
 
 Regarding atomicity, the only guarantees that the operating system gives us is that creating and removing files is atomic as well as changing a single bit in a file.
-That's why Chunky uses a *transaction file*:
+That's why Chunky uses a **transaction file**:
 
 1. When a transaction is finished, a separate file is created, the naming scheme being something like `🌮.chest.transaction`. It contains only a single byte that acts like a single bit – only differentiating between zero and non-zero. Initially, it's set to zero.
 2. The file is flushed to disk (the changes are actually written to disk).
@@ -102,7 +104,7 @@ If the program gets killed at any point, a consistent state can always be restor
     - No: We're before step 5 and can just delete the transaction file (old state).
 
 Because we either revert to the old state or the new one in all of the cases, the transactions are atomic.  
-The transaction byte being set to 1 guarantees that the changes will actually be written to disk, either right now or during recovery in case the program crashes.
+The transaction byte being set to `1` guarantees that the changes will actually be written to disk, either right now or during recovery in case the program crashes.
 
 ## Conclusion
 
