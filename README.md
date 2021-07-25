@@ -38,7 +38,6 @@ TODOs in no particular order:
   * visits
   * statistics about which pages were visited how often
   * shortcuts
-* configure caching of content
 * pay
   * redirect to PayPal
   * calculate amount

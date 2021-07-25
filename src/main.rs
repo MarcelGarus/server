@@ -172,7 +172,9 @@ async fn index(blog: web::Data<Blog>) -> impl Responder {
     let page = template::page()
         .await
         .fill_in_content(&itertools::join(articles, "\n"));
-    HttpResponse::Ok().html(page)
+    HttpResponse::Ok()
+        .append_header(("Cache-Control", "public,max-age=3600"))
+        .html(page)
 }
 
 /// For brevity, most URLs consist of a single key.
@@ -185,6 +187,7 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
         return match fs::read(&asset.path).await {
             Ok(content) => HttpResponse::Ok()
                 .content_type(asset.content_type)
+                .append_header(("Cache-Control", "public,max-age=3600"))
                 .body(content),
             Err(_) => panic!("The file is missing."),
         };
@@ -198,7 +201,9 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
             .fill_in_article(&article)
             .fill_in_previous_article(&blog.get_previous(&key).await)
             .fill_in_next_article(&blog.get_next(&key).await);
-        return HttpResponse::Ok().html(template::page().await.fill_in_content(&article_html));
+        return HttpResponse::Ok()
+            .append_header(("Cache-Control", "public,max-age=3600"))
+            .html(template::page().await.fill_in_content(&article_html));
     }
 
     error_page_404(&req).await
