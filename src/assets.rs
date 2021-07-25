@@ -31,7 +31,7 @@ lazy_static! {
             Asset::internal("favicon.ico", "image/vnd.microsoft.icon"),
             Asset::internal("icon.png", "image/png"),
             Asset::internal("prism.css", "text/css"),
-            Asset::internal("prism.js", "text/javascirpt"),
+            Asset::internal("prism.js", "text/javascript"),
             Asset::internal("fonts.css", "text/css"),
             Asset::internal("JetBrainsMono-Latin.woff2", "font/woff2"),
             Asset::internal("JetBrainsMono-LatinExt.woff2", "font/woff2"),
