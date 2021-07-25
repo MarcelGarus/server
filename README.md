@@ -26,7 +26,7 @@ Why use `marcelgarus.dev` as the main domain?
 * It contains my full name (and my usual username), not some cryptic abbreviation that I don't use anywhere else.
 * It's easy to say in conversation.
 * The `.dev` domain enforces HTTPS. No need to redirect HTTP to HTTPS.
-* Using the short `mgar.us` that redirects to the main domain is still possible, so links don't get shorter.
+* Because `mgar.us` redirects to the main domain, links can still be short.
 
 For information on how to configure the server, the [server setup guide](server-setup.md) might be interesting.
 
