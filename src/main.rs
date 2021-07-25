@@ -6,7 +6,8 @@ use crate::visits::{Visit, VisitsLog};
 use actix_service::Service;
 use actix_web::body::AnyBody;
 use actix_web::dev::{self, HttpServiceFactory, RequestHead, ServiceResponse};
-use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
+use actix_web::http::ContentEncoding;
+use actix_web::middleware::{self, ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{
     delete, get, guard, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
@@ -105,6 +106,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(
                 ErrorHandlers::new().handler(StatusCode::INTERNAL_SERVER_ERROR, error_500_handler),
             )
+            .wrap(middleware::Compress::new(ContentEncoding::Auto))
             // .wrap(middleware::NormalizePath::default())
             .service(index)
             .service(go_shortcut)

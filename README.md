@@ -43,7 +43,6 @@ TODOs in no particular order:
   * redirect to PayPal
   * calculate amount
 * treat paths as normalized
-* add compression
 * auto-select all of the shortlink in the article footer
 
 # Setting up the server
