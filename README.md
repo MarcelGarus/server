@@ -32,7 +32,6 @@ TODOs in no particular order:
   * statistics about which pages were visited how often
   * shortcuts
 * configure caching of items
-* files
 * blog
   * add `link` tags to previous and next article
   * review and improve articles

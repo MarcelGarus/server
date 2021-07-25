@@ -1696,6 +1696,7 @@ dependencies = [
  "futures",
  "http",
  "itertools",
+ "lazy_static",
  "log",
  "nom",
  "reqwest",

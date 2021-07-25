@@ -17,11 +17,11 @@ use log::{info, warn, LevelFilter};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
-use std::collections::HashMap;
 use std::io::BufReader;
 use std::net::SocketAddr;
 use tokio::fs;
 
+mod assets;
 mod blog;
 mod shortcuts;
 mod utils;
@@ -178,25 +178,11 @@ async fn index(blog: web::Data<Blog>) -> impl Responder {
 async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Responder {
     let (key,) = path.into_inner();
 
-    // Check if this is one of the static assets.
-    let static_assets: HashMap<String, String> = vec![
-        ("favicon.ico", "image/vnd.microsoft.icon"),
-        ("icon.png", "image/png"),
-        ("prism.css", "text/css"),
-        ("prism.js", "text/javascript"),
-        ("fonts.css", "text/css"),
-        ("JetBrainsMono-Latin.woff2", "font/woff2"),
-        ("JetBrainsMono-LatinExt.woff2", "font/woff2"),
-        ("JosefinSans-Latin.woff2", "font/woff2"),
-        ("JosefinSans-LatinExt.woff2", "font/woff2"),
-    ]
-    .into_iter()
-    .map(|(key, content_type)| (key.to_owned(), content_type.to_owned()))
-    .collect();
-    if let Some(content_type) = static_assets.get(&key) {
-        return match fs::read(&format!("assets/{}", key)).await {
+    // Check if this is one of the static assets or files.
+    if let Some(asset) = assets::asset_for(&key) {
+        return match fs::read(&asset.path).await {
             Ok(content) => HttpResponse::Ok()
-                .content_type(content_type.to_owned())
+                .content_type(asset.content_type)
                 .body(content),
             Err(_) => panic!("The file is missing."),
         };
