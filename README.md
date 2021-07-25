@@ -42,7 +42,6 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* treat paths as normalized
 * auto-select all of the shortlink in the article footer
 
 # Setting up the server

@@ -87,7 +87,6 @@ async fn main() -> std::io::Result<()> {
         tls_config
     });
 
-    // TODO: Enable compression?
     let cloned_log = visits_log.clone();
     let server = HttpServer::new(move || {
         let cloned_log = cloned_log.clone();
@@ -107,7 +106,7 @@ async fn main() -> std::io::Result<()> {
                 ErrorHandlers::new().handler(StatusCode::INTERNAL_SERVER_ERROR, error_500_handler),
             )
             .wrap(middleware::Compress::new(ContentEncoding::Auto))
-            // .wrap(middleware::NormalizePath::default())
+            .wrap(middleware::NormalizePath::default())
             .service(index)
             .service(go_shortcut)
             .service(rss)
