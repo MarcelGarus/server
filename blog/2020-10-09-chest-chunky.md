@@ -7,6 +7,8 @@ A key question is how to deal with mutating data: If we need to insert some data
 
 --snip--
 
+![Chest abstracts files](https://github.com/marcelgarus/server/raw/main/blog/images/chest-chunky-layers.png)
+
 Also, writing to the file might fail for various reasons – whether the OS kills our program, the user plugs out the storage medium, the power supply vanishes, or a black hole consumes the earth. Chunky also ensures that we handle such cases gracefully by fulfilling the four ACID goals:
 
 - **Atomicity**: If you do a change, it's either fully written to the database file or not at all – partially written changes should never occur.
@@ -23,6 +25,8 @@ To do anything with those chunks, you need to start a transaction, during which 
 At the end of the transaction, all the changed chunks are actually written to the file.
 
 Here's a schematic diagram of how the file looks like:
+
+![Chunks are placed in the file one after another](https://github.com/marcelgarus/server/raw/main/blog/images/chest-chunky-chunks.png)
 
 ```text
 | chunk 0 | chunk 1 | chunk 2 | chunk 3 | ...
