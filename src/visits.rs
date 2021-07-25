@@ -95,7 +95,7 @@ impl VisitsLog {
     }
 
     pub async fn register(&self, visit: Visit) {
-        info!("Registering visit: {:?}", visit);
+        info!("Registering {:?}", visit);
 
         let mut buffer = self.buffer.write().await;
         buffer.push(visit.clone());

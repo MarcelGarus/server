@@ -184,6 +184,11 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
         ("icon.png", "image/png"),
         ("prism.css", "text/css"),
         ("prism.js", "text/javascript"),
+        ("fonts.css", "text/css"),
+        ("JetBrainsMono-Latin.woff2", "font/woff2"),
+        ("JetBrainsMono-LatinExt.woff2", "font/woff2"),
+        ("JosefinSans-Latin.woff2", "font/woff2"),
+        ("JosefinSans-LatinExt.woff2", "font/woff2"),
     ]
     .into_iter()
     .map(|(key, content_type)| (key.to_owned(), content_type.to_owned()))
