@@ -28,10 +28,6 @@ Here's a schematic diagram of how the file looks like:
 
 ![Chunks are placed in the file one after another](https://github.com/marcelgarus/server/raw/main/blog/images/chest-chunky-chunks.png)
 
-```text
-| chunk 0 | chunk 1 | chunk 2 | chunk 3 | ...
-```
-
 And here's how a usage might look like in actual code:
 
 ```dart
