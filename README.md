@@ -35,7 +35,6 @@ TODOs in no particular order:
 * files
 * blog
   * add `link` tags to previous and next article
-  * improve how images are displayed
   * review and improve articles
 * pay
   * redirect to PayPal
