@@ -2,31 +2,38 @@ This is a work in progress.
 
 ---
 
-This is my personal server, which is available at [mgar.us](https://mgar.us).
+This is my personal server, which is available at [marcelgarus.dev](https://marcelgarus.dev).
 
 The goal for this server is to offer several services:
 
-* `mgar.us`: A page with general information about me.
-* `mgar.us/blog`: An overview of articles that I wrote.
-* `mgar.us/contact`: Options to contact me.
-* `mgar.us/pay`: Redirects to PayPal, calculates result of path (e.g. mgar.us/pay?amount=13/3).
-* `mgar.us/<article-id>`: Each article has a custom URL.
-* `mgar.us/<file-id>`: A file I made publicly available.
-* `mgar.us/go/<shortcut-id>`: A shortcut to another website.
-* `mgar.us/api/...`: APIs are available here.
+* `marcelgarus.dev`: An overview of articles that I wrote.
+* `marcelgarus.dev/<article-id>`: An article I wrote.
+* `marcelgarus.dev/<file-id>`: A file I made publicly available.
+* `marcelgarus.dev/go/<shortcut-id>`: A shortcut to another website.
+* `marcelgarus.dev/contact`: Options to contact me.
+* `marcelgarus.dev/pay`: Redirects to PayPal, calculates result of path (e.g. `marcelgarus.dev/pay?amount=13/3`).
+* `marcelgarus.dev/api/...`: APIs are available here.
 
 Other domains redirect here:
 
-* `marcelgarus.de` -> redirect to `mgar.us`
-* `marcelgarus.dev` -> redirect to `mgar.us`
-* `schreib.marcel.jetzt` -> redirect to `mgar.us/contact`
-* `bezahl.marcel.jetzt` -> redirect to `mgar.us/pay`
+* `mgar.us` redirects to `marcelgarus.dev`
+* `marcelgarus.de` redirects to `marcelgarus.dev`
+* `schreib.marcel.jetzt` redirects to `marcelgarus.dev/contact`
+* `bezahl.marcel.jetzt` redirects to `marcelgarus.dev/pay`
+
+Why use `marcelgarus.dev` as the main domain?
+
+* It contains my full name (and my usual username), not some cryptic abbreviation that I don't use anywhere else.
+* It's easy to say in conversation.
+* The `.dev` domain enforces HTTPS. No need to redirect HTTP to HTTPS.
+* Using the short `mgar.us` that redirects to the main domain is still possible, so links don't get shorter.
 
 For information on how to configure the server, the [server setup guide](server-setup.md) might be interesting.
 
 TODOs in no particular order:
 
 * redirect HTTP to HTTPS
+* switch to marcelgarus.dev
 * app
   * visits
   * statistics about which pages were visited how often
