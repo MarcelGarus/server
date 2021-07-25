@@ -38,7 +38,6 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* make shortcut previews in social messenges beautiful
 * add an RSS feed
 * treat paths as normalized
 * add compression
