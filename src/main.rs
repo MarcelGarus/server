@@ -192,7 +192,11 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     // Or maybe it's a blog article?
     let blog = req.app_data::<web::Data<Blog>>().unwrap();
     if let Some(article) = blog.get(&key).await {
-        let article_html = template::full_article().await.fill_in_article(&article);
+        let article_html = template::full_article()
+            .await
+            .fill_in_article(&article)
+            .fill_in_previous_article(&blog.get_previous(&key).await)
+            .fill_in_next_article(&blog.get_next(&key).await);
         return HttpResponse::Ok().html(template::page().await.fill_in_content(&article_html));
     }
 

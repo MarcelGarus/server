@@ -122,6 +122,8 @@ pub mod template {
 pub trait FillInTemplateExt {
     fn fill_in_content(&self, content: &str) -> Self;
     fn fill_in_article(&self, article: &Article) -> Self;
+    fn fill_in_previous_article(&self, previous_article: &Option<Article>) -> Self;
+    fn fill_in_next_article(&self, next_article: &Option<Article>) -> Self;
     fn fill_in_error(&self, status_code: StatusCode, title: &str, description: &str) -> Self;
 }
 impl FillInTemplateExt for String {
@@ -147,6 +149,24 @@ impl FillInTemplateExt for String {
             .replace("{{info}}", &itertools::join(infos.into_iter(), " · "))
             .replace("{{teaser}}", &article.teaser)
             .replace("{{body}}", &article.content)
+    }
+    fn fill_in_previous_article(&self, previous_article: &Option<Article>) -> Self {
+        match previous_article {
+            Some(article) => self
+                .replace("{{has-previous}}", "true")
+                .replace("{{previous-key}}", &article.key)
+                .replace("{{previous-title}}", &article.title),
+            None => self.replace("{{has-previous}}", "false"),
+        }
+    }
+    fn fill_in_next_article(&self, next_article: &Option<Article>) -> Self {
+        match next_article {
+            Some(article) => self
+                .replace("{{has-next}}", "true")
+                .replace("{{next-key}}", &article.key)
+                .replace("{{next-title}}", &article.title),
+            None => self.replace("{{has-next}}", "false"),
+        }
     }
     fn fill_in_error(&self, status_code: StatusCode, title: &str, description: &str) -> Self {
         self.replace("{{title}}", title)

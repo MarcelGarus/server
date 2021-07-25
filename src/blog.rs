@@ -91,6 +91,23 @@ impl Blog {
             .map(|article| article.clone())
     }
 
+    pub async fn get_previous(&self, key: &str) -> Option<Article> {
+        self.get_delta(key, -1).await
+    }
+    pub async fn get_next(&self, key: &str) -> Option<Article> {
+        self.get_delta(key, 1).await
+    }
+    async fn get_delta(&self, key: &str, delta: i64) -> Option<Article> {
+        let keys = self.article_keys.read().await;
+        let index = keys.iter().position(|it| it == key)?;
+        let wanted_index = (index as i64) + delta;
+        if wanted_index < 0 {
+            return None;
+        }
+        let wanted_key = keys.get(wanted_index as usize)?;
+        self.get(wanted_key).await
+    }
+
     pub async fn list(&self) -> Vec<Article> {
         let mut articles = vec![];
         for key in self.article_keys.read().await.iter() {
