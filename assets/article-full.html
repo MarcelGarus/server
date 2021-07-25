@@ -12,6 +12,7 @@
             const urlParts = document.URL.split("#");
             if (urlParts == 1) return;
             const anchor = urlParts[1];
+            if (!anchor) return;
             if (!anchor.startsWith("title-at-")) return;
             const desiredTitlePosition = parseInt(anchor.substring("title-at-".length));
             if (Number.isNaN(desiredTitlePosition)) return;
