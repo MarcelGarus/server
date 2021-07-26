@@ -33,7 +33,6 @@ For information on how to configure the server, the [server setup guide](server-
 TODOs in no particular order:
 
 * redirect HTTP to HTTPS
-* switch to marcelgarus.dev
 * app
   * visits
   * statistics about which pages were visited how often
@@ -182,11 +181,11 @@ use=web, web=checkip.dyndns.org
 # Update using Namecheap.
 protocol=namecheap
 server=dynamicdns.park-your-domain.com
-login=mgar.us
+login=marcelgarus.dev
 password='the-namecheap-dyn-dns-password'
 ssl=yes
-## The addresses of the A+ Dynamic DNS Records to update
-@, www
+## The comma-separated addresses of the A+ Dynamic DNS Records to update
+@
 ```
 
 To test if it works:
@@ -194,6 +193,8 @@ To test if it works:
 ```bash
 ddclient -daemon=0 -noquiet -debug
 ```
+
+The cache file is at `/tmp/ddclient.cache` and you might need to delete it if you want to re-set the DynDNS A+ record although the IP didn't change.
 
 Make `ddclient` start when the system is booted:
 
@@ -240,11 +241,13 @@ sudo certbot certonly --standalone
 The command will output the paths of the certificates, for example:
 
 ```
-Certificate is saved at: /etc/letsencrypt/live/mgar.us/fullchain.pem
-Key is saved at:         /etc/letsencrypt/live/mgar.us/privkey.pem
+Certificate is saved at: /etc/letsencrypt/live/marcelgarus.dev/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/marcelgarus.dev/privkey.pem
 ```
 
-The following commands tell Certbot how to temporarily stop and start the server for certificate renewals:
+The easy-to-use version of Certbot will use port 80 to re-request a new certificate when necessary.
+The `.dev` domain only supports HTTPS, so the server only needs to listen on port 443.
+If we would also bind port 80 from the server, the following commands tell Certbot how to temporarily stop and start the server for certificate renewals:
 
 ```bash
 sudo sh -c 'printf "#!/bin/sh\nsystemctl server stop\n" > /etc/letsencrypt/renewal-hooks/pre/server.sh'
@@ -253,4 +256,4 @@ sudo chmod 755 /etc/letsencrypt/renewal-hooks/pre/server.sh
 sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
 ```
 
-In the `Config.toml` file, add an `[https]` section.
+Make sure there's an `[https]` section in the `Config.toml` file (like in the example file above).
