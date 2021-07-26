@@ -43,7 +43,7 @@ TODOs in no particular order:
 
 # Setting up the server
 
-This document describes my server setup, mostly for my future self.
+This chapter describes my server setup, mostly for my future self.
 Got a server with Ubuntu 18.04 LTS 64bit from [Strato](https://strato.de).
 
 ## Long-running commands
