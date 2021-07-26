@@ -47,11 +47,14 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
+* add certificate for marcelgarus.dev, *.marcelgarus.dev, mgar.us, *.mgar.us, marcel.jetzt, and *.marcel.jetzt
 * redirect mgar.us to marcelgarus.dev
 * redirect marcel.jetzt to marcelgarus.dev
+* use 301 redirects for shortlinks
 * directly scroll to the right position before onload
+* add security.txt
 * add robots.txt
-* change contact page to about me page
+* change contact page to more general about me page
 * put CAAS in privacy policy
 
 # Setting up the server
