@@ -53,7 +53,6 @@ TODOs in no particular order:
 * add robots.txt
 * change contact page to about me page
 * put CAAS in privacy policy
-* add DNS record for *
 
 # Setting up the server
 
@@ -112,8 +111,8 @@ address = "0.0.0.0:80"
 admin_key = "the-admin-key"
 
 [certficate]
-cert = "/etc/letsencrypt/live/mgar.us/fullchain.pem"
-key  = "/etc/letsencrypt/live/mgar.us/privkey.pem"
+cert = "/etc/letsencrypt/live/marcelgarus.dev/fullchain.pem"
+key  = "/etc/letsencrypt/live/marcelgarus.dev/privkey.pem"
 ```
 
 Finally, start the server:
@@ -169,7 +168,7 @@ Viewing logs works like this:
 journalctl -f -u server.service
 ```
 
-## Setup DynDNS to route mgar.us traffic here (DynDNS via Namecheap)
+## Setup DynDNS to route marcelgarus.dev traffic here (DynDNS via Namecheap)
 
 ```bash
 sudo apt install ddclient
@@ -199,8 +198,10 @@ login=marcelgarus.dev
 password='the-namecheap-dyn-dns-password'
 ssl=yes
 ## The comma-separated addresses of the A+ Dynamic DNS Records to update
-@
+@, *
 ```
+
+The `@, *` means that the DynDNS records for both `@` (resembling just `marcelgarus.dev`) and for `*` (resembling `*.marcelgarus.dev`) will be updated.
 
 To test if it works:
 
@@ -244,13 +245,20 @@ Ensure that Certbot can be run:
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
-Temporarily stop the server; Certbot needs port 80.
+Cerbot offers two basic authentication options: `standalone`, which will try to spin up an HTTP webserver on port 80 and thereby see if you got control over the domain, or DNS-based verification where you create a TXT DNS record.
 
-Then, run the certbot:
+HTTP-based authentication only works for specific subdomains, e.g. `marcelgarus.dev` or `something.marcelgarus.dev` – but it can't be used to issue a wildcard certificate for `*.marcelgarus.dev`.
+
+Namecheap doesn't natively support certbot, so we need to do that manually:
 
 ```bash
-sudo certbot certonly --standalone
+sudo certbot certonly --manual --preferred-challenges dns -d "marcel
+garus.dev,*.marcelgarus.dev"
 ```
+
+This will create a certbot-internal private/public key pair and ask you to add the public key as a TXT DNS record for the subdomain `_acme-challenge`.
+It may take some time for the record to propagate. After some time, it should be visible in this [Google DNS Toolbox](https://toolbox.googleapps.com/apps/dig/#TXT/_acme-challenge.marcelgarus.dev) or be retrievable by running `nslookup -type=TXT _acme-challenge.marcelgarus.dev`).
+Once the record is public, click enter.
 
 The command will output the paths of the certificates, for example:
 
@@ -259,14 +267,10 @@ Certificate is saved at: /etc/letsencrypt/live/marcelgarus.dev/fullchain.pem
 Key is saved at:         /etc/letsencrypt/live/marcelgarus.dev/privkey.pem
 ```
 
-The easy-to-use version of Certbot will use port 80 to re-request a new certificate when necessary.
-The `.dev` domain only supports HTTPS, so the server only needs to listen on port 443.
-If we would also bind port 80 from the server, the following commands tell Certbot how to temporarily stop and start the server for certificate renewals:
+To make sure the server is restarted with the new certificate after renewal:
 
 ```bash
-sudo sh -c 'printf "#!/bin/sh\nsystemctl server stop\n" > /etc/letsencrypt/renewal-hooks/pre/server.sh'
-sudo sh -c 'printf "#!/bin/sh\nsystemctl server start\n" > /etc/letsencrypt/renewal-hooks/post/server.sh'
-sudo chmod 755 /etc/letsencrypt/renewal-hooks/pre/server.sh
+sudo sh -c 'printf "#!/bin/sh\nsystemctl server restart\n" > /etc/letsencrypt/renewal-hooks/post/server.sh'
 sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
 ```
 
