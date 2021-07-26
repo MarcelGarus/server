@@ -84,7 +84,7 @@ pub struct VisitsLog {
     tail: Arc<RwLock<VecDeque<Visit>>>,
 }
 impl VisitsLog {
-    const BUFFER_SIZE: usize = 1000;
+    const BUFFER_SIZE: usize = 100;
     const TAIL_SIZE: usize = 100;
 
     pub fn new() -> Self {
