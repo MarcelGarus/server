@@ -34,12 +34,26 @@ TODOs in no particular order:
 
 * redirect HTTP to HTTPS
 * app
-  * visits
-  * statistics about which pages were visited how often
-  * shortcuts
+  * configuring shortcuts
+  * recent visits
+  * faulty (non-200) responses in the last 30 days
+  * distribution of response times in the last 30 days
+  * distribution of visits in the last 30 days
+  * distribution of page visits (paths) in the last 30 days
+  * distribution of user agents in the last 30 days
+  * distribution of languages in the last 30 days
+  * distribution of referers in the last 30 days
+  * referers per article in the last 30 days
 * pay
   * redirect to PayPal
   * calculate amount
+* redirect mgar.us to marcelgarus.dev
+* redirect marcel.jetzt to marcelgarus.dev
+* directly scroll to the right position before onload
+* add robots.txt
+* change contact page to about me page
+* put CAAS in privacy policy
+* add DNS record for *
 
 # Setting up the server
 
