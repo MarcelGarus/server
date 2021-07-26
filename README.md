@@ -58,6 +58,15 @@ Detach from a screens using ctrl+a ctrl+d.
 
 Screens can be re-connected to using `screen -d -r <id>`.
 
+## Firewall?
+
+No Firewall is needed; there are only few programs listening on ports, so it's easy to get an overview.
+To see which programs listen on ports, do:
+
+```bash
+sudo ss -tunlp
+```
+
 ## Setup the repo
 
 ```bash
