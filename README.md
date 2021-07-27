@@ -50,15 +50,40 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* add certificate for marcelgarus.dev, *.marcelgarus.dev, mgar.us, *.mgar.us, marcel.jetzt, and *.marcel.jetzt
-* redirect mgar.us to marcelgarus.dev
-* redirect marcel.jetzt to marcelgarus.dev
+* add certificates for several domains
+  * @.marcelgarus.dev
+  * *.marcelgarus.dev
+  * @.marcelgarus.de
+  * *.marcelgarus.de
+  * @.mgar.us
+  * *.mgar.us
+  * @.marcel.jetzt
+  * *.marcel.jetzt
+* redirect secondary domains to primary one
+  * www.marcelgarus.dev -> marcelgarus.dev
+  * *.marcelgarus.dev -> error page
+  * marcelgarus.de -> marcelgarus.dev
+  * www.marcelgarus.de -> marcelgarus.dev
+  * *.marcelgarus.de -> error page
+  * mgar.us -> marcelgarus.dev
+  * www.mgar.us -> marcelgarus.dev
+  * go.mgar.us -> marcelgarus.dev/go
+  * *.mgar.us -> error page
+  * marcel.jetzt -> marcelgarus.dev
+  * www.marcel.jetzt -> marcelgarus.dev
+  * schreib.marcel.jetzt -> marcelgarus.dev/about-me
+  * folge.marcel.jetzt -> marcelgarus.dev/about-me
+  * folg.marcel.jetzt -> marcelgarus.dev
+  * bezahl.marcel.jetzt -> marcelgarus.dev/pay
+  * zahl.marcel.jetzt -> marcelgarus.dev/pay
+  * *.marcel.jetzt -> error page
 * use 301 redirects for shortlinks
 * directly scroll to the right position before onload
 * add security.txt
 * add robots.txt
 * change contact page to more general about me page
 * put CAAS in privacy policy
+* use CSS variables
 
 # Setting up the server
 
