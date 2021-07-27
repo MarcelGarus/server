@@ -14,13 +14,6 @@ The goal for this server is to offer several services:
 * `marcelgarus.dev/pay`: Redirects to PayPal, calculates result of path (e.g. `marcelgarus.dev/pay?amount=13/3`).
 * `marcelgarus.dev/api/...`: APIs are available here.
 
-Other domains redirect here:
-
-* `mgar.us` redirects to `marcelgarus.dev`
-* `marcelgarus.de` redirects to `marcelgarus.dev`
-* `schreib.marcel.jetzt` redirects to `marcelgarus.dev/contact`
-* `bezahl.marcel.jetzt` redirects to `marcelgarus.dev/pay`
-
 Why use `marcelgarus.dev` as the main domain?
 
 * It contains my full name (and my usual username), not some cryptic abbreviation that I don't use anywhere else.
@@ -28,7 +21,17 @@ Why use `marcelgarus.dev` as the main domain?
 * The `.dev` domain enforces HTTPS. No need to redirect HTTP to HTTPS.
 * Because `mgar.us` redirects to the main domain, links can still be short.
 
-For information on how to configure the server, the [server setup guide](server-setup.md) might be interesting.
+Domains are normalized and redirect to `marcelgarus.dev` without a subdomain.
+This is true for subdomains of `marcelgarus.dev` and for my other domains (`mgar.us`, `marcelgarus.de`, `marcel.jetzt`).
+They keep the existing path, but change the hostname and may add a path at the beginning.
+
+* no subdomain (`@`) and subdomain `www` redirects to `marcelgarus.dev`
+* the `go` subdomain redirects to `marcelgarus.dev/go`
+* German verb domains (like `schreib.marcel.jetzt`) redirect to specific pages
+  * a trailing `e` is removed (so both `schreib` and `schreibe` works)
+  * `schreib` and `folg` redirect to `marcelgarus.dev/about-me`
+  * `bezahl` and `zahl` redirect to `marcelgarus.dev/pay`
+* other subdomains produce an error page
 
 TODOs in no particular order:
 
@@ -197,6 +200,7 @@ use=web, web=checkip.dyndns.org
 # Update using Namecheap.
 protocol=namecheap
 server=dynamicdns.park-your-domain.com
+
 login=marcelgarus.dev
 password='the-namecheap-dyn-dns-password'
 ssl=yes
