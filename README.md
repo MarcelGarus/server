@@ -200,11 +200,23 @@ server=dynamicdns.park-your-domain.com
 login=marcelgarus.dev
 password='the-namecheap-dyn-dns-password'
 ssl=yes
-## The comma-separated addresses of the A+ Dynamic DNS Records to update
-@, *
-```
+@.marcelgarus.dev, *.marcelgarus.dev
 
-The `@, *` means that the DynDNS records for both `@` (resembling just `marcelgarus.dev`) and for `*` (resembling `*.marcelgarus.dev`) will be updated.
+login=marcelgarus.de
+password='the-namecheap-dyn-dns-password'
+ssl=yes
+@.marcelgarus.de, *.marcelgarus.de
+
+login=mgar.us
+password='the-namecheap-dyn-dns-password'
+ssl=yes
+@.mgar.us, *.mgar.us
+
+login=marcel.jetzt
+password='the-namecheap-dyn-dns-password'
+ssl=yes
+@.marcel.jetzt, *.marcel.jetzt
+```
 
 To test if it works:
 
