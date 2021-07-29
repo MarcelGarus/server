@@ -13,7 +13,7 @@ use actix_web::{
 };
 use blog::Blog;
 use futures::future::{self, FutureExt};
-use http::{StatusCode, Uri};
+use http::StatusCode;
 use log::{info, warn, LevelFilter};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
@@ -97,9 +97,10 @@ async fn main() -> std::io::Result<()> {
                 })
             })
             .wrap_fn(move |req, srv| {
+                info!("Normalizing request {:?}", &req);
                 srv.call(req).then(async move |res| {
                     res.map(|res| {
-                        if let Some(location) = normalize_uri(res.request().uri()) {
+                        if let Some(location) = normalize_request(res.request()) {
                             res.into_response(HttpResponse::redirect_to(&location))
                         } else {
                             res
@@ -169,16 +170,22 @@ async fn main() -> std::io::Result<()> {
 }
 
 async fn redirect_to_https(req: HttpRequest) -> impl Responder {
-    let location = normalize_uri(&req.uri()).unwrap_or("https://marcelgarus.dev".into());
+    let location = normalize_request(&req).unwrap_or("https://marcelgarus.dev".into());
     info!("Redirecting to {}", location);
     HttpResponse::redirect_to(&location)
 }
 
 /// Returns `None` if the given URI is properly normalized, or `Some(location)`
 /// if the user should be redirected to a new location.
-fn normalize_uri(uri: &Uri) -> Option<String> {
-    let host = uri.host().unwrap_or("marcelgarus.dev".into());
-    let path = uri.path();
+fn normalize_request(req: &HttpRequest) -> Option<String> {
+    let host = match req.uri().host() {
+        Some(host) => host.to_owned(),
+        None => req
+            .headers()
+            .get_utf8("host")
+            .unwrap_or("marcelgarus.dev".into()),
+    };
+    let path = req.path();
     let additional_path_prefix = if host.ends_with(".marcel.jetzt") {
         let subdomain = host[..host.len() - ".marcel.jetzt".len()].to_owned();
         match subdomain.as_ref() {
