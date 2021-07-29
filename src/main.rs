@@ -12,7 +12,7 @@ use actix_web::{
     delete, get, guard, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use blog::Blog;
-use futures::future::FutureExt;
+use futures::future::{self, FutureExt};
 use http::StatusCode;
 use log::{info, warn, LevelFilter};
 use rustls::{NoClientAuth, ServerConfig};
@@ -32,12 +32,13 @@ mod visits;
 struct Config {
     address: SocketAddr,
     admin_key: String,
-    tls_config: Option<TlsConfig>,
+    https_config: Option<HttpsConfig>,
 }
 #[derive(Clone)]
-struct TlsConfig {
-    certificate: String,
-    key: String,
+struct HttpsConfig {
+    redirect_from_address: Option<SocketAddr>,
+    certificate_chain: String,
+    private_key: String,
 }
 impl Config {
     async fn load() -> Self {
@@ -49,12 +50,15 @@ impl Config {
         Self {
             address: config["address"].as_str().unwrap().parse().unwrap(),
             admin_key: config["admin_key"].as_str().unwrap().into(),
-            tls_config: config
+            https_config: config
                 .get("https")
                 .and_then(|it| it.as_table())
-                .map(|cert_info| TlsConfig {
-                    certificate: cert_info["certificate_chain"].as_str().unwrap().into(),
-                    key: cert_info["private_key"].as_str().unwrap().into(),
+                .map(|config| HttpsConfig {
+                    redirect_from_address: config
+                        .get("redirect_from_address")
+                        .map(|address| address.as_str().unwrap().parse().unwrap()),
+                    certificate_chain: config["certificate_chain"].as_str().unwrap().into(),
+                    private_key: config["private_key"].as_str().unwrap().into(),
                 }),
         }
     }
@@ -76,18 +80,8 @@ async fn main() -> std::io::Result<()> {
     let shortcut_db = web::Data::new(ShortcutDb::new().await);
     let address = config.address.clone();
 
-    let tls_config = config.tls_config.clone().map(|config| {
-        let mut tls_config = ServerConfig::new(NoClientAuth::new());
-        tls_config
-            .set_single_cert(
-                load_certs(&config.certificate),
-                load_private_key(&config.key),
-            )
-            .unwrap();
-        tls_config
-    });
-
     let cloned_log = visits_log.clone();
+    let cloned_config = config.clone();
     let server = HttpServer::new(move || {
         let cloned_log = cloned_log.clone();
         App::new()
@@ -110,12 +104,22 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(go_shortcut)
             .service(rss)
-            .service(api(&config.admin_key))
+            .service(api(&cloned_config.admin_key))
             .service(url_with_key)
             .default_service(web::route().to(default_handler))
     });
 
-    let server = if let Some(config) = tls_config {
+    let tls_config = config.https_config.clone().map(|config| {
+        let mut tls_config = ServerConfig::new(NoClientAuth::new());
+        tls_config
+            .set_single_cert(
+                load_certs(&config.certificate_chain),
+                load_private_key(&config.private_key),
+            )
+            .unwrap();
+        tls_config
+    });
+    let main_server = if let Some(config) = tls_config {
         info!("Binding using HTTPS.");
         server.bind_rustls(address, config)?
     } else {
@@ -123,13 +127,41 @@ async fn main() -> std::io::Result<()> {
         server.bind(address)?
     };
 
-    server.run().await?;
+    let redirect_server = config
+        .clone()
+        .https_config
+        .clone()
+        .and_then(|config| config.redirect_from_address)
+        .map(|addr| {
+            HttpServer::new(move || App::new().service(redirect_to_https))
+                .bind(addr)
+                .expect("Couln't bind to redirect socket.")
+        });
+
+    future::join(
+        async {
+            main_server.run().await.expect("Main server crashed.");
+        },
+        async {
+            if let Some(server) = redirect_server {
+                server.run().await.expect("Redirect server crashed.");
+            }
+        },
+    )
+    .await;
 
     info!("Server ended.");
     visits_log.flush().await;
 
     info!("Ending server executable.");
     Ok(())
+}
+
+#[get("/")]
+async fn redirect_to_https(_req: HttpRequest) -> impl Responder {
+    HttpResponse::MovedPermanently()
+        .append_header(("Location", "https://marcelgarus.dev"))
+        .body("")
 }
 
 fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
@@ -218,7 +250,7 @@ async fn go_shortcut(
 ) -> impl Responder {
     let (shortcut,) = path.into_inner();
     if let Some(shortcut) = shortcut_db.shortcut_for(&shortcut).await {
-        return HttpResponse::Found()
+        return HttpResponse::MovedPermanently()
             .append_header(("Location", shortcut.url.clone()))
             .body("");
     }
