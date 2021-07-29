@@ -133,7 +133,7 @@ async fn main() -> std::io::Result<()> {
         .clone()
         .and_then(|config| config.redirect_from_address)
         .map(|addr| {
-            HttpServer::new(move || App::new().service(redirect_to_https))
+            HttpServer::new(move || App::new().default_service(web::route().to(redirect_to_https)))
                 .bind(addr)
                 .expect("Couln't bind to redirect socket.")
         });
@@ -157,7 +157,6 @@ async fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-#[get("/")]
 async fn redirect_to_https(req: HttpRequest) -> impl Responder {
     let (host, path) = normalize_host_and_path(
         &req.headers()
