@@ -130,12 +130,13 @@ git clone https://github.com/marcelgarus/server.git
 Then, add a `Config.toml`:
 
 ```toml
-address = "0.0.0.0:80"
+address   = "0.0.0.0:80"
 admin_key = "the-admin-key"
 
-[certficate]
-cert = "/etc/letsencrypt/live/marcelgarus.dev/fullchain.pem"
-key  = "/etc/letsencrypt/live/marcelgarus.dev/privkey.pem"
+[https]
+redirect_from_address = "0.0.0.0:80"
+certificate_chain     = "/etc/letsencrypt/live/marcelgarus.dev/fullchain.pem"
+private_key           = "/etc/letsencrypt/live/marcelgarus.dev/privkey.pem"
 ```
 
 Finally, start the server:
