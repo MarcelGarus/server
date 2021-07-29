@@ -165,6 +165,7 @@ async fn redirect_to_https(req: HttpRequest) -> impl Responder {
         req.path(),
     );
     let location = format!("https://{}{}", host, path);
+    info!("Redirecting to {}", location);
     HttpResponse::MovedPermanently()
         .append_header(("Location", location))
         .body("")
