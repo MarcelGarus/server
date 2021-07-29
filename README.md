@@ -50,15 +50,6 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* add certificates for several domains
-  * @.marcelgarus.dev
-  * *.marcelgarus.dev
-  * @.marcelgarus.de
-  * *.marcelgarus.de
-  * @.mgar.us
-  * *.mgar.us
-  * @.marcel.jetzt
-  * *.marcel.jetzt
 * redirect secondary domains to primary one
   * www.marcelgarus.dev -> marcelgarus.dev
   * *.marcelgarus.dev -> error page
@@ -84,6 +75,7 @@ TODOs in no particular order:
 * change contact page to more general about me page
 * put CAAS in privacy policy
 * use CSS variables
+* update certbot hooks based on whether the server also listens on port 80
 
 # Setting up the server
 
@@ -291,25 +283,22 @@ sudo ln -s /snap/bin/certbot /usr/bin/certbot
 
 Cerbot offers two basic authentication options: `standalone`, which will try to spin up an HTTP webserver on port 80 and thereby see if you got control over the domain, or DNS-based verification where you create a TXT DNS record.
 
-HTTP-based authentication only works for specific subdomains, e.g. `marcelgarus.dev` or `something.marcelgarus.dev` – but it can't be used to issue a wildcard certificate for `*.marcelgarus.dev`.
+HTTP-based authentication only works for specific subdomains, e.g. `marcelgarus.dev` or `something.marcelgarus.dev`.
+To get a wildcard certificate like `*.marcelgarus.dev`, DNS validation needs to be used but that's hard.
+So for 
+
+<details>
+<summary>DNS validation (not chosen)</sumamry>
 
 Namecheap doesn't natively support certbot, so we need to do that manually:
 
 ```bash
-sudo certbot certonly --manual --preferred-challenges dns -d "marcel
-garus.dev,*.marcelgarus.dev"
+sudo certbot certonly --manual --preferred-challenges dns -d "marcelgarus.dev,*.marcelgarus.dev,marcelgarus.de,*.marcelgarus.de,mgar.us,*.mgar.us,marcel.jetzt,*.marcel.jetzt"
 ```
 
 This will create a certbot-internal private/public key pair and ask you to add the public key as a TXT DNS record for the subdomain `_acme-challenge`.
 It may take some time for the record to propagate. After some time, it should be visible in this [Google DNS Toolbox](https://toolbox.googleapps.com/apps/dig/#TXT/_acme-challenge.marcelgarus.dev) or be retrievable by running `nslookup -type=TXT _acme-challenge.marcelgarus.dev`).
 Once the record is public, click enter.
-
-The command will output the paths of the certificates, for example:
-
-```
-Certificate is saved at: /etc/letsencrypt/live/marcelgarus.dev/fullchain.pem
-Key is saved at:         /etc/letsencrypt/live/marcelgarus.dev/privkey.pem
-```
 
 To make sure the server is restarted with the new certificate after renewal:
 
@@ -318,4 +307,33 @@ sudo sh -c 'printf "#!/bin/sh\nsystemctl server restart\n" > /etc/letsencrypt/re
 sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
 ```
 
-Make sure there's an `[https]` section in the `Config.toml` file (like in the example file above).
+</details>
+
+<details>
+<summary>Standalone validation</summary>
+
+To make sure the temporary Certbot server doesn't conflict with our server, create hooks:
+
+```bash
+sudo sh -c 'printf "#!/bin/sh\nsystemctl server stop\n" > /etc/letsencrypt/renewal-hooks/pre/server.sh'
+sudo sh -c 'printf "#!/bin/sh\nsystemctl server start\n" > /etc/letsencrypt/renewal-hooks/post/server.sh'
+sudo chmod 755 /etc/letsencrypt/renewal-hooks/pre/server.sh
+sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
+```
+
+Then just run:
+
+```bash
+sudo certbot certonly -d "marcelgarus.dev,www.marcelgarus.dev,marcelgarus.de,www.marcelgarus.de,mgar.us,www.mgar.us,marcel.jetzt,www.marcel.jetzt,schreib.marcel.jetzt,schreibe.marcel.jetzt,folg.marcel.jetzt,folge.marcel.jetzt,bezahl.marcel.jetzt,bezahle.marcel.jetzt,zahl.marcel.jetzt,zahle.marcel.jetzt"
+```
+
+</deatils>
+
+The command will also output the paths of the certificates, for example:
+
+```
+Certificate is saved at: /etc/letsencrypt/live/marcelgarus.dev/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/marcelgarus.dev/privkey.pem
+```
+
+Make sure there's an `[https]` section in the `Config.toml` file that links to these files (like in the example file above).
