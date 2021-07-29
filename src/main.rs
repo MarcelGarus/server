@@ -158,10 +158,33 @@ async fn main() -> std::io::Result<()> {
 }
 
 #[get("/")]
-async fn redirect_to_https(_req: HttpRequest) -> impl Responder {
+async fn redirect_to_https(req: HttpRequest) -> impl Responder {
+    let (host, path) = normalize_host_and_path(
+        &req.headers()
+            .get_utf8("host")
+            .unwrap_or("marcelgarus.dev".into()),
+        req.path(),
+    );
+    let location = format!("https://{}{}", host, path);
     HttpResponse::MovedPermanently()
-        .append_header(("Location", "https://marcelgarus.dev"))
+        .append_header(("Location", location))
         .body("")
+}
+fn normalize_host_and_path(host: &str, path: &str) -> (String, String) {
+    let additional_path_prefix = if host.ends_with(".marcel.jetzt") {
+        let subdomain = host[..host.len() - ".marcel.jetzt".len()].to_owned();
+        match subdomain.as_ref() {
+            "bezahle" | "bezahl" | "zahle" | "zahl" => "/pay",
+            "schreibe" | "schreib" | "folge" | "folg" => "/about-me",
+            _ => "",
+        }
+    } else {
+        ""
+    };
+    (
+        "marcelgarus.dev".into(),
+        format!("{}{}", additional_path_prefix, path),
+    )
 }
 
 fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
@@ -190,7 +213,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
     panic!("No keys found in {:?}.", filename);
 }
 
-// Visitors of mgar.us get a list of all articles.
+// Visitors of the main page get a list of all articles.
 #[get("/")]
 async fn index(blog: web::Data<Blog>) -> impl Responder {
     let article_template = template::article_teaser().await;
