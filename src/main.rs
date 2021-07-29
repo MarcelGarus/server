@@ -195,7 +195,7 @@ fn normalize_uri(uri: &Uri) -> Option<String> {
     if host == normalized_host && path == normalized_path {
         None
     } else {
-        Some(format!("https://marcelgarus.dev/{}", normalized_path))
+        Some(format!("https://marcelgarus.dev{}", normalized_path))
     }
 }
 
