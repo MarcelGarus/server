@@ -71,6 +71,17 @@ impl HtmlEncode for String {
     }
 }
 
+pub trait RedirectHttpResponseExt {
+    fn redirect_to(location: &str) -> Self;
+}
+impl RedirectHttpResponseExt for HttpResponse {
+    fn redirect_to(location: &str) -> Self {
+        HttpResponse::MovedPermanently()
+            .append_header(("Location", location))
+            .body("")
+    }
+}
+
 /// Fetches the body from a URL. It should return a 200 code and valid UTF-8 content.
 pub async fn download(url: &str) -> Result<String, String> {
     let response = reqwest::get(url)

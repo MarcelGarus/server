@@ -96,6 +96,17 @@ async fn main() -> std::io::Result<()> {
                     res
                 })
             })
+            .wrap_fn(move |req, srv| {
+                srv.call(req).then(async move |res| {
+                    res.map(|res| {
+                        if let Some(location) = normalize_request(res.request()) {
+                            res.into_response(HttpResponse::redirect_to(&location))
+                        } else {
+                            res
+                        }
+                    })
+                })
+            })
             .wrap(
                 ErrorHandlers::new().handler(StatusCode::INTERNAL_SERVER_ERROR, error_500_handler),
             )
@@ -158,19 +169,19 @@ async fn main() -> std::io::Result<()> {
 }
 
 async fn redirect_to_https(req: HttpRequest) -> impl Responder {
-    let (host, path) = normalize_host_and_path(
-        &req.headers()
-            .get_utf8("host")
-            .unwrap_or("marcelgarus.dev".into()),
-        req.path(),
-    );
-    let location = format!("https://{}{}", host, path);
+    let location = normalize_request(&req).unwrap_or("https://marcelgarus.dev".into());
     info!("Redirecting to {}", location);
-    HttpResponse::MovedPermanently()
-        .append_header(("Location", location))
-        .body("")
+    HttpResponse::redirect_to(&location)
 }
-fn normalize_host_and_path(host: &str, path: &str) -> (String, String) {
+
+/// Returns `None` if the request is properly normalized, or `Some(location)` if
+/// the user should be redirected to a new location.
+fn normalize_request(req: &HttpRequest) -> Option<String> {
+    let host = req
+        .headers()
+        .get_utf8("host")
+        .unwrap_or("marcelgarus.dev".into());
+    let path = req.path();
     let additional_path_prefix = if host.ends_with(".marcel.jetzt") {
         let subdomain = host[..host.len() - ".marcel.jetzt".len()].to_owned();
         match subdomain.as_ref() {
@@ -181,10 +192,14 @@ fn normalize_host_and_path(host: &str, path: &str) -> (String, String) {
     } else {
         ""
     };
-    (
-        "marcelgarus.dev".into(),
-        format!("{}{}", additional_path_prefix, path),
-    )
+
+    let normalized_host = "marcelgarus.dev".to_owned();
+    let normalized_path = format!("{}{}", additional_path_prefix, path);
+    if host == normalized_host && path == normalized_path {
+        None
+    } else {
+        Some(format!("https://marcelgarus.dev/{}", normalized_path))
+    }
 }
 
 fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
@@ -273,11 +288,8 @@ async fn go_shortcut(
 ) -> impl Responder {
     let (shortcut,) = path.into_inner();
     if let Some(shortcut) = shortcut_db.shortcut_for(&shortcut).await {
-        return HttpResponse::MovedPermanently()
-            .append_header(("Location", shortcut.url.clone()))
-            .body("");
+        return HttpResponse::redirect_to(&shortcut.url);
     }
-
     error_page_404(&req).await
 }
 
