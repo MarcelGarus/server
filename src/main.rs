@@ -324,7 +324,16 @@ fn api(admin_key: &str) -> impl HttpServiceFactory {
                 .service(shortcuts_api::remove),
         )
         .service(web::scope("/blog").service(blog_api::refresh))
-        .service(web::scope("/visits").service(visits_api::tail))
+        .service(
+            web::scope("/visits")
+                .service(visits_api::tail)
+                .service(visits_api::error_tail)
+                .service(visits_api::number_of_visits)
+                .service(visits_api::urls)
+                .service(visits_api::user_agents)
+                .service(visits_api::languages)
+                .service(visits_api::referers),
+        )
 }
 pub struct AuthGuard(String);
 impl guard::Guard for AuthGuard {
@@ -383,6 +392,36 @@ mod visits_api {
     #[get("/tail")]
     async fn tail(visits_log: web::Data<VisitsLog>) -> impl Responder {
         HttpResponse::Ok().json(visits_log.get_tail().await)
+    }
+
+    #[get("/error-tail")]
+    async fn error_tail(visits_log: web::Data<VisitsLog>) -> impl Responder {
+        HttpResponse::Ok().json(visits_log.get_error_tail().await)
+    }
+
+    #[get("/number-of-visits")]
+    async fn number_of_visits(visits_log: web::Data<VisitsLog>) -> impl Responder {
+        HttpResponse::Ok().json(visits_log.get_number_of_visits_by_day().await)
+    }
+
+    #[get("/urls")]
+    async fn urls(visits_log: web::Data<VisitsLog>) -> impl Responder {
+        HttpResponse::Ok().json(visits_log.get_urls_by_day().await)
+    }
+
+    #[get("/user-agents")]
+    async fn user_agents(visits_log: web::Data<VisitsLog>) -> impl Responder {
+        HttpResponse::Ok().json(visits_log.get_user_agents_by_day().await)
+    }
+
+    #[get("/languages")]
+    async fn languages(visits_log: web::Data<VisitsLog>) -> impl Responder {
+        HttpResponse::Ok().json(visits_log.get_languages_by_day().await)
+    }
+
+    #[get("/referers")]
+    async fn referers(visits_log: web::Data<VisitsLog>) -> impl Responder {
+        HttpResponse::Ok().json(visits_log.get_referers_by_day().await)
     }
 }
 

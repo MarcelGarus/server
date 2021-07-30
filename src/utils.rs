@@ -1,5 +1,7 @@
 use actix_web::{body::AnyBody, http::HeaderMap, HttpResponse, HttpResponseBuilder};
+use chrono::{Date, Utc};
 use http::{HeaderValue, StatusCode};
+use serde::Serialize;
 
 use crate::blog::Article;
 
@@ -59,6 +61,14 @@ impl Utf8OrNoneExt for HeaderValue {
 impl Utf8OrNoneExt for Option<&HeaderValue> {
     fn utf8_or_none(&self) -> Option<String> {
         self.and_then(|value| value.utf8_or_none())
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Hash)]
+pub struct UtcDate(pub Date<Utc>);
+impl Serialize for UtcDate {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(&self.0.format("%G-%m-%d"))
     }
 }
 

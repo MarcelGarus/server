@@ -5,9 +5,10 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DurationMicroSeconds, TimestampSeconds};
 use std::{
-    collections::VecDeque,
+    collections::{HashMap, VecDeque},
     fs::OpenOptions,
     io::Write,
+    iter::FromIterator,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -38,7 +39,7 @@ impl Visit {
             method: req.method().to_string(),
             url: req.path().to_owned(),
             user_agent: req.headers().get_utf8("user-agent"),
-            language: req.headers().get_utf8("language"),
+            language: req.headers().get_utf8("accept-language"),
             referer: req.headers().get_utf8("referer"),
         }
     }
@@ -80,17 +81,27 @@ pub struct VisitsLog {
     /// and then flushed to disk.
     buffer: Arc<RwLock<Vec<Visit>>>,
 
-    /// A deque containing the last `TAIL_SIZE` visits.
-    tail: Arc<RwLock<VecDeque<Visit>>>,
+    tail: LimitedLog<Visit>,
+    errors: LimitedLog<Visit>,
+    number_of_visits: MonthlyDistributionCounter<()>,
+    visited_urls: MonthlyDistributionCounter<String>,
+    user_agents: MonthlyDistributionCounter<String>,
+    languages: MonthlyDistributionCounter<String>,
+    referers: MonthlyDistributionCounter<String>,
 }
 impl VisitsLog {
     const BUFFER_SIZE: usize = 100;
-    const TAIL_SIZE: usize = 100;
 
     pub fn new() -> Self {
         Self {
             buffer: Default::default(),
             tail: Default::default(),
+            errors: Default::default(),
+            number_of_visits: Default::default(),
+            visited_urls: Default::default(),
+            user_agents: Default::default(),
+            languages: Default::default(),
+            referers: Default::default(),
         }
     }
 
@@ -103,10 +114,26 @@ impl VisitsLog {
             self.flush().await
         }
 
-        let mut tail = self.tail.write().await;
-        tail.push_back(visit);
-        if tail.len() > Self::TAIL_SIZE {
-            tail.pop_front();
+        self.tail.add(visit.clone()).await;
+
+        if !matches!(visit.response_status, Ok(200 | 301)) {
+            self.errors.add(visit.clone()).await;
+        }
+
+        self.number_of_visits.report_occurrence(()).await;
+
+        self.visited_urls.report_occurrence(visit.url).await;
+
+        if let Some(user_agent) = visit.user_agent {
+            self.user_agents.report_occurrence(user_agent).await;
+        }
+
+        if let Some(language) = visit.language {
+            self.languages.report_occurrence(language).await;
+        }
+
+        if let Some(referer) = visit.referer {
+            self.referers.report_occurrence(referer).await;
         }
     }
 
@@ -127,6 +154,88 @@ impl VisitsLog {
     }
 
     pub async fn get_tail(&self) -> Vec<Visit> {
-        self.tail.read().await.clone().into_iter().rev().collect()
+        self.tail.list().await
+    }
+
+    pub async fn get_error_tail(&self) -> Vec<Visit> {
+        self.errors.list().await
+    }
+
+    pub async fn get_number_of_visits_by_day(&self) -> HashMap<UtcDate, u64> {
+        HashMap::from_iter(
+            self.number_of_visits
+                .list()
+                .await
+                .into_iter()
+                .map(|(date, map)| (date, *map.get(&()).unwrap_or(&0))),
+        )
+    }
+
+    pub async fn get_urls_by_day(&self) -> HashMap<UtcDate, HashMap<String, u64>> {
+        self.visited_urls.list().await
+    }
+
+    pub async fn get_user_agents_by_day(&self) -> HashMap<UtcDate, HashMap<String, u64>> {
+        self.user_agents.list().await
+    }
+
+    pub async fn get_languages_by_day(&self) -> HashMap<UtcDate, HashMap<String, u64>> {
+        self.languages.list().await
+    }
+
+    pub async fn get_referers_by_day(&self) -> HashMap<UtcDate, HashMap<String, u64>> {
+        self.referers.list().await
+    }
+}
+
+/// Log that keeps a maximum number of items.
+#[derive(Clone)]
+struct LimitedLog<T: Clone> {
+    log: Arc<RwLock<VecDeque<T>>>,
+}
+impl<T: Clone> LimitedLog<T> {
+    const LOG_SIZE: usize = 100;
+
+    async fn add(&self, item: T) {
+        let mut log = self.log.write().await;
+        log.push_back(item);
+        if log.len() > Self::LOG_SIZE {
+            log.pop_front();
+        }
+    }
+    async fn list(&self) -> Vec<T> {
+        self.log.read().await.clone().into_iter().rev().collect()
+    }
+}
+impl<T: Clone> Default for LimitedLog<T> {
+    fn default() -> Self {
+        Self {
+            log: Default::default(),
+        }
+    }
+}
+
+/// Counts the occurrence of some thing in the last 30 days.
+#[derive(Clone, Default)]
+struct MonthlyDistributionCounter<T: Clone + Eq + core::hash::Hash> {
+    buckets: Arc<RwLock<HashMap<UtcDate, HashMap<T, u64>>>>,
+}
+impl<T: Clone + Eq + core::hash::Hash> MonthlyDistributionCounter<T> {
+    async fn report_occurrence(&self, occurrence: T) {
+        let today = Utc::now().date();
+        let mut buckets = self.buckets.write().await;
+        *buckets
+            .entry(UtcDate(today))
+            .or_insert(Default::default())
+            .entry(occurrence)
+            .or_insert(0) += 1;
+
+        let month_ago = today
+            .checked_sub_signed(chrono::Duration::days(30))
+            .unwrap();
+        buckets.retain(|date, _| date.0 > month_ago);
+    }
+    async fn list(&self) -> HashMap<UtcDate, HashMap<T, u64>> {
+        self.buckets.read().await.clone()
     }
 }
