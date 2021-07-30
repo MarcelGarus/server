@@ -52,6 +52,8 @@ TODOs in no particular order:
 * directly scroll to the right position before onload
 * add security.txt
 * add robots.txt
+* write more in the footer
+* link to RSS feed in the footer
 
 # Setting up the server
 
