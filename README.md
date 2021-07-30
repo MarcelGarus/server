@@ -52,7 +52,6 @@ TODOs in no particular order:
 * directly scroll to the right position before onload
 * add security.txt
 * add robots.txt
-* change contact page to more general about me page
 * put CAAS in privacy policy
 * use CSS variables
 * update certbot hooks based on whether the server also listens on port 80
