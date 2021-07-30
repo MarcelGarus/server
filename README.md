@@ -35,7 +35,6 @@ They keep the existing path, but change the hostname and may add a path at the b
 
 TODOs in no particular order:
 
-* redirect HTTP to HTTPS
 * app
   * configuring shortcuts
   * recent visits
@@ -50,25 +49,6 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* redirect secondary domains to primary one
-  * www.marcelgarus.dev -> marcelgarus.dev
-  * *.marcelgarus.dev -> error page
-  * marcelgarus.de -> marcelgarus.dev
-  * www.marcelgarus.de -> marcelgarus.dev
-  * *.marcelgarus.de -> error page
-  * mgar.us -> marcelgarus.dev
-  * www.mgar.us -> marcelgarus.dev
-  * go.mgar.us -> marcelgarus.dev/go
-  * *.mgar.us -> error page
-  * marcel.jetzt -> marcelgarus.dev
-  * www.marcel.jetzt -> marcelgarus.dev
-  * schreib.marcel.jetzt -> marcelgarus.dev/about-me
-  * folge.marcel.jetzt -> marcelgarus.dev/about-me
-  * folg.marcel.jetzt -> marcelgarus.dev
-  * bezahl.marcel.jetzt -> marcelgarus.dev/pay
-  * zahl.marcel.jetzt -> marcelgarus.dev/pay
-  * *.marcel.jetzt -> error page
-* use 301 redirects for shortlinks
 * directly scroll to the right position before onload
 * add security.txt
 * add robots.txt
