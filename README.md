@@ -54,7 +54,6 @@ TODOs in no particular order:
 * add robots.txt
 * put CAAS in privacy policy
 * use CSS variables
-* update certbot hooks based on whether the server also listens on port 80
 
 # Setting up the server
 
