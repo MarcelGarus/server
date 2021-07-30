@@ -39,13 +39,11 @@ TODOs in no particular order:
   * configuring shortcuts
   * recent visits
   * faulty (non-200) responses in the last 30 days
-  * distribution of response times in the last 30 days
-  * distribution of visits in the last 30 days
-  * distribution of page visits (paths) in the last 30 days
-  * distribution of user agents in the last 30 days
-  * distribution of languages in the last 30 days
-  * distribution of referers in the last 30 days
-  * referers per article in the last 30 days
+  * visits in the last 30 days
+  * urls in the last 30 days
+  * user agents in the last 30 days
+  * languages in the last 30 days
+  * referers in the last 30 days
 * pay
   * redirect to PayPal
   * calculate amount
