@@ -13,8 +13,9 @@ marcel.garus@gmail.com
 ## Collection of General Information When You Visit My Website
 
 **Type and purpose of processing**:
-When you access my website, the server automatically records [general information](https://github.com/marcelgarus/server/blob/main/src/visits.rs), which I statistically evaluate.
-In particular, I use them for the following purposes:
+When you access my website, the server automatically receives and records general information from your computer and browser, including information about your software and hardware and the visited site.
+The exact type of information to be collected can be seen [here in the source code](https://github.com/marcelgarus/server/blob/main/src/visits.rs).
+I statistically evaluate these information – in particular, I use them for the following purposes:
 
 * **Administrative**: Ensuring a problem-free use of my website and evaluating its stability and performance
 * **Content statistics**: Evaluating which content is popular
@@ -26,12 +27,19 @@ The processing takes place in accordance with Art. 6 Paragraph 1 GDPR on the bas
 **Recipient**:
 I am the recipient of these information.
 I also might share these information with friends or make them public.
+Strato hosts the server and thereby gets access to connection metadata.
 
 **Storage period**:
-The data does not contain personal information, so it is saved permanently.
+The collected information don't contain personal information, so they are saved permanently.
 
 **Provision prescribed or required**:
 No personal data is collected, so it's not made available to you.
+
+## CATAAS When You See an Error Page
+
+When you encounter an error page, a random cat picture is displayed.
+To deliver a broad set of cat pictures, I use the service [Cat As a Service](https://cataas.com).
+See their [privacy policy](https://firewall.oauthorize.tk/privacy-policy?client_id=cataas) for what data is collected on what basis and what is shared with third-party.
 
 ## TLS encryption
 

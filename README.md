@@ -52,7 +52,6 @@ TODOs in no particular order:
 * directly scroll to the right position before onload
 * add security.txt
 * add robots.txt
-* put CAAS in privacy policy
 
 # Setting up the server
 
