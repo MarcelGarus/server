@@ -15,6 +15,28 @@
     <style>
         @import url("/fonts.css");
 
+        /* colors */
+        :root {
+            --accent-color: #f97191;
+            --main-bg-color: white;
+            --main-fg-color: black;
+            --main-selection-bg-color: var(--accent-color);
+            --main-selection-fg-color: white;
+            --nav-bg-color: var(--accent-color);
+            --nav-fg-color: white;
+            --nav-selection-bg-color: white;
+            --nav-selection-fg-color: black;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --main-bg-color: #222;
+                --main-fg-color: white;
+                --nav-fg-color: #222;
+                --nav-selection-bg-color: #222;
+                --nav-selection-fg-color: white;
+            }
+        }
+
         /* general styles */
         html,
         body {
@@ -22,12 +44,8 @@
             padding: 0;
 
             font-family: "Roboto", sans-serif;
-        }
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #222;
-                color: white;
-            }
+            background-color: var(--main-bg-color);
+            color: var(--main-fg-color);
         }
 
         .secondary {
@@ -38,10 +56,7 @@
 
         a {
             font-family: "Josefin Sans", sans-serif;
-            color: black;
-        }
-        @media (prefers-color-scheme:dark) {
-            a { color: white; }
+            color: var(--main-fg-color);
         }
 
         h1 {
@@ -61,7 +76,7 @@
             min-width: 10em;
             padding: 0 4mm;
 
-            background-color: #f97191;
+            background-color: var(--nav-bg-color);
             text-align: right;
         }
         @media (max-width: 700px) {
@@ -80,19 +95,15 @@
             margin: auto;
             margin-right: 0;
             max-width: 25em;
-            color: white;
+            color: var(--nav-fg-color);
         }
         aside h1 a { text-decoration: none !important; }
         aside ::selection {
-            color: white;
-            background: #222;
+            background: var(--nav-selection-bg-color);
+            color: var(--nav-selection-fg-color);
         }
-        aside a { color: white; }
+        aside a { color: var(--nav-fg-color); }
         aside p { margin-top: 1em; }
-        @media (prefers-color-scheme:dark) {
-            aside .content { color: black; }
-            aside a { color: black; }
-        }
 
         /* styles for the main part */
         main {
@@ -112,10 +123,10 @@
             padding-bottom: 2em;
         }
         main ::selection {
-            color: white;
-            background: #f97191;
+            background: var(--main-selection-bg-color);
+            color: var(--main-selection-fg-color);
         }
-        main a { color: #f97191; }
+        main a { color: var(--accent-color); }
 
         article {
             line-height: 1.7;
@@ -137,13 +148,10 @@
         p, ul { margin: 4mm; }
 
         article h1 a {
-            color: black;
+            color: var(--main-fg-color);
             text-decoration: none;
         }
         article h1 a:hover { text-decoration: underline; }
-        @media (prefers-color-scheme:dark) {
-            article h1 a { color: white; }
-        }
         h2, h3, h4, h5, h6 {
             margin-top: 8mm;
             margin-bottom: 4mm;

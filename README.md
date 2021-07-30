@@ -53,7 +53,6 @@ TODOs in no particular order:
 * add security.txt
 * add robots.txt
 * put CAAS in privacy policy
-* use CSS variables
 
 # Setting up the server
 
