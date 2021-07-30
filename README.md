@@ -31,7 +31,7 @@ They keep the existing path, but change the hostname and may add a path at the b
   * a trailing `e` is removed (so both `schreib` and `schreibe` works)
   * `schreib` and `folg` redirect to `marcelgarus.dev/about-me`
   * `bezahl` and `zahl` redirect to `marcelgarus.dev/pay`
-* other subdomains produce an error page
+* other subdomains just redirect to `marcelgarus.dev`
 
 TODOs in no particular order:
 
@@ -265,7 +265,7 @@ Cerbot offers two basic authentication options: `standalone`, which will try to 
 
 HTTP-based authentication only works for specific subdomains, e.g. `marcelgarus.dev` or `something.marcelgarus.dev`.
 To get a wildcard certificate like `*.marcelgarus.dev`, DNS validation needs to be used but that's hard.
-So for 
+So for my server, I simply use a certificate for most subdomains that people will encounter.
 
 <details>
 <summary>DNS validation (not chosen)</sumamry>
