@@ -14,7 +14,7 @@ use actix_web::{
 use blog::Blog;
 use futures::future::{self, FutureExt};
 use http::StatusCode;
-use log::{info, warn, LevelFilter};
+use log::{debug, info, warn, LevelFilter};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
@@ -84,6 +84,8 @@ async fn main() -> std::io::Result<()> {
     let cloned_config = config.clone();
     let server = HttpServer::new(move || {
         let cloned_log = cloned_log.clone();
+        let cloned_config = cloned_config.clone();
+        let cloned_config2 = cloned_config.clone();
         App::new()
             .app_data(cloned_log.clone())
             .app_data(blog.clone())
@@ -97,14 +99,17 @@ async fn main() -> std::io::Result<()> {
                 })
             })
             .wrap_fn(move |req, srv| {
-                info!("Normalizing request {:?}", &req);
+                let is_running_locally = cloned_config.clone().https_config.is_none();
+                debug!("Normalizing request {:?}", &req);
                 srv.call(req).then(async move |res| {
                     res.map(|res| {
-                        if let Some(location) = normalize_request(res.request()) {
-                            res.into_response(HttpResponse::redirect_to(&location))
-                        } else {
-                            res
+                        // Don't normalize the request if we're just running locally.
+                        if !is_running_locally {
+                            if let Some(location) = normalize_request(res.request()) {
+                                return res.into_response(HttpResponse::redirect_to(&location));
+                            }
                         }
+                        res
                     })
                 })
             })
@@ -116,7 +121,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(go_shortcut)
             .service(rss)
-            .service(api(&cloned_config.admin_key))
+            .service(api(&cloned_config2.admin_key))
             .service(url_with_key)
             .default_service(web::route().to(default_handler))
     });
