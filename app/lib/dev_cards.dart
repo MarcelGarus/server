@@ -8,21 +8,10 @@ import 'package:dartx/dartx.dart';
 import 'api.dart' as api;
 import 'utils.dart';
 
-class DevTab extends StatelessWidget {
-  const DevTab({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.all(8),
-      children: [
-        UserAgentGraph(),
-        SizedBox(height: 8),
-        VisitsTrail(),
-      ],
-    );
-  }
-}
+final devCards = <Widget>[
+  UserAgentGraph(),
+  VisitsTrail(),
+];
 
 class UserAgentGraph extends StatelessWidget {
   const UserAgentGraph({Key? key}) : super(key: key);
@@ -36,10 +25,13 @@ class UserAgentGraph extends StatelessWidget {
           future: api.visitsUserAgents(),
           builder: (context, snapshot) {
             if (!snapshot.hasData && !snapshot.hasError) {
-              return Container();
+              return SizedBox(height: 300);
             }
             if (snapshot.hasError) {
-              return Text(snapshot.error.toString());
+              return SizedBox(
+                height: 300,
+                child: Text(snapshot.error.toString()),
+              );
             }
             return _buildDiagram(context, isDetailed, snapshot.requireData);
           },
@@ -90,11 +82,12 @@ class UserAgentGraph extends StatelessWidget {
           child: SfCartesianChart(
             series: <ChartSeries>[
               for (final info in userAgentInfos)
-                StackedColumnSeries<MapEntry<DateTime, Map<String, int>>, int>(
+                StackedColumnSeries<MapEntry<DateTime, Map<String, int>>,
+                    String>(
                   animationDuration: 0,
                   dataSource: data.entries.toList(),
                   xValueMapper: (report, _) =>
-                      report.key.millisecondsSinceEpoch,
+                      report.key.toIso8601String().substring(0, 10),
                   yValueMapper: (report, _) => report.value[info.userAgent],
                   color: colors[info.userAgent]!,
                 ),
@@ -163,10 +156,12 @@ class VisitTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final info =
+        visit.userAgent == null ? null : UserAgentInfo.from(visit.userAgent!);
     return ListTile(
       leading: CircleAvatar(child: Text(visit.responseCode.toString())),
       title: Text('${visit.method} ${visit.url}'),
-      subtitle: Text(visit.userAgent ?? '<no user agent>'),
+      subtitle: Text(info?.simpleName ?? visit.userAgent ?? '<no user agent>'),
       trailing: Text(
         '${visit.handlingDuration.inMicroseconds} µs\n'
         '${visit.timestamp.toLocal().toString().substring(0, 19)}',

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:black_hole_flutter/black_hole_flutter.dart';
 
 import 'api.dart' as api;
-import 'dev_tab.dart';
+import 'dev_cards.dart';
 
 Future<void> main() async {
   await api.initialize();
@@ -22,43 +22,81 @@ class CompanionApp extends StatelessWidget {
         scaffoldBackgroundColor: Color(0xff111111),
         cardColor: Color(0xff222222),
       ),
-      home: DefaultTabController(
-        length: 3,
-        child: Scaffold(
-          bottomNavigationBar: TabBar(
-            tabs: [
-              Tab(
-                icon: Icon(Icons.storage_outlined),
-                text: 'Dev',
+      home: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 1000) {
+          return DefaultTabController(
+            length: 3,
+            child: Scaffold(
+              bottomNavigationBar: TabBar(
+                tabs: [
+                  Tab(icon: Icon(Icons.storage_outlined), text: 'Dev'),
+                  Tab(icon: Icon(Icons.article_outlined), text: 'Content'),
+                  Tab(icon: Icon(Icons.bolt_outlined), text: 'Shortcuts'),
+                ],
               ),
-              Tab(
-                icon: Icon(Icons.bolt_outlined),
-                text: 'Shortcuts',
+              body: TabBarView(
+                children: [
+                  TabPage(cards: devCards),
+                  TabPage(cards: []),
+                  TabPage(cards: []),
+                ],
               ),
-              Tab(
-                icon: Icon(Icons.article_outlined),
-                text: 'Content',
-              ),
-            ],
-          ),
-          body: TabBarView(
-            children: [
-              DevTab(),
-              EmptyTab(),
-              EmptyTab(),
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+        } else {
+          return Scaffold(
+            body: ListView(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: DashboardColumn(cards: devCards)),
+                    Expanded(child: Container()),
+                    Expanded(child: Container()),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+      }),
     );
   }
 }
 
-class EmptyTab extends StatelessWidget {
-  const EmptyTab({Key? key}) : super(key: key);
+class TabPage extends StatelessWidget {
+  const TabPage({Key? key, required this.cards}) : super(key: key);
+
+  final List<Widget> cards;
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return ListView(
+      padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
+      children: [
+        for (final card in cards) ...[
+          card,
+          SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class DashboardColumn extends StatelessWidget {
+  const DashboardColumn({Key? key, required this.cards}) : super(key: key);
+
+  final List<Widget> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(height: 8),
+        for (final card in cards) ...[
+          card,
+          SizedBox(height: 8),
+        ],
+      ],
+    );
   }
 }
