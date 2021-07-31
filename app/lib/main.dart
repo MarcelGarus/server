@@ -49,9 +49,13 @@ class CompanionApp extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    SizedBox(width: 8),
                     Expanded(child: DashboardColumn(cards: devCards)),
+                    SizedBox(width: 8),
                     Expanded(child: Container()),
+                    SizedBox(width: 8),
                     Expanded(child: Container()),
+                    SizedBox(width: 8),
                   ],
                 ),
               ],
