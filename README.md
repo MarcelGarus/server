@@ -75,13 +75,13 @@ No Firewall is needed; there are only few programs listening on ports, so it's e
 To see which programs listen on ports, do:
 
 ```bash
-sudo ss -tunlp
+ss -tunlp
 ```
 
 ## Setup the repo
 
 ```bash
-sudo apt install curl git nano build-essential pkg-config libssl-dev
+apt install curl git nano build-essential pkg-config libssl-dev
 curl https://sh.rustup.rs -sSf | sh
 ```
 
@@ -145,21 +145,21 @@ This repo contains a `server.service` file, which is a systemd service descripti
 Copy it to the system service directory:
 
 ```bash
-sudo cp server.service /etc/systemd/system
+cp server.service /etc/systemd/system
 ```
 
 Then, reload the available services and enable our server service:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable server.service
+systemctl daemon-reload
+systemctl enable server.service
 ```
 
 Finally, start the service:
 
 ```bash
-sudo systemctl start server.service
-sudo systemctl status server.service
+systemctl start server.service
+systemctl status server.service
 ```
 
 Viewing logs works like this:
@@ -171,14 +171,14 @@ journalctl -f -u server.service
 ## Setup DynDNS to route marcelgarus.dev traffic here (DynDNS via Namecheap)
 
 ```bash
-sudo apt install ddclient
+apt install ddclient
 ```
 
 This will automatically start a wizard, where you can enter random values.
 Configuring is instead done using the configuration file:
 
 ```bash
-sudo nano /etc/ddclient.conf
+nano /etc/ddclient.conf
 ```
 
 The content should be this:
@@ -227,8 +227,8 @@ The cache file is at `/tmp/ddclient.cache` and you might need to delete it if yo
 Make `ddclient` start when the system is booted:
 
 ```bash
-sudo update-rc.d ddclient defaults
-sudo update-rc.d ddclient enable
+update-rc.d ddclient defaults
+update-rc.d ddclient enable
 ```
 
 ## Get HTTPS
@@ -236,26 +236,26 @@ sudo update-rc.d ddclient enable
 Install snap:
 
 ```bash
-sudo apt install fuse snapd
-sudo snap install core; sudo snap refresh core
+apt install fuse snapd
+snap install core; snap refresh core
 ```
 
 Make sure that the old certbot-auto is not installed:
 
 ```bash
-sudo apt-get remove certbot
+apt-get remove certbot
 ```
 
 Install Certbot:
 
 ```bash
-sudo snap install --classic certbot
+snap install --classic certbot
 ```
 
 Ensure that Certbot can be run:
 
 ```bash
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
+ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
 Cerbot offers two basic authentication options: `standalone`, which will try to spin up an HTTP webserver on port 80 and thereby see if you got control over the domain, or DNS-based verification where you create a TXT DNS record.
@@ -270,7 +270,7 @@ So for my server, I simply use a certificate for most subdomains that people wil
 Namecheap doesn't natively support certbot, so we need to do that manually:
 
 ```bash
-sudo certbot certonly --manual --preferred-challenges dns -d "marcelgarus.dev,*.marcelgarus.dev,marcelgarus.de,*.marcelgarus.de,mgar.us,*.mgar.us,marcel.jetzt,*.marcel.jetzt"
+certbot certonly --manual --preferred-challenges dns -d "marcelgarus.dev,*.marcelgarus.dev,marcelgarus.de,*.marcelgarus.de,mgar.us,*.mgar.us,marcel.jetzt,*.marcel.jetzt"
 ```
 
 This will create a certbot-internal private/public key pair and ask you to add the public key as a TXT DNS record for the subdomain `_acme-challenge`.
@@ -280,8 +280,8 @@ Once the record is public, click enter.
 To make sure the server is restarted with the new certificate after renewal:
 
 ```bash
-sudo sh -c 'printf "#!/bin/sh\nsystemctl server restart\n" > /etc/letsencrypt/renewal-hooks/post/server.sh'
-sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
+sh -c 'printf "#!/bin/sh\nsystemctl server restart\n" > /etc/letsencrypt/renewal-hooks/post/server.sh'
+chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
 ```
 
 </details>
@@ -292,16 +292,16 @@ sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
 To make sure the temporary Certbot server doesn't conflict with our server, create hooks:
 
 ```bash
-sudo sh -c 'printf "#!/bin/sh\nsystemctl server stop\n" > /etc/letsencrypt/renewal-hooks/pre/server.sh'
-sudo sh -c 'printf "#!/bin/sh\nsystemctl server start\n" > /etc/letsencrypt/renewal-hooks/post/server.sh'
-sudo chmod 755 /etc/letsencrypt/renewal-hooks/pre/server.sh
-sudo chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
+sh -c 'printf "#!/bin/sh\nsystemctl server stop\n" > /etc/letsencrypt/renewal-hooks/pre/server.sh'
+sh -c 'printf "#!/bin/sh\nsystemctl server start\n" > /etc/letsencrypt/renewal-hooks/post/server.sh'
+chmod 755 /etc/letsencrypt/renewal-hooks/pre/server.sh
+chmod 755 /etc/letsencrypt/renewal-hooks/post/server.sh
 ```
 
 Then just run:
 
 ```bash
-sudo certbot certonly -d "marcelgarus.dev,www.marcelgarus.dev,marcelgarus.de,www.marcelgarus.de,mgar.us,www.mgar.us,marcel.jetzt,www.marcel.jetzt,schreib.marcel.jetzt,schreibe.marcel.jetzt,folg.marcel.jetzt,folge.marcel.jetzt,bezahl.marcel.jetzt,bezahle.marcel.jetzt,zahl.marcel.jetzt,zahle.marcel.jetzt"
+certbot certonly -d "marcelgarus.dev,www.marcelgarus.dev,marcelgarus.de,www.marcelgarus.de,mgar.us,www.mgar.us,marcel.jetzt,www.marcel.jetzt,schreib.marcel.jetzt,schreibe.marcel.jetzt,folg.marcel.jetzt,folge.marcel.jetzt,bezahl.marcel.jetzt,bezahle.marcel.jetzt,zahl.marcel.jetzt,zahle.marcel.jetzt"
 ```
 
 </deatils>
