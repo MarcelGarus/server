@@ -6,12 +6,11 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DurationMicroSeconds, TimestampSeconds};
 use std::{
     collections::{HashMap, VecDeque},
-    fs::OpenOptions,
-    io::Write,
     iter::FromIterator,
     sync::Arc,
     time::{Duration, Instant},
 };
+use tokio::io::{self, AsyncWriteExt};
 use tokio::sync::RwLock;
 
 /// A recorded visit to the server.
@@ -108,10 +107,13 @@ impl VisitsLog {
     pub async fn register(&self, visit: Visit) {
         info!("Registering {:?}", visit);
 
-        let mut buffer = self.buffer.write().await;
-        buffer.push(visit.clone());
-        if buffer.len() > Self::BUFFER_SIZE {
-            self.flush().await
+        let buffer_size = {
+            let mut buffer = self.buffer.write().await;
+            buffer.push(visit.clone());
+            buffer.len()
+        };
+        if buffer_size > Self::BUFFER_SIZE {
+            self.flush().await.expect("Couldn't flush visits to disk.");
         }
 
         self.tail.add(visit.clone()).await;
@@ -137,20 +139,25 @@ impl VisitsLog {
         }
     }
 
-    pub async fn flush(&self) {
+    pub async fn flush(&self) -> io::Result<()> {
         info!("Flushing visits to disk.");
-        let buffer = std::mem::replace(&mut *self.buffer.write().await, vec![]);
+        let mut buffer = self.buffer.write().await;
+        // TODO: Make this more efficient
+        let visits = buffer.clone();
+        buffer.clear();
 
-        let mut file = OpenOptions::new()
+        let mut file = tokio::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open("visits.jsonl")
-            .unwrap();
-        for visit in buffer {
+            .await?;
+        for visit in visits {
             let json = serde_json::to_string(&visit).unwrap();
-            file.write(json.as_bytes()).unwrap();
-            file.write(&[10]).unwrap(); // '\n'
+            file.write_all(json.as_bytes()).await?;
+            file.write_all(&[10]).await?; // '\n'
         }
+        info!("Visits successfully flushed to disk.");
+        Ok(())
     }
 
     pub async fn get_tail(&self) -> Vec<Visit> {

@@ -168,7 +168,10 @@ async fn main() -> std::io::Result<()> {
     .await;
 
     info!("Server ended.");
-    visits_log.flush().await;
+    visits_log
+        .flush()
+        .await
+        .expect("Couldn't flush visits to disk.");
 
     info!("Ending server executable.");
     Ok(())
