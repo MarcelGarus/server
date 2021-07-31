@@ -41,7 +41,6 @@ TODOs in no particular order:
   * faulty (non-200) responses in the last 30 days
   * visits in the last 30 days
   * urls in the last 30 days
-  * user agents in the last 30 days
   * languages in the last 30 days
   * referers in the last 30 days
   * uptime
