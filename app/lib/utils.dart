@@ -1,4 +1,6 @@
+import 'package:black_hole_flutter/black_hole_flutter.dart';
 import 'package:dartx/dartx.dart';
+import 'package:flutter/material.dart';
 
 extension NextOnEndlessIterator<T> on Iterator<T> {
   T next() {
@@ -125,5 +127,117 @@ class UserAgentInfo {
     if (device != null) buffer.write(' on $device');
     if (extra.isNotBlank) buffer.write(' ($extra)');
     return buffer.toString();
+  }
+}
+
+// Utility widgets.
+
+class DashboardCard extends StatelessWidget {
+  const DashboardCard({
+    Key? key,
+    required this.title,
+    required this.builder,
+  }) : super(key: key);
+
+  final String title;
+  final Widget Function(BuildContext context, bool detailed) builder;
+
+  void _openFullScreen(BuildContext context) {
+    context.navigator.push(MaterialPageRoute(
+      builder: (context) {
+        return Scaffold(
+          body: Hero(
+            tag: title,
+            child: ListView(
+              children: [
+                _CardScaffold(
+                  title: title,
+                  actions: [
+                    TextButton(
+                      onPressed: () => context.navigator.pop(),
+                      child: Text(
+                        'See less',
+                        style: TextStyle(
+                          color: context.theme.cardColor.highEmphasisOnColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                  child: builder(context, true),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Hero(
+      tag: title,
+      child: _CardScaffold(
+        title: title,
+        actions: [
+          TextButton(
+            onPressed: () => _openFullScreen(context),
+            child: Text(
+              'See more',
+              style: TextStyle(
+                color: context.theme.cardColor.highEmphasisOnColor,
+              ),
+            ),
+          ),
+          // IconButton(
+          //   icon: Icon(Icons.fullscreen),
+          //   onPressed: () {},
+          // ),
+        ],
+        child: builder(context, false),
+      ),
+    );
+  }
+}
+
+class _CardScaffold extends StatelessWidget {
+  const _CardScaffold({
+    Key? key,
+    required this.title,
+    required this.actions,
+    required this.child,
+  }) : super(key: key);
+
+  final String title;
+  final List<Widget> actions;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 12,
+      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  SizedBox(width: 8),
+                  Text(title),
+                  Spacer(),
+                  ...actions,
+                  SizedBox(width: 8),
+                ],
+              ),
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:black_hole_flutter/black_hole_flutter.dart';
 
 import 'api.dart' as api;
 import 'dev_tab.dart';
@@ -14,7 +15,12 @@ class CompanionApp extends StatelessWidget {
     return MaterialApp(
       title: 'Server Companion App',
       theme: ThemeData.dark().copyWith(
-        primaryColor: Colors.pink,
+        primaryColor: Color(0xfff97191),
+        primaryColorLight: Color(0xfff97191).hsv.withValue(0.9).toColor(),
+        primaryColorDark: Color(0xfff97191).hsv.withValue(0.2).toColor(),
+        accentColor: Color(0xfff97191),
+        scaffoldBackgroundColor: Color(0xff111111),
+        cardColor: Color(0xff222222),
       ),
       home: DefaultTabController(
         length: 3,

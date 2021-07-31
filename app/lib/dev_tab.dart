@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:black_hole_flutter/black_hole_flutter.dart';
 import 'package:dartx/dartx.dart';
-import 'package:tuple/tuple.dart';
 
 import 'api.dart' as api;
 import 'utils.dart';
@@ -15,27 +14,11 @@ class DevTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: EdgeInsets.all(8),
       children: [
-        Padding(
-          padding: EdgeInsets.all(16),
-          child: UserAgentGraph(),
-        ),
-        FutureBuilder<List<api.Visit>>(
-          future: api.visitsTail(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData && !snapshot.hasError) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text(snapshot.error.toString()));
-            } else {
-              return Column(
-                children: [
-                  for (final visit in snapshot.requireData) VisitTile(visit),
-                ],
-              );
-            }
-          },
-        ),
+        UserAgentGraph(),
+        SizedBox(height: 8),
+        VisitsTrail(),
       ],
     );
   }
@@ -46,12 +29,10 @@ class UserAgentGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 12,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: EdgeInsets.all(8),
-        child: FutureBuilder<Map<DateTime, Map<String, int>>>(
+    return DashboardCard(
+      title: 'Server load',
+      builder: (context, isDetailed) {
+        return FutureBuilder<Map<DateTime, Map<String, int>>>(
           future: api.visitsUserAgents(),
           builder: (context, snapshot) {
             if (!snapshot.hasData && !snapshot.hasError) {
@@ -60,35 +41,18 @@ class UserAgentGraph extends StatelessWidget {
             if (snapshot.hasError) {
               return Text(snapshot.error.toString());
             }
-            return _buildDiagram(context, snapshot.requireData);
+            return _buildDiagram(context, isDetailed, snapshot.requireData);
           },
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildDiagram(
     BuildContext context,
+    bool isDetailed,
     Map<DateTime, Map<String, int>> data,
   ) {
-    // In the diagram, more constant sources of traffic should be displayed at
-    // the bottom. These are the basic things to display:
-    // - 3: other visits
-    // - 2: debugging, like this app or Postman
-    // - 1: crawlers, bots, spiders
-    // - 0: StatusCake uptime monitoring
-    int topness(String userAgent) {
-      if (userAgent.contains('StatusCake')) return 0;
-      if (userAgent.toLowerCase().contains('bot')) return 1;
-      if (userAgent.toLowerCase().contains('research')) return 1;
-      if (userAgent.toLowerCase().contains('inspect')) return 1;
-      if (userAgent.contains('python')) return 1;
-      if (userAgent.contains('dart')) return 1;
-      if (userAgent.contains('CompanionApp')) return 2;
-      if (userAgent.contains('PostmanRuntime')) return 2;
-      return 3;
-    }
-
     final userAgentInfos = data.values
         .expand((map) => map.keys)
         .toSet()
@@ -108,7 +72,7 @@ class UserAgentGraph extends StatelessWidget {
             return Color(0xffff6c37);
           if (info.userAgent.toLowerCase().contains('companionapp'))
             return Color(0xff444444);
-          return Colors.pink; // Unknown debugging user agent.
+          return Colors.green; // Unknown debugging user agent.
         case UserAgentType.human:
           return humanColors.next();
       }
@@ -127,6 +91,7 @@ class UserAgentGraph extends StatelessWidget {
             series: <ChartSeries>[
               for (final info in userAgentInfos)
                 StackedColumnSeries<MapEntry<DateTime, Map<String, int>>, int>(
+                  animationDuration: 0,
                   dataSource: data.entries.toList(),
                   xValueMapper: (report, _) =>
                       report.key.millisecondsSinceEpoch,
@@ -137,23 +102,56 @@ class UserAgentGraph extends StatelessWidget {
             primaryXAxis: CategoryAxis(name: 'time'),
           ),
         ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final info in userAgentInfos.reversed)
-              ActionChip(
-                backgroundColor: colors[info.userAgent]!,
-                label: Text(
-                  info.simpleName ?? info.userAgent,
-                  style: TextStyle(
-                      color: colors[info.userAgent]!.highEmphasisOnColor),
-                ),
-                onPressed: () => context.showSimpleSnackBar(info.userAgent),
-              ),
-          ],
-        ),
+        if (isDetailed)
+          Padding(
+            padding: EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final info in userAgentInfos.reversed)
+                  ActionChip(
+                    backgroundColor: colors[info.userAgent]!,
+                    label: Text(
+                      info.simpleName ?? info.userAgent,
+                      style: TextStyle(
+                          color: colors[info.userAgent]!.highEmphasisOnColor),
+                    ),
+                    onPressed: () => context.showSimpleSnackBar(info.userAgent),
+                  ),
+              ],
+            ),
+          ),
       ],
+    );
+  }
+}
+
+class VisitsTrail extends StatelessWidget {
+  const VisitsTrail({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return DashboardCard(
+      title: 'Last visits',
+      builder: (context, isDetailed) {
+        return FutureBuilder<List<api.Visit>>(
+          future: api.visitsTail(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData && !snapshot.hasError) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text(snapshot.error.toString()));
+            } else {
+              return Column(
+                children: [
+                  for (final visit in snapshot.requireData) VisitTile(visit),
+                ],
+              );
+            }
+          },
+        );
+      },
     );
   }
 }
