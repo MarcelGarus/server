@@ -44,9 +44,16 @@ TODOs in no particular order:
   * user agents in the last 30 days
   * languages in the last 30 days
   * referers in the last 30 days
+  * uptime
+  * how much visitor data is saved
+  * parse and analyse languages
+  * how visits map to areas (index, blog articles, shortcuts, etc.)
+  * top most popular blog articles
+  * publishing dates of past articles
 * pay
   * redirect to PayPal
   * calculate amount
+* use a cookie instead of an anchor to transmit the scroll position
 * directly scroll to the right position before onload
 * add security.txt
 * add robots.txt
