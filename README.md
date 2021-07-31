@@ -44,6 +44,7 @@ TODOs in no particular order:
   * languages in the last 30 days
   * referers in the last 30 days
   * uptime
+  * size of the `visits.jsonl` file
   * how much visitor data is saved
   * parse and analyse languages
   * how visits map to areas (index, blog articles, shortcuts, etc.)
@@ -54,8 +55,8 @@ TODOs in no particular order:
   * calculate amount
 * use a cookie instead of an anchor to transmit the scroll position
 * directly scroll to the right position before onload
-* add security.txt
-* add robots.txt
+* add `security.txt`
+* add `robots.txt`
 * write more in the footer
 * link to RSS feed in the footer
 
