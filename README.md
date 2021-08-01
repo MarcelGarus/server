@@ -37,15 +37,13 @@ TODOs in no particular order:
 
 * app
   * configuring shortcuts
-  * recent visits
   * faulty (non-200) responses in the last 30 days
   * visits in the last 30 days
   * urls in the last 30 days
   * languages in the last 30 days
   * referers in the last 30 days
   * uptime
-  * size of the `visits.jsonl` file
-  * how much visitor data is saved
+  * resource utilization
   * parse and analyse languages
   * how visits map to areas (index, blog articles, shortcuts, etc.)
   * top most popular blog articles
@@ -59,6 +57,7 @@ TODOs in no particular order:
 * add `robots.txt`
 * write more in the footer
 * link to RSS feed in the footer
+* on restarts, load past visits
 
 # Setting up the server
 
