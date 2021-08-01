@@ -10,7 +10,7 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use tokio::io::{self, AsyncWriteExt};
+use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt};
 use tokio::sync::RwLock;
 
 /// A recorded visit to the server.
@@ -91,8 +91,8 @@ pub struct VisitsLog {
 impl VisitsLog {
     const BUFFER_SIZE: usize = 100;
 
-    pub fn new() -> Self {
-        Self {
+    pub async fn new() -> Self {
+        let log = Self {
             buffer: Default::default(),
             tail: Default::default(),
             errors: Default::default(),
@@ -101,7 +101,18 @@ impl VisitsLog {
             user_agents: Default::default(),
             languages: Default::default(),
             referers: Default::default(),
+        };
+        let file = tokio::fs::OpenOptions::new()
+            .read(true)
+            .open("visits.jsonl")
+            .await
+            .expect("Can't open visits.jsonl");
+        let mut lines = tokio::io::BufReader::new(file).lines();
+        while let Some(line) = lines.next_line().await.unwrap() {
+            log.register_for_stats(serde_json::from_str(&line).expect("Invalid visit line."))
+                .await;
         }
+        log
     }
 
     pub async fn register(&self, visit: Visit) {
@@ -116,27 +127,7 @@ impl VisitsLog {
             self.flush().await.expect("Couldn't flush visits to disk.");
         }
 
-        self.tail.add(visit.clone()).await;
-
-        if !matches!(visit.response_status, Ok(200 | 301)) {
-            self.errors.add(visit.clone()).await;
-        }
-
-        self.number_of_visits.report_occurrence(()).await;
-
-        self.visited_urls.report_occurrence(visit.url).await;
-
-        if let Some(user_agent) = visit.user_agent {
-            self.user_agents.report_occurrence(user_agent).await;
-        }
-
-        if let Some(language) = visit.language {
-            self.languages.report_occurrence(language).await;
-        }
-
-        if let Some(referer) = visit.referer {
-            self.referers.report_occurrence(referer).await;
-        }
+        self.register_for_stats(visit).await;
     }
 
     pub async fn flush(&self) -> io::Result<()> {
@@ -158,6 +149,32 @@ impl VisitsLog {
         }
         info!("Visits successfully flushed to disk.");
         Ok(())
+    }
+
+    async fn register_for_stats(&self, visit: Visit) {
+        let date = UtcDate(visit.timestamp.date());
+
+        self.tail.add(visit.clone()).await;
+
+        if !matches!(visit.response_status, Ok(200 | 301)) {
+            self.errors.add(visit.clone()).await;
+        }
+
+        self.number_of_visits.report_occurrence(&date, ()).await;
+
+        self.visited_urls.report_occurrence(&date, visit.url).await;
+
+        if let Some(user_agent) = visit.user_agent {
+            self.user_agents.report_occurrence(&date, user_agent).await;
+        }
+
+        if let Some(language) = visit.language {
+            self.languages.report_occurrence(&date, language).await;
+        }
+
+        if let Some(referer) = visit.referer {
+            self.referers.report_occurrence(&date, referer).await;
+        }
     }
 
     pub async fn get_tail(&self) -> Vec<Visit> {
@@ -228,16 +245,16 @@ struct MonthlyDistributionCounter<T: Clone + Eq + core::hash::Hash> {
     buckets: Arc<RwLock<HashMap<UtcDate, HashMap<T, u64>>>>,
 }
 impl<T: Clone + Eq + core::hash::Hash> MonthlyDistributionCounter<T> {
-    async fn report_occurrence(&self, occurrence: T) {
-        let today = Utc::now().date();
+    async fn report_occurrence(&self, date: &UtcDate, occurrence: T) {
         let mut buckets = self.buckets.write().await;
         *buckets
-            .entry(UtcDate(today))
+            .entry(date.clone())
             .or_insert(Default::default())
             .entry(occurrence)
             .or_insert(0) += 1;
 
-        let month_ago = today
+        let month_ago = Utc::now()
+            .date()
             .checked_sub_signed(chrono::Duration::days(30))
             .unwrap();
         buckets.retain(|date, _| date.0 > month_ago);

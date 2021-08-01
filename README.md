@@ -57,7 +57,6 @@ TODOs in no particular order:
 * add `robots.txt`
 * write more in the footer
 * link to RSS feed in the footer
-* on restarts, load past visits
 
 # Setting up the server
 

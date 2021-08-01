@@ -75,7 +75,7 @@ async fn main() -> std::io::Result<()> {
     .unwrap();
 
     let config = web::Data::new(Config::load().await);
-    let visits_log = web::Data::new(VisitsLog::new());
+    let visits_log = web::Data::new(VisitsLog::new().await);
     let blog = web::Data::new(Blog::new().await);
     let shortcut_db = web::Data::new(ShortcutDb::new().await);
     let address = config.address.clone();
