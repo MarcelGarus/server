@@ -108,19 +108,19 @@ impl VisitsLog {
         // we can process the lines. That's why when the tokio frameworks tries
         // to send more and more data to us and fills our buffers, a "Resource
         // temporarily unavailable" error would occur.
-        info!("Reading existing visits.");
-        let file = std::fs::File::open("visits.jsonl").expect("Can't open visits.jsonl");
-        let visits = std::io::BufReader::new(file)
-            .lines()
-            .map(|line| line.expect("Couldn't read visits line.").trim().to_owned())
-            .filter(|line| !line.is_empty())
-            .map(|line| {
-                serde_json::from_str(&line).expect(&format!("Invalid visit line: {}", line))
-            });
-        for visit in visits {
-            log.register_for_stats(visit).await;
-        }
-        info!("Done reading existing visits.");
+        // info!("Reading existing visits.");
+        // let file = std::fs::File::open("visits.jsonl").expect("Can't open visits.jsonl");
+        // let visits = std::io::BufReader::new(file)
+        //     .lines()
+        //     .map(|line| line.expect("Couldn't read visits line.").trim().to_owned())
+        //     .filter(|line| !line.is_empty())
+        //     .map(|line| {
+        //         serde_json::from_str(&line).expect(&format!("Invalid visit line: {}", line))
+        //     });
+        // for visit in visits {
+        //     log.register_for_stats(visit).await;
+        // }
+        // info!("Done reading existing visits.");
         log
     }
 
