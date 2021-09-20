@@ -119,6 +119,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Compress::new(ContentEncoding::Auto))
             .wrap(middleware::NormalizePath::default())
             .service(index)
+            .service(pay)
+            .service(pay_amount)
             .service(go_shortcut)
             .service(rss)
             .service(api(&cloned_config2.admin_key))
@@ -289,6 +291,17 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     }
 
     error_page_404(&req).await
+}
+
+#[get("/pay")]
+async fn pay() -> impl Responder {
+    HttpResponse::redirect_to("https://paypal.me/marcelgarus")
+}
+
+#[get("/pay/{amount}")]
+async fn pay_amount(amount: web::Path<(String,)>) -> impl Responder {
+    let (amount,) = amount.into_inner();
+    HttpResponse::redirect_to(&format!("https://paypal.me/marcelgarus/{}", amount))
 }
 
 /// Shortcuts are not content of the website itself. Rather, they redirect to somewhere else.
