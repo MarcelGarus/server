@@ -6,6 +6,7 @@ use comrak::{
     parse_document, Arena, ComrakOptions,
 };
 use log::{error, info, warn};
+use rand::prelude::SliceRandom;
 use std::{cell::RefCell, collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 
@@ -91,21 +92,23 @@ impl Blog {
             .map(|article| article.clone())
     }
 
-    pub async fn get_previous(&self, key: &str) -> Option<Article> {
-        self.get_delta(key, -1).await
-    }
-    pub async fn get_next(&self, key: &str) -> Option<Article> {
-        self.get_delta(key, 1).await
-    }
-    async fn get_delta(&self, key: &str, delta: i64) -> Option<Article> {
-        let keys = self.article_keys.read().await;
-        let index = keys.iter().position(|it| it == key)?;
-        let wanted_index = (index as i64) + delta;
-        if wanted_index < 0 {
-            return None;
+    // Returns a suggestion what to read next based on a key. By default,
+    // returns the article written after the current one. If there is none, it
+    // simply suggests a random one.
+    pub async fn get_suggestion(&self, key: &str) -> Article {
+        let mut keys = self.article_keys.read().await.clone();
+        let index = keys.iter().position(|it| it == key);
+        let mut suggested_key = index.and_then(|index| {
+            let suggested_index = (index as i64) + 1;
+            keys.get(suggested_index as usize)
+        });
+        if suggested_key.is_none() {
+            if let Some(index) = index {
+                keys.remove(index);
+            }
+            suggested_key = keys.choose(&mut rand::thread_rng());
         }
-        let wanted_key = keys.get(wanted_index as usize)?;
-        self.get(wanted_key).await
+        self.get(suggested_key.unwrap()).await.unwrap()
     }
 
     pub async fn list(&self) -> Vec<Article> {

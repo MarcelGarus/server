@@ -23,85 +23,59 @@
     </script>
 </article>
 
-<!-- Pagination to previous and next article -->
-<style>
-    .pagination {
-        display: flex;
-        margin-top: 2em;
-
-        flex-wrap: wrap;
-        justify-content: space-between;
-    }
-    .pagination-item {
-        margin-top: 2em;
-        
-        text-decoration: none;
-        color: var(--main-fg-color);
-    }
-    .pagination-item:hover > .pagination-title {
-        text-decoration: underline;
-    }
-    .pagination-previous {
-        margin-right: auto;
-        text-align: left;
-    }
-    .pagination-next {
-        margin-left: auto;
-        text-align: right;
-    }
-    .pagination-is-valid-false {
-        display: none;
-    }
-    .pagination-label {
-        font-family: 'Roboto', sans-serif;
-        margin-bottom: 0.8em;
-    }
-    .pagination-title {
-        font-size: 2em;
-    }
-</style>
-<footer class="pagination">
-    <a href="/{{previous-key}}" class="pagination-is-valid-{{has-previous}} pagination-item pagination-previous secondary">
-        <div class="pagination-label">˂ Previous</div>
-        <div class="pagination-title">{{previous-title}}</div>
-    </a>
-    <a href="/{{next-key}}" class="pagination-is-valid-{{has-next}} pagination-item pagination-next">
-        <div class="pagination-label">Next ˃</div>
-        <div class="pagination-title">{{next-title}}</div>
-    </a>
-</footer>
-
-<!-- Shortlink -->
-<script>
-    const shortlink = "mgar.us/{{key}}";
-    async function copyShortlink() {
-        await navigator.clipboard.writeText(shortlink);
-
-        let confirmationText = " Copied! ";
-        while (confirmationText.length < shortlink.length) {
-            confirmationText = confirmationText + "-";
-            if (confirmationText.length < shortlink.length) {
-                confirmationText = "-" + confirmationText;
-            }
-            console.log("Confirmation text is now " + confirmationText.length + " long.");
-        }
-        document.getElementById("shortlink").innerHTML = confirmationText;
-    }
-    function resetShortlink() {
-        document.getElementById("shortlink").innerHTML = shortlink;
-    }
-</script>
-<style>
-    #shortlink {
-        background-color: transparent;
-        color: inherit;
-        border: 0.1em solid #f97191;
-        border-radius: 0.2em;
-        cursor: pointer;
-        font-family: 'JetBrains Mono', monospace;
-    }
-</style>
 <footer class="secondary" style="margin-top: 2em;">
+
+    <!-- Shortlink -->
+    <script>
+        const shortlink = "mgar.us/{{key}}";
+        async function copyShortlink() {
+            await navigator.clipboard.writeText(shortlink);
+
+            let confirmationText = " Copied! ";
+            while (confirmationText.length < shortlink.length) {
+                confirmationText = confirmationText + "-";
+                if (confirmationText.length < shortlink.length) {
+                    confirmationText = "-" + confirmationText;
+                }
+                console.log("Confirmation text is now " + confirmationText.length + " long.");
+            }
+            document.getElementById("shortlink").innerHTML = confirmationText;
+        }
+        function resetShortlink() {
+            document.getElementById("shortlink").innerHTML = shortlink;
+        }
+    </script>
+    <style>
+        #shortlink {
+            background-color: transparent;
+            color: inherit;
+            border: 0.1em solid #f97191;
+            border-radius: 0.2em;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
     <span>You liked this article? Feel free to share it using this shortlink:</span>
-    <button id="shortlink" title="Click to copy the shortlink" onclick="copyShortlink()" onmouseout="resetShortlink()">mgar.us/{{key}}</button>
+    <button id="shortlink" title="Click to copy the shortlink" onclick="copyShortlink()"
+        onmouseout="resetShortlink()">mgar.us/{{key}}</button>
+
+    <!-- Suggested article -->
+    <style>
+        .suggestion-label {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        .suggestion {
+            font-size: 2em;
+            text-decoration: none;
+            color: var(--main-fg-color);
+        }
+        .suggestion:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <p class="suggestion-label">Looking for another article? This one might be interesting:</p>
+    <a href="/{{suggestion-key}}" class="suggestion">{{suggestion-title}}</a>
+
 </footer>

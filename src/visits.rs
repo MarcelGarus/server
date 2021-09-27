@@ -6,12 +6,11 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DurationMicroSeconds, TimestampSeconds};
 use std::{
     collections::{HashMap, VecDeque},
-    io::BufRead,
     iter::FromIterator,
     sync::Arc,
     time::{Duration, Instant},
 };
-use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt};
+use tokio::io::{self, AsyncWriteExt};
 use tokio::sync::RwLock;
 
 /// A recorded visit to the server.

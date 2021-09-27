@@ -25,6 +25,7 @@ use tokio::fs;
 mod assets;
 mod blog;
 mod shortcuts;
+mod templates;
 mod utils;
 mod visits;
 
@@ -245,20 +246,9 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 // Visitors of the main page get a list of all articles.
 #[get("/")]
 async fn index(blog: web::Data<Blog>) -> impl Responder {
-    let article_template = template::article_teaser().await;
-    let articles = blog
-        .list()
-        .await
-        .into_iter()
-        .rev()
-        .map(|article| article_template.fill_in_article(&article))
-        .collect::<Vec<_>>();
-    let page = template::page()
-        .await
-        .fill_in_content(&itertools::join(articles, "\n"));
     HttpResponse::Ok()
         .append_header(("Cache-Control", "public,max-age=3600"))
-        .html(page)
+        .html(templates::blog_page(blog.list().await.into_iter().rev().collect::<Vec<_>>()).await)
 }
 
 /// For brevity, most URLs consist of a single key.
@@ -280,14 +270,9 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     // Or maybe it's a blog article?
     let blog = req.app_data::<web::Data<Blog>>().unwrap();
     if let Some(article) = blog.get(&key).await {
-        let article_html = template::full_article()
-            .await
-            .fill_in_article(&article)
-            .fill_in_previous_article(&blog.get_previous(&key).await)
-            .fill_in_next_article(&blog.get_next(&key).await);
         return HttpResponse::Ok()
             .append_header(("Cache-Control", "public,max-age=3600"))
-            .html(template::page().await.fill_in_content(&article_html));
+            .html(templates::article_page(&article, &blog.get_suggestion(&key).await).await);
     }
 
     error_page_404(&req).await
@@ -320,14 +305,9 @@ async fn go_shortcut(
 
 #[get("/rss")]
 async fn rss(blog: web::Data<Blog>) -> impl Responder {
-    let mut items_xml = vec![];
-    for article in blog.list().await {
-        items_xml.push(template::rss_article().await.fill_in_article(&article));
-    }
-    let rss_xml = template::rss_feed()
-        .await
-        .fill_in_content(&itertools::join(items_xml, "\n"));
-    HttpResponse::Ok().content_type("text/xml").body(rss_xml)
+    HttpResponse::Ok()
+        .content_type("text/xml")
+        .body(templates::rss_feed(&blog.list().await).await)
 }
 
 fn api(admin_key: &str) -> impl HttpServiceFactory {
@@ -464,12 +444,9 @@ async fn error_page_404(req: &HttpRequest) -> HttpResponse {
 }
 
 async fn error_page(status: StatusCode, title: &str, description: &str) -> HttpResponse {
-    let error_html = template::error()
-        .await
-        .fill_in_error(status, title, description);
     HttpResponse::Ok()
         .status(status)
-        .html(template::page().await.fill_in_content(&error_html))
+        .html(templates::error_page(status, title, description).await)
 }
 
 fn error_500_handler(

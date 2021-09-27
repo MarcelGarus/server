@@ -3,8 +3,6 @@ use chrono::{Date, Utc};
 use http::{HeaderValue, StatusCode};
 use serde::Serialize;
 
-use crate::blog::Article;
-
 pub trait VecStringExt {
     fn clone_first_n(&self, n: usize) -> Option<Vec<String>>;
     fn starts_with(&self, other: Vec<&str>) -> bool;
@@ -81,6 +79,25 @@ impl HtmlEncode for String {
     }
 }
 
+pub trait StripHtml {
+    fn strip_html(&self) -> Self;
+}
+impl StripHtml for String {
+    fn strip_html(&self) -> Self {
+        let mut b = string_builder::Builder::default();
+        let mut skipping = false;
+        for c in self.chars() {
+            match (skipping, c) {
+                (false, '<') => skipping = true,
+                (false, c) => b.append(c),
+                (true, '>') => skipping = false,
+                (true, _) => {}
+            }
+        }
+        b.string().unwrap()
+    }
+}
+
 pub trait RedirectHttpResponseExt {
     fn redirect_to(location: &str) -> Self;
 }
@@ -111,89 +128,6 @@ pub async fn download(url: &str) -> Result<String, String> {
     let content = String::from_utf8(content.to_vec())
         .map_err(|_| format!("Body of {} is not UTF-8.", url))?;
     Ok(content)
-}
-
-pub mod template {
-    use tokio::fs;
-
-    pub async fn page() -> String {
-        fs::read_to_string("assets/page.html").await.unwrap()
-    }
-    pub async fn article_teaser() -> String {
-        fs::read_to_string("assets/article-teaser.html")
-            .await
-            .unwrap()
-    }
-    pub async fn full_article() -> String {
-        fs::read_to_string("assets/article-full.html")
-            .await
-            .unwrap()
-    }
-    pub async fn rss_article() -> String {
-        fs::read_to_string("assets/rss-article.xml").await.unwrap()
-    }
-    pub async fn rss_feed() -> String {
-        fs::read_to_string("assets/rss-feed.xml").await.unwrap()
-    }
-    pub async fn error() -> String {
-        fs::read_to_string("assets/error.html").await.unwrap()
-    }
-}
-
-pub trait FillInTemplateExt {
-    fn fill_in_content(&self, content: &str) -> Self;
-    fn fill_in_article(&self, article: &Article) -> Self;
-    fn fill_in_previous_article(&self, previous_article: &Option<Article>) -> Self;
-    fn fill_in_next_article(&self, next_article: &Option<Article>) -> Self;
-    fn fill_in_error(&self, status_code: StatusCode, title: &str, description: &str) -> Self;
-}
-impl FillInTemplateExt for String {
-    fn fill_in_content(&self, content: &str) -> Self {
-        self.replace("{{content}}", content)
-    }
-    fn fill_in_article(&self, article: &Article) -> Self {
-        let published = article
-            .published
-            .map(|date| format!("{}", date.format("%Y-%m-%d")));
-        let mut infos = vec![];
-        if let Some(date) = published.clone() {
-            infos.push(date);
-        }
-        infos.push(format!(
-            "{} minute read",
-            (((article.read_duration.as_secs() as f64) / 60.0).round() as u64).min(1),
-        ));
-
-        self.replace("{{key}}", &article.key)
-            .replace("{{title}}", &article.title)
-            .replace("{{published}}", &published.unwrap_or("unknown".into()))
-            .replace("{{info}}", &itertools::join(infos.into_iter(), " · "))
-            .replace("{{teaser}}", &article.teaser)
-            .replace("{{body}}", &article.content)
-    }
-    fn fill_in_previous_article(&self, previous_article: &Option<Article>) -> Self {
-        match previous_article {
-            Some(article) => self
-                .replace("{{has-previous}}", "true")
-                .replace("{{previous-key}}", &article.key)
-                .replace("{{previous-title}}", &article.title),
-            None => self.replace("{{has-previous}}", "false"),
-        }
-    }
-    fn fill_in_next_article(&self, next_article: &Option<Article>) -> Self {
-        match next_article {
-            Some(article) => self
-                .replace("{{has-next}}", "true")
-                .replace("{{next-key}}", &article.key)
-                .replace("{{next-title}}", &article.title),
-            None => self.replace("{{has-next}}", "false"),
-        }
-    }
-    fn fill_in_error(&self, status_code: StatusCode, title: &str, description: &str) -> Self {
-        self.replace("{{title}}", title)
-            .replace("{{status}}", &format!("{}", status_code.as_u16()))
-            .replace("{{description}}", description)
-    }
 }
 
 pub trait HtmlResponse {
