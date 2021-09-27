@@ -49,15 +49,11 @@ TODOs in no particular order:
   * top most popular blog articles
   * publishing dates of past articles
 * blog
-  * only show next article, not previous
   * make suggested article configurable
-  * improve metadata
-  * fix read duration being very short
 * pay
   * redirect to PayPal
   * calculate amount
 * add image of me
-* write templating engine
 * use a cookie instead of an anchor to transmit the scroll position
 * directly scroll to the right position before onload
 * add `security.txt`
