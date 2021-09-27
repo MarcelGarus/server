@@ -50,6 +50,7 @@ TODOs in no particular order:
   * publishing dates of past articles
 * blog
   * make suggested article configurable
+  * include first blog image in metadata
 * pay
   * redirect to PayPal
   * calculate amount
@@ -58,8 +59,6 @@ TODOs in no particular order:
 * directly scroll to the right position before onload
 * add `security.txt`
 * add `robots.txt`
-* write more in the footer
-* link to RSS feed in the footer
 
 # Setting up the server
 
