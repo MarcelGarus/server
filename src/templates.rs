@@ -26,7 +26,7 @@ pub async fn article_page(article: &Article, suggestion: &Article) -> String {
         &article.title,
         &metadata(
             "article",
-            "https://marcelgarus.dev/{key}",
+            &format!("https://marcelgarus.dev/{}", article.key),
             &article.title,
             &article.teaser.strip_html(),
             None, // TODO: Add first image.
