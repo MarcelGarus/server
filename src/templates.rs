@@ -14,7 +14,7 @@ pub async fn blog_page(articles: Vec<Article>) -> String {
             "https://marcelgarus.dev",
             "Blog",
             "Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter.",
-            Some("/me.webp".into()),
+            Some(("https://marcelgarus/me.webp".into(), "A portrait of me.".into())),
         ),
         &itertools::join(teasers, "\n"),
     )
@@ -65,7 +65,7 @@ fn metadata(
     canonical_url: &str,
     title: &str,
     description: &str,
-    image_src: Option<String>,
+    image_src_and_alt: Option<(String, String)>,
 ) -> String {
     let general_metadata = r#"
             <meta name="title" content="{{title}}" />
@@ -86,8 +86,9 @@ fn metadata(
     let image_metadata = r#"
             <link rel="image_src" href="{{image}}" />
             <meta property="og:image" content="{{image}}" />
-            <meta property="twitter:card" content="summary_large_image" />
+            <meta property="og:image:alt" content="{{alt}}" />
             <meta property="twitter:image" content="{{image}}" />
+            <meta property="twitter:image:alt" content="{{alt}}" />
         "#;
     itertools::join(
         &vec![
@@ -96,8 +97,11 @@ fn metadata(
                 .replace("{{canonical-url}}", canonical_url)
                 .replace("{{title}}", title)
                 .replace("{{description}}", description),
-            if let Some(image_src) = image_src {
-                image_metadata.replace("{{image}}", &image_src).to_owned()
+            if let Some((src, alt)) = image_src_and_alt {
+                image_metadata
+                    .replace("{{image}}", &src)
+                    .replace("{{alt}}", &alt)
+                    .to_owned()
             } else {
                 "".to_owned()
             },
