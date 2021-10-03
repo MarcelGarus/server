@@ -14,7 +14,7 @@ pub async fn blog_page(articles: Vec<Article>) -> String {
             "https://marcelgarus.dev",
             "Blog",
             "Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter.",
-            None, // TODO: Add image of me.
+            Some("/me.webp".into()),
         ),
         &itertools::join(teasers, "\n"),
     )

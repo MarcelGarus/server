@@ -48,9 +48,7 @@
             color: var(--main-fg-color);
         }
 
-        .secondary {
-            opacity: 0.5;
-        }
+        .secondary { opacity: 0.5; }
 
         a {
             font-family: "Josefin Sans", sans-serif;
@@ -73,11 +71,9 @@
             width: calc(30% - 2em);
             min-width: 10em;
             padding: 0 4mm;
-
-            background-color: var(--nav-bg-color);
             text-align: right;
         }
-        @media (max-width: 700px) {
+        @media (max-width: 1000px) {
             aside {
                 position: relative;
                 width: calc(100% - 8mm);
@@ -93,22 +89,71 @@
             margin: auto;
             margin-right: 0;
             max-width: 25em;
+            text-align: right;
+        }
+        @media (max-width: 1000px) {
+            aside .content { text-align: center; }
+        }
+        aside div {
+            position: relative;
+            padding: 1em;
+            border-radius: 1em;
+            z-index: 1;
+            text-align: left;
             color: var(--nav-fg-color);
+            display: inline-block;
+            color: black;
         }
-        aside h1 a { text-decoration: none !important; }
-        aside ::selection {
-            background: var(--nav-selection-bg-color);
-            color: var(--nav-selection-fg-color);
+        aside div ::selection { background: white; }
+        aside .my-name {
+            background-color: var(--nav-bg-color);
+            transform: rotate(-5deg);
+            z-index: 1;
+            margin-bottom: -1.4em;
+            inline-size: min-content;
         }
-        aside a { color: var(--nav-fg-color); }
-        aside p { margin-top: 1em; }
+        aside h1 a {
+            color: var(--nav-fg-color);
+            text-decoration: none !important;
+        }
+        aside .my-name ::selection { background: var(--nav-fg-color); }
+        aside .my-image {
+            background-color: #ffb152;
+            width: 7em;
+            height: 7em;
+            border-radius: 3.5em;
+            z-index: 3;
+            translate: 0 0.4em;
+            padding: 0;
+            margin-left: -0.5em;
+            margin-bottom: -0.7em;
+            overflow: hidden;
+        }
+        aside .description {
+            background-color: #7ece64;
+            padding: 1em;
+            border-radius: 1em;
+            transform: rotate(1deg);
+            z-index: 2;
+            margin-top: 0.5em;
+            margin-bottom: -0.3em;
+        }
+        aside .more-about-me {
+            background-color: #c59bff;
+            padding: 0.5em;
+            z-index: 3;
+            translate: -1em 0;
+        }
+        aside a { color: black; }
+        aside h1 { margin: 0; }
+        aside p { margin: 0; }
 
         /* styles for the main part */
         main {
             margin-left: 30%;
             width: 70%;
         }
-        @media (max-width: 700px) {
+        @media (max-width: 1000px) {
             main {
                 margin-left: 0;
                 width: 100%;
@@ -181,12 +226,33 @@
 <body>
     <aside>
         <div class="content">
-            <h1><a href="/">Marcel Garus</a></h1>
-            <p>
-                Hello, world! 👋🏻
-                I&nbsp;develop <a href="https://github.com/marcelgarus">open source thingies</a>.
-                <a href="/about-me">About me</a>
-            </p>
+            <div class="my-name"><h1><a href="/">Marcel Garus</a></h1></div>
+            <div class="my-image"><img id="my-image" src="/me.webp" /></div>
+            <script>
+                // If JS is disabled, the image suddenly appears once it's
+                // loaded. If JS is enabled, we hide the image and then slowly
+                // make it fade in once loaded (if it isn't immediately loaded,
+                // for example, because of being cached).
+                const img = document.getElementById('my-image');
+                const startTime = performance.now();
+                img.addEventListener("loadstart", function () {
+                    img.style.opacity = 0;
+                });
+                img.addEventListener("load", function() {
+                    const elapsedTime = performance.now() - startTime;
+                    if (elapsedTime > 100) {
+                        img.style.transition = "all 0.8s ease-out";
+                    }
+                    img.style.opacity = 1;
+                });
+            </script>
+            <div class="description">
+                <p>
+                    Hello, world! I&nbsp;develop
+                    <a href="https://github.com/marcelgarus">open source thingies</a>.
+                </p>
+            </div>
+            <div class="more-about-me"><p><a href="/about-me">More about me</a></p></div>
         </div>
     </aside>
     <main>

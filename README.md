@@ -54,7 +54,6 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* add image of me
 * use a cookie instead of an anchor to transmit the scroll position
 * directly scroll to the right position before onload
 * add `security.txt`
