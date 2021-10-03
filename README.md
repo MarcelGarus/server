@@ -48,13 +48,10 @@ TODOs in no particular order:
   * how visits map to areas (index, blog articles, shortcuts, etc.)
   * top most popular blog articles
   * publishing dates of past articles
-* blog
-  * make suggested article configurable
-  * include first blog image in metadata
 * pay
   * redirect to PayPal
   * calculate amount
-* use a cookie instead of an anchor to transmit the scroll position
+* use local storage instead of an anchor to transmit the scroll position
 * directly scroll to the right position before onload
 * add `security.txt`
 * add `robots.txt`
