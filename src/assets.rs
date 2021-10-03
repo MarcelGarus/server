@@ -30,6 +30,7 @@ lazy_static! {
         vec![
             Asset::internal("favicon.ico", "image/vnd.microsoft.icon"),
             Asset::internal("icon.png", "image/png"),
+            Asset::internal("me.png", "image/png"),
             Asset::internal("me.webp", "image/webp"),
             Asset::internal("prism.css", "text/css"),
             Asset::internal("prism.js", "text/javascript"),
