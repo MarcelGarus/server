@@ -4,21 +4,27 @@
     {{teaser}}
     <a id="read-more-of-{{key}}" href="/{{key}}" data-read-more="{{key}}">Read more</a>
     <script>
-        // When you click a "Read more" link, the article content should
-        // seamlessly expand. In particular, you shouldn't jump up to the
-        // beginning of the article on the new page.
-        // That's why the full-article page supports an anchor – you can
-        // navigate to "mgar.us/some-article#title-at--10", and the page will
-        // try to adjust the scrolling position so that the title is at position
-        // -10 in the viewport.
-        // Using the following code, we intercept clicks on the "Read more"
-        // button to append the anchor to the URL.
+        // When you click "Read more", you shouldn't jump up to the beginning of
+        // the article on the new page.
+        // Using the following code, we intercept clicks on the "Read more" link
+        // and save the desired scroll value in the session storage before
+        // navigating to the new site.
         for (const link of document.querySelectorAll('[data-read-more="{{key}}"]')) {
             link.addEventListener('click', (event) => {
-                event.preventDefault();
+                // Determine the absolute offset of the first article's title.
+                // Because the pages have the same layout, this absolute
+                // position will also be the position of this article's title on
+                // the new page.
+                const offsetOfFirstTitle = document.getElementsByTagName('article').item(0)
+                    .children.item(0).getBoundingClientRect().top + window.scrollY;
+
+                // Determine the position of this article's title on the window.
                 const title = document.getElementById("title-of-{{key}}");
-                const offset = title.getBoundingClientRect().top;
-                window.location.href = "/{{key}}#title-at-" + Math.round(offset);
+                const offsetOfChosenTitle = title.getBoundingClientRect().top;
+
+                // Save the scroll position.
+                const desiredScrollOnNewPage = offsetOfFirstTitle - offsetOfChosenTitle;
+                sessionStorage.setItem('scrollTo', JSON.stringify(desiredScrollOnNewPage));
             });
         }
     </script>

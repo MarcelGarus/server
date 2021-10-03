@@ -51,8 +51,6 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
-* use local storage instead of an anchor to transmit the scroll position
-* directly scroll to the right position before onload
 * add `security.txt`
 * add `robots.txt`
 
