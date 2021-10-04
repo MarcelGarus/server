@@ -2,10 +2,12 @@
 
 Our home has a smart electric grid that can be controlled using [KNX](https://www.knx.org).
 In our home, a *Gira HomeServer* connects to the physical KNX wires as well as to our WiFi network and enables us to control all devices using an app.
-In [the previous article](/gira), we looked at how the Gira HomeServer communicates with the app.
+In [my previous article](/gira), we looked at how the Gira HomeServer communicates with the app.
 As a reminder, this is how the authentication phase works:
 
 ![comic](https://github.com/marcelgarus/server/raw/main/blog/images/gira-comic.png)
+
+--snip--
 
 More specifically, the process works like this:
 
@@ -15,23 +17,22 @@ More specifically, the process works like this:
 4. The app sends the result to the server. The result is pretty long (something like `A335F32830EAFB1534DE46EFEECF1A8C`), so it's unlikely that the app gets this right by chance if it doesn't know the password.
 5. The server does the same hash calculation itself and checks if the results match. If they do, the app is authenticated and can control the devices in the home.
 
-This process protects against other devices listening to the communication – if a malicious device wants to sign in, it's given a different random salt and can't calculate the corresponding hash, because it doesn't know the password.
+This process protects against other devices listening in on the communication – if a malicious device wants to sign in, it's given a different random salt and can't calculate the corresponding hash, because it doesn't know the password.
 
-While developing the app and tinkering with the authentication flow, I discovered a glaring security flaw: The server ignores step 5! Regardless of whether the password hash was correct, the server lets the app control all devices! 🤦[^emoji]
-Exploiting this behavior would look like this in the comic version:
+While developing the app and tinkering with the authentication flow, I discovered a glaring security flaw: The server ignores step 5! Regardless of whether the password hash was correct, the server lets the app control all devices! 🤦
 
-![comic](...)
+Exploiting this behavior looks like this in the comic version:
+
+![comic](https://github.com/marcelgarus/server/raw/main/blog/images/gira-hack-comic.png)
 
 Note that the server doesn't send any device updates to the app (like which devices are turned on or off), but it still listens to commands from the app.
 This is such a simple and preventable bug that I'm alarmed Gira's quality assurance team didn't discover it.
-It's not even a small oversight, but instead indicates a fundamental flaw in the Gira's security assurance.
-**Something like this should never happen.**
+It's not even a small oversight, but instead indicates a fundamental flaw in the Gira's organizational approach to security.
+**A working security process doesn't let something like this happen.**
 
 You own a Gira HomeServer and want to see if you're affected?
 On GitHub, I published [a program written in Dart that toggles all devices off](...) (including alarm systems).
-Please only test this in your home.
-
-[^emoji]: I'm usually not a fan of emojis in blogs, but I believe the facepalm emoji is warranted in this case.
+It goes without saying that you should please only test this in your own home.
 
 ## How bad is it?
 
@@ -39,14 +40,15 @@ Let's take a step back and look at the impact of this hack.
 To be able to use it maliciously on other people's homes, a few preconditions need to be met:
 
 * The home needs to have a Gira HomeServer. We have a Gira HomeServer 4 and I don't have access to other models, so I can only confirm that the hack works on that particular model.
-* For the hack to succeed without having access to the network (e.g. without being logged into the home's WiFi), the HomeServer needs to be accessible from the internet. The company that set up our HomeServer conveniently also enabled port forwarding in our router, so that we can connect to the server while not being at home. They also registered our router at [giradns.com](https://giradns.com) so the app can find it even if its IP changes. By scanning the subdomains of `giradns.com`, you can get a list of Gira HomeServers reachable via the public internet.
+* The Gira HomeServer needs vulnerable software. At least our HomeServer's software from 2017 to 2021 is vulnerable.
+* For the hack to succeed without having access to the local network (e.g. WiFi), the HomeServer needs to be accessible from the internet. The company that set up our HomeServer conveniently also enabled port forwarding in our router and registered it at [giradns.com](https://giradns.com), so that we can control devices while not being at home. By scanning the subdomains of `giradns.com`, you can get a list of Gira HomeServers reachable via the public internet.
 * As an additional step, you need the username to log in. Usually, usernames are less guarded than passwords, so I assume that many are the same as the subdomain or the family's names. I'm pretty certain that performing a [dictionary attack](https://en.wikipedia.org/wiki/Dictionary_attack) using names would be highly effective.
 
 Once these criteria are met, you can control all devices in the home.
-That includes not only toggling lights, but also controlling more critical devices, like blinds, thermostats, and alarm systems.
+That includes not only toggling lights, but also controlling critical devices, like blinds, thermostats, and alarm systems.
 The fact that I can turn off our alarm system without knowing the password is frightening.
 
-To mitigate the risk, I turned off the port forwarding setup company enabled in our router settings.
+To mitigate the risk for us, I turned off the port forwarding in our router settings.
 Until the bug is fixed, having the HomeServer not being reachable from the public internet is a good idea.
 
 ## Communicating with Gira
@@ -56,10 +58,12 @@ Thankfully, there's a process for reporting security vulnerabilities: [Responsib
 This process works like this:
 
 1. Contact the responsible company privately.
-2. After a period of time (hopefully after the vulnerability is fixed), make the vulnerability public so that others can learn from it.
+2. After a sufficient period of time (hopefully after the vulnerability is fixed), make the vulnerability public so that others can learn from it.
 
-So, in November 2017, I contacted Gira using their contact form: (typography corrected)
+So, in November 2017, I contacted Gira using their contact form:
 
+> <span class="secondary">(typography corrected)</span>
+>
 > To whom it may concern!
 >
 > Since we got a Gira Home Server, I thought it would be nice if I could control devices in our house with a simple programming interface.
@@ -94,8 +98,10 @@ A fix is already in the works, so it's probably okay to lean back and relax.
 ---
 
 About half a year later, the bug still existed.
-Naturally, in May 2018, I contacted Gira again: (translated from German)
+Naturally, in May 2018, I contacted Gira again:
 
+> <span class="secondary">(translated from German)</span>
+>
 > Hello,
 >
 > pretty much half a year ago I reported a critical security vulnerability in the Gira HomeServer 4 software (Gira message ██████), which allows attackers to turn off alarm systems if port forwarding is activated in the router's settings (for us, this was enabled by default).
@@ -111,10 +117,8 @@ The next day, a Gira spokesperson called me (the contact form asked for the phon
 ---
 
 Fast-forward to 2021.
-So much has happened: I moved to Potsdam, started studying, finished my Bachelor of Science in IT-Systems Engineering.
-Recently, I visited my family and while I was at home, I checked if the security flaw is still present – of course it is.
+So much has happened in my life: I moved to Potsdam, started studying, finished my Bachelor of Science in IT-Systems Engineering.
+Recently, I visited my family and while I was at home, I confirmed that the security flaw is still present.
 Because of Corona, I have some spare time right now, so let's get to it:
 
 > TODO: Write mail.
-
-Let's see how this goes.

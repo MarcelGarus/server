@@ -293,6 +293,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 output.end_tag("li");
             }
             NodeValue::HtmlBlock(it) => output.push(format!("{}", it.literal.utf8_or_panic())),
+            NodeValue::HtmlInline(it) => output.push(format!("{}", it.utf8_or_panic())),
             NodeValue::ThematicBreak => output.push("<hr />".into()),
             NodeValue::Link(link) => {
                 output.start_tag(&format!("a href=\"{}\"", link.url.utf8_or_panic(),));
@@ -339,11 +340,17 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 self.children().to_html_parts(output);
                 output.end_tag("blockquote");
             }
-            NodeValue::FootnoteDefinition(key) => {
-                println!("Footnote definition with key {:?}", key);
-            }
             NodeValue::FootnoteReference(key) => {
                 println!("Footnote reference with key {:?}", key);
+                output.push(format!("<sup>{}</sup>", key.utf8_or_panic()));
+            }
+            NodeValue::FootnoteDefinition(key) => {
+                println!("Footnote definition with key {:?}", key);
+                output.start_tag("small");
+                output.push(key.utf8_or_panic());
+                output.push(": ".into());
+                self.children().to_html_parts(output);
+                output.end_tag("small");
             }
             _ => warn!("Not handling node {:?} yet.", self),
         }
