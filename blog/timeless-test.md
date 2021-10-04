@@ -24,7 +24,7 @@ Rust code
 
 ---
 
-Hi, `dart:blub`! You are **bold** to assume that I just _did_ stuff.
+Hi, `dart:blub`! You are **bold** to ~~assume~~ that I just _did_ stuff.[^mynote]
 
 Also,a [link](https://example.com).
 
@@ -37,3 +37,5 @@ Raw html?
 </details>
 
 > This is a quote.
+
+[mynote]: This is a footnote.
