@@ -1,7 +1,3 @@
-This is a work in progress.
-
----
-
 This is my personal server, which is available at [marcelgarus.dev](https://marcelgarus.dev).
 
 The goal for this server is to offer several services:
