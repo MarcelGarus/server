@@ -4,9 +4,10 @@
     {{body}}
     <script>
         const desiredScrollPosition = JSON.parse(sessionStorage.getItem('scrollTo'));
-        console.log('scrollTo=' + desiredScrollPosition);
         sessionStorage.removeItem('scrollTo');
-        window.scrollTo(window.scrollX, desiredScrollPosition);
+        if (typeof desiredScrollPosition === 'number') {
+            window.scrollTo(window.scrollX, desiredScrollPosition);
+        }
     </script>
 </article>
 
