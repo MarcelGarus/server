@@ -44,15 +44,13 @@ TODOs in no particular order:
   * referers in the last 30 days
   * uptime
   * resource utilization
-  * parse and analyse languages
+  * parse and analyze languages
   * how visits map to areas (index, blog articles, shortcuts, etc.)
   * top most popular blog articles
   * publishing dates of past articles
 * pay
   * redirect to PayPal
   * calculate amount
-* add `security.txt`
-* add `robots.txt`
 
 # Setting up the server
 
