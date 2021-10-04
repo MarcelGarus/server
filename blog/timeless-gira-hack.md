@@ -63,9 +63,10 @@ So, in November 2017, I contacted Gira using their contact form: (typography cor
 > To whom it may concern!
 >
 > Since we got a Gira Home Server, I thought it would be nice if I could control devices in our house with a simple programming interface.
-> […]
+> <span class="secondary">[…]</span>
 > While testing, I realized you don't need the password hash to change device states.
-> If you use a proper username and answer to the password hash request with a random 32 chars long string made up by hexadecimal digits, you are still logged in. In this case, you don't get notified about state changes of devices but you can still change device states. […]
+> If you use a proper username and answer to the password hash request with a random 32 chars long string made up by hexadecimal digits, you are still logged in. In this case, you don't get notified about state changes of devices but you can still change device states.
+> <span class="secondary">[…]</span>
 >
 > I took the GitHub repository offline, but I wanted to inform you about the problem, so you can fix the flaw.
 >
@@ -99,6 +100,7 @@ Naturally, in May 2018, I contacted Gira again: (translated from German)
 >
 > pretty much half a year ago I reported a critical security vulnerability in the Gira HomeServer 4 software (Gira message ██████), which allows attackers to turn off alarm systems if port forwarding is activated in the router's settings (for us, this was enabled by default).
 > I have been assured that you are working on new software that supports encryption and closes this gaping security vulnerability.
+>
 > Christmas has now passed, I turned 18 and graduated from high school. Since I now have free time again, I wanted to find out how the development of the new software is going. 
 >
 > Greetings,  
