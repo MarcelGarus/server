@@ -166,11 +166,10 @@ impl Article {
         markdown: &str,
     ) -> Self {
         let arena = Arena::new();
-        let root = parse_document(
-            &arena,
-            &markdown.replace("--snip--", ""),
-            &ComrakOptions::default(),
-        );
+        let mut options = ComrakOptions::default();
+        options.extension.footnotes = true;
+        options.extension.strikethrough = true;
+        let root = parse_document(&arena, &markdown.replace("--snip--", ""), &options);
 
         // To estimate the read time, I timed how long it took to read the
         // articles and related that to their Markdown file size. That's not an
@@ -243,10 +242,9 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
         itertools::join(html, "")
     }
     fn to_html_parts(&'a self, output: &mut Vec<String>) {
-        use NodeValue::*;
         match self.data.borrow().value.clone() {
-            Document => self.children().to_html_parts(output),
-            Heading(heading) => {
+            NodeValue::Document => self.children().to_html_parts(output),
+            NodeValue::Heading(heading) => {
                 if heading.level == 1 {
                     return; // The title of the entire article is treated separately.
                 }
@@ -255,25 +253,31 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 self.children().to_html_parts(output);
                 output.end_tag(&tag);
             }
-            Paragraph => {
+            NodeValue::Paragraph => {
                 output.start_tag("p");
                 self.children().to_html_parts(output);
                 output.end_tag("p");
             }
-            Text(text) => output.push(text.utf8_or_panic().html_encode()),
-            SoftBreak => output.push(" ".into()),
-            LineBreak => output.push("<br />".into()),
-            Emph => {
+            NodeValue::Text(text) => output.push(text.utf8_or_panic().html_encode()),
+            NodeValue::SoftBreak => output.push(" ".into()),
+            NodeValue::LineBreak => output.push("<br />".into()),
+            NodeValue::Emph => {
                 output.start_tag("em");
                 self.children().to_html_parts(output);
                 output.end_tag("em");
             }
-            Strong => {
+            NodeValue::Strong => {
                 output.start_tag("strong");
                 self.children().to_html_parts(output);
                 output.end_tag("strong");
             }
-            List(list) => {
+            NodeValue::Strikethrough => {
+                println!("Strikethrough");
+                output.start_tag("s");
+                self.children().to_html_parts(output);
+                output.end_tag("s");
+            }
+            NodeValue::List(list) => {
                 let tag = match list.list_type {
                     ListType::Bullet => "ul",
                     ListType::Ordered => "ol",
@@ -283,20 +287,20 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 self.children().to_html_parts(output);
                 output.end_tag(&tag);
             }
-            Item(_) => {
+            NodeValue::Item(_) => {
                 output.start_tag("li");
                 self.children().to_html_parts(output);
                 output.end_tag("li");
             }
-            HtmlBlock(it) => output.push(format!("{}", it.literal.utf8_or_panic())),
-            ThematicBreak => output.push("<hr />".into()),
-            Link(link) => {
+            NodeValue::HtmlBlock(it) => output.push(format!("{}", it.literal.utf8_or_panic())),
+            NodeValue::ThematicBreak => output.push("<hr />".into()),
+            NodeValue::Link(link) => {
                 output.start_tag(&format!("a href=\"{}\"", link.url.utf8_or_panic(),));
                 output.push(link.title.utf8_or_panic().html_encode());
                 self.children().to_html_parts(output);
                 output.end_tag("a");
             }
-            Image(image) => {
+            NodeValue::Image(image) => {
                 output.start_tag("center");
                 output.push(format!(
                     "<img src=\"{}\" alt=\"{}\" />",
@@ -305,7 +309,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 ));
                 output.end_tag("center");
             }
-            Code(code) => {
+            NodeValue::Code(code) => {
                 let code = code.utf8_or_panic();
                 let (code, language) = if code.split(":").count() >= 2 {
                     let language = code.split(":").next().unwrap();
@@ -317,7 +321,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 output.push(code.html_encode());
                 output.end_tag("code");
             }
-            CodeBlock(code) => {
+            NodeValue::CodeBlock(code) => {
                 output.start_tag("pre");
                 output.start_tag(&format!(
                     "code class=\"language-{}\"",
@@ -330,9 +334,18 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 output.end_tag("code");
                 output.end_tag("pre");
             }
-            _ => {
-                warn!("Not handling node {:?} yet.", self);
+            NodeValue::BlockQuote => {
+                output.start_tag("blockquote");
+                self.children().to_html_parts(output);
+                output.end_tag("blockquote");
             }
+            NodeValue::FootnoteDefinition(key) => {
+                println!("Footnote definition with key {:?}", key);
+            }
+            NodeValue::FootnoteReference(key) => {
+                println!("Footnote reference with key {:?}", key);
+            }
+            _ => warn!("Not handling node {:?} yet.", self),
         }
     }
 }
