@@ -35,6 +35,7 @@ TODOs in no particular order:
   * configuring shortcuts
   * faulty (non-200) responses in the last 30 days
   * visits in the last 30 days
+  * successful (200) visits in the last 30 days
   * urls in the last 30 days
   * languages in the last 30 days
   * referers in the last 30 days
@@ -47,6 +48,7 @@ TODOs in no particular order:
 * pay
   * redirect to PayPal
   * calculate amount
+* make images placeholders the correct size
 
 # Setting up the server
 
