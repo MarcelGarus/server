@@ -96,7 +96,7 @@ source $HOME/.cargo/env
 ```
 
 ```bash
-git clone https://github.com/marcelgarus/server.git
+git clone https://github.com/MarcelGarus/server.git
 ```
 
 Then, add a `Config.toml`:
