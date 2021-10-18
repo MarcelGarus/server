@@ -1,7 +1,7 @@
 # On Developing This Blog
 
 I created the blogging server that hosts this page with my bare hands.
-Well, the [HTTP request handling software](https://github.com/marcelgarus/server) at least.
+Well, the [HTTP request handling software](https://github.com/MarcelGarus/server) at least.
 And I have to say, I thoroughly enjoyed it!
 
 --snip--
@@ -21,4 +21,4 @@ Every URL.
 No magic.
 
 If you want to learn a bit more about how the web works, I can only recommend writing your own server.
-I used [`actix-web`](https://crates.io/crates/actix-web) and the [source code of my server](https://github.com/marcelgarus/server) is publicly available.
+I used [`actix-web`](https://crates.io/crates/actix-web) and the [source code of my server](https://github.com/MarcelGarus/server) is publicly available.

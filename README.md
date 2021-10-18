@@ -1,4 +1,4 @@
-This is my personal server, which is available at [marcelgarus.dev](https://marcelgarus.dev).
+This repository contains the code of my server, which is available at [marcelgarus.dev](https://marcelgarus.dev).
 
 The goal for this server is to offer several services:
 
@@ -10,16 +10,15 @@ The goal for this server is to offer several services:
 * `marcelgarus.dev/pay`: Redirects to PayPal, calculates result of path (e.g. `marcelgarus.dev/pay?amount=13/3`).
 * `marcelgarus.dev/api/...`: APIs are available here.
 
-Why use `marcelgarus.dev` as the main domain?
+Why use `marcelgarus.dev` as the primary domain?
 
 * It contains my full name (and my usual username), not some cryptic abbreviation that I don't use anywhere else.
 * It's easy to say in conversation.
 * The `.dev` domain enforces HTTPS. No need to redirect HTTP to HTTPS.
 * Because `mgar.us` redirects to the main domain, links can still be short.
 
-Domains are normalized and redirect to `marcelgarus.dev` without a subdomain.
-This is true for subdomains of `marcelgarus.dev` and for my other domains (`mgar.us`, `marcelgarus.de`, `marcel.jetzt`).
-They keep the existing path, but change the hostname and may add a path at the beginning.
+Subdomains of `marcelgarus.dev` and other domains redirect to `marcelgarus.dev` without a subdomain.
+They keep the current path but change the hostname and may add a path prefix at the beginning.
 
 * no subdomain (`@`) and subdomain `www` redirects to `marcelgarus.dev`
 * the `go` subdomain redirects to `marcelgarus.dev/go`
@@ -36,9 +35,9 @@ TODOs in no particular order:
   * faulty (non-200) responses in the last 30 days
   * visits in the last 30 days
   * successful (200) visits in the last 30 days
-  * urls in the last 30 days
+  * URLs in the last 30 days
   * languages in the last 30 days
-  * referers in the last 30 days
+  * HTTP referers in the last 30 days
   * uptime
   * resource utilization
   * parse and analyze languages
@@ -52,15 +51,15 @@ TODOs in no particular order:
 
 # Setting up the server
 
-This chapter describes my server setup, mostly for my future self.
-Got a server with Ubuntu 18.04 LTS 64bit from [Strato](https://strato.de).
+This chapter describes my server setup, primarily for my future self.
+The server runs Ubuntu 18.04 LTS 64bit; it's a small machine hosted by [Strato](https://strato.de).
 
 ## Long-running commands
 
 Using the GNU `screen` utility, you can connect to the server multiple times while retaining the same terminal state.
 
 `screen -S <name>` starts a new named screen session.
-Detach from a screens using ctrl+a ctrl+d.
+Detach from a screen using ctrl+a ctrl+d.
 
 `screen -list` lists all screens in the form `<pid>.<name>`
 
@@ -68,7 +67,7 @@ Screens can be re-connected to using `screen -d -r <id>`.
 
 ## Firewall?
 
-No Firewall is needed; there are only few programs listening on ports, so it's easy to get an overview.
+No Firewall is needed; only a few programs are listening on ports, so it's easy to get an overview.
 To see which programs listen on ports, do:
 
 ```bash
@@ -118,7 +117,7 @@ Finally, start the server:
 cargo run
 ```
 
-Later on, updates can be applied like this:
+Later on, you can apply updates like this:
 
 ```bash
 git pull && cargo run
@@ -219,7 +218,7 @@ To test if it works:
 ddclient -daemon=0 -noquiet -debug
 ```
 
-The cache file is at `/tmp/ddclient.cache` and you might need to delete it if you want to re-set the DynDNS A+ record although the IP didn't change.
+The cache file is at `/tmp/ddclient.cache`, and you might need to delete it if you want to re-set the DynDNS A+ record, although the IP didn't change.
 
 Make `ddclient` start when the system is booted:
 
@@ -255,22 +254,22 @@ Ensure that Certbot can be run:
 ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
-Cerbot offers two basic authentication options: `standalone`, which will try to spin up an HTTP webserver on port 80 and thereby see if you got control over the domain, or DNS-based verification where you create a TXT DNS record.
+Certbot offers two basic authentication options: `standalone` tries to spin up an HTTP web server on port 80 and thereby see if you got control over the domain. DNS-based verification creates a TXT DNS record.
 
 HTTP-based authentication only works for specific subdomains, e.g. `marcelgarus.dev` or `something.marcelgarus.dev`.
-To get a wildcard certificate like `*.marcelgarus.dev`, DNS validation needs to be used but that's hard.
-So for my server, I simply use a certificate for most subdomains that people will encounter.
+You must use DNS validation to use wildcard certificates like `*.marcelgarus.dev`, but that's hard with Namecheap.
+So for my server, I use a certificate for most subdomains that people will encounter.
 
 <details>
 <summary>DNS validation (not chosen)</sumamry>
 
-Namecheap doesn't natively support certbot, so we need to do that manually:
+Namecheap doesn't natively support Certbot, so we need to do that manually:
 
 ```bash
 certbot certonly --manual --preferred-challenges dns -d "marcelgarus.dev,*.marcelgarus.dev,marcelgarus.de,*.marcelgarus.de,mgar.us,*.mgar.us,marcel.jetzt,*.marcel.jetzt"
 ```
 
-This will create a certbot-internal private/public key pair and ask you to add the public key as a TXT DNS record for the subdomain `_acme-challenge`.
+This command will create a Certbot-internal private/public key pair and ask you to add the public key as a TXT DNS record for the subdomain `_acme-challenge`.
 It may take some time for the record to propagate. After some time, it should be visible in this [Google DNS Toolbox](https://toolbox.googleapps.com/apps/dig/#TXT/_acme-challenge.marcelgarus.dev) or be retrievable by running `nslookup -type=TXT _acme-challenge.marcelgarus.dev`).
 Once the record is public, click enter.
 
@@ -310,4 +309,4 @@ Certificate is saved at: /etc/letsencrypt/live/marcelgarus.dev/fullchain.pem
 Key is saved at:         /etc/letsencrypt/live/marcelgarus.dev/privkey.pem
 ```
 
-Make sure there's an `[https]` section in the `Config.toml` file that links to these files (like in the example file above).
+Ensure there's an `[https]` section in the `Config.toml` file that links to these files (like in the example file above).

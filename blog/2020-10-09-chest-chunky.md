@@ -9,7 +9,7 @@ Files are a linear stream of bytes and that doesn't quite fit our use case. So, 
 
 --snip--
 
-![Chest abstracts files](https://github.com/marcelgarus/server/raw/main/blog/images/chest-chunky-layers.png)
+![Chest abstracts files](https://github.com/MarcelGarus/server/raw/main/blog/images/chest-chunky-layers.png)
 
 Also, writing to the file might fail for various reasons – whether the OS kills our program, the user plugs out the storage medium, the power supply vanishes, or a black hole consumes the earth. Chunky also ensures that we handle such cases gracefully by fulfilling the four ACID goals:
 

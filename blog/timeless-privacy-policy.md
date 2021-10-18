@@ -14,7 +14,7 @@ marcel.garus@gmail.com
 
 **Type and purpose of processing**:
 When you access my website, the server automatically receives and records general information from your computer and browser, including information about your software and hardware and the visited site.
-The exact type of information to be collected can be seen [here in the source code](https://github.com/marcelgarus/server/blob/main/src/visits.rs).
+The exact type of information to be collected can be seen [here in the source code](https://github.com/MarcelGarus/server/blob/main/src/visits.rs).
 I statistically evaluate these information – in particular, I use them for the following purposes:
 
 * **Administrative**: Ensuring a problem-free use of my website and evaluating its stability and performance

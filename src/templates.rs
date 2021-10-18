@@ -14,7 +14,7 @@ pub async fn blog_page(articles: Vec<Article>) -> String {
             "https://marcelgarus.dev",
             "Blog",
             "Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter.",
-            Some(("https://marcelgarus/me.png".into(), "A portrait of me.".into())),
+            Some(("https://marcelgarus.dev/me.png".into(), "A portrait of me.".into())),
         ),
         &itertools::join(teasers, "\n"),
     )
@@ -80,7 +80,7 @@ fn metadata(
             <meta property="og:type" content="{{site-type}}" />
             <meta property="twitter:title" content="{{title}}" />
             <meta property="twitter:description" content="{{description}}" />
-            <meta property="twitter:site" content="@marcelgarus" />
+            <meta property="twitter:site" content="@MarcelGarus" />
             <meta property="twitter:url" content="{{canonical-url}}" />
         "#;
     let image_metadata = r#"
