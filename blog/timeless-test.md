@@ -24,7 +24,7 @@ Rust code
 
 ---
 
-Hi, `dart:blub`! You are **bold** to ~~assume~~ that I just _did_ stuff.[^mynote]
+Hi, `dart:blub`! You are **bold** to ~~assume~~ that I _did_ stuff.[^mynote]
 
 Also, a [link](https://example.com).
 

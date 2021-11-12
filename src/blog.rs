@@ -31,7 +31,7 @@ pub struct Blog {
     article_keys: Arc<RwLock<Vec<String>>>,
 }
 impl Blog {
-    const BASE_URL: &'static str = "https://raw.githubusercontent.com/marcelgarus/server/main/blog";
+    const BASE_URL: &'static str = "https://raw.githubusercontent.com/MarcelGarus/server/main/blog";
 
     pub async fn new() -> Self {
         let db = Self {
