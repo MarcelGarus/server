@@ -7,12 +7,13 @@ Using it is a lot of fun: By connecting the piano to my iPad, I can play music *
 
 --snip--
 
+Here's how arrangements looks like in the GarageBand app:
+
+![Screenshot of GarageBand on my iPad](https://github.com/MarcelGarus/server/raw/main/blog/images/screenshot-of-garageband-on-ipad.jpg)
+
 Of course, some instruments (such as oboe or violin) sound bad, but percussion and plucked instruments generally have a good sampling quality.
 
 Here is an example song making use of different keyboards, drumpads, and effects:
 
 <audio controls src="/jogging-in-the-cold" />
 
-And here's how the arrangement looks on the iPad:
-
-![Screenshot of GarageBand on my iPad](https://github.com/MarcelGarus/server/raw/main/blog/images/screenshot-of-garageband-on-ipad.jpg)
