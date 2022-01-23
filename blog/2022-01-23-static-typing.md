@@ -62,9 +62,24 @@ Now, if the compiler tries `a = ""` and `b = []`, the code still crashes, but th
 
 I do admit that this looks similar to types in static languages. The difference is that you can put any regular code after the `needs` instead of having a complex meta-language for defining types. As long as it evaluates to a `Bool`, you're good to go.
 You can write functions that only accept even numbers, palindromes, valid JSON strings; you name it.
-Even better, you'll get error reports for cases you haven't considered yet. Whether writing an `average` function that doesn't handle empty lists or a `sort` function with an off-by-one error, your editor will warn you about it as soon as you type.
+Even better, you'll get error reports for cases you haven't considered yet. Whether writing an `average` function that doesn't handle empty lists or a `sort` function with an off-by-one error, your editor will warn you about it while you still type.
+It could also discover invalid uses of stateful APIs:
 
-I'd even go as far as claiming that this is better than writing unit tests.
+```candy
+file = File.open "some-file.txt"
+File.write file "Hello!"
+File.close file
+File.close file # error: the file is already closed here
+```
+
+A further benefit is that a function's `needs` don't necessarily have to be stated at the beginning; functions can reject inputs after they did some calculations!
+
+```candy
+grabJson "https://some-api.com" # works
+grabJson "https://example.com"  # error: this server doesn't return JSON
+```
+
+I'd even go as far as claiming that this is even better than writing unit tests.
 Unit tests get you to think creatively about what values your program needs to handle. Still, fuzzing will report the tiniest edge cases – and you don't have to write a single line of extra code to get the benefit.
 
 ## Performance
