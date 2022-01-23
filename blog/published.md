@@ -11,3 +11,4 @@ timeless-test
 2021-10-05-gira-hack
 2021-11-12-no-templating-engine
 2021-12-29-midi-music
+2022-01-23-static-typing
