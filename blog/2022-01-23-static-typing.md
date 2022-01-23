@@ -18,7 +18,7 @@ In comparison, dynamic languages feel more flexible.
 ## Types are only a rough approximation of sets
 
 To better understand the appeal of this flexibility, let's take a step back and look at mathematics:
-Ask a mathematician what a function is, and you'll get the answer that a function `f : X -> Y` is just a relation from an input set `X` to an output set `Y`.
+Ask a mathematician what a function is, and you'll get the answer that a function `text:f : X -> Y` is just a relation from an input set `X` to an output set `Y`.
 Alright, so what's a set? Interestingly, it's one of the fundamental definitions of mathematics that is not defined using other math terms but using natural language instead:
 
 > A set is a thing where each value is either in that thing or not.
