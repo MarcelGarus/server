@@ -4,13 +4,13 @@ Nowadays, there are soooo many programming languages.
 One critical differentiation point among them is how their type systems work.
 You can sort programming languages into two camps:
 
-- **Statically typed languages** determine what sort of values variables store just by looking at the program.
-- **Dynamically typed languages** can't statically infer what sort of values variables store. They have to run the program to find out.
+- **Statically-typed languages** determine what sort of values variables store just by looking at the program.
+- **Dynamically-typed languages** can't statically infer what sort of values variables store. They have to run the program to find out.
 
 If given a choice, I prefer statically typed languages. Because they know the types of variables, they can offer clever suggestions. Additionally, the compiler catches many errors while you write the code, so you get immediate feedback.
 
 On the other hand, most type systems limit what you can express in a language.
-Types act like rigid meta-languages that sits on top of your actual code.
+Types act like rigid meta-languages that sit on top of your actual code.
 In comparison, dynamic languages feel more flexible.
 
 --snip--
@@ -39,7 +39,7 @@ I think so! Here's a two-step plan:
 1. Remove the rigid distinction between compile-time and runtime errors. Embrace how dynamic languages handle errors.
 2. Try to find most of those errors with **fuzzing,** which is the process of trying out lots and lots of inputs until one breaks the code.
 
-Together with [Jonas](https://wanke.dev), I'm working on a new programming language called **Candy,** which uses fuzzing as a fundamental part of the developer experience. It'll still take some time to be useful, but take a look at the following function definition:
+Together with [Jonas](https://wanke.dev), I'm working on a new programming language called [Candy](https://github.com/candy-lang/candy), which uses fuzzing as a fundamental part of the developer experience. It'll still take some time to be useful, but take a look at the following function definition:
 
 ```candy
 foo a b = add a b
