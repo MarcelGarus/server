@@ -28,7 +28,7 @@ The *set of even numbers* contains the number 4, but not the number 1 or the ban
 The *set of positive numbers* contains the numbers 1 and 3, but not the number -9.
 
 Static programming languages model sets using **types.** These are often just some primitive types (like `Bool` or `String`) or a combination of primitive types. (For example, classes or structs represent an *and* combination; enumerations or unions represent an *or* combination.)
-Critically, this means that you can *only* use these ways to create new types. Because types are only a rough abstraction over sets, you can't represent all sets as types! If you want to write a function that only accepts positive numbers or only strings that are palindromes, you're out of luck.
+Critically, this means that you can *only* use these ways to create new types. Because types are only a rough abstraction over sets, **you can't represent all sets as types!** If you want to write a function that only accepts positive numbers or only strings that are palindromes, you're out of luck.
 
 So, what happens in these cases? Well, we're back to runtime errors. Even in static languages like Java or Rust, the compiler won't warn you if you call the logarithm function with a negative input. Instead, you'll get a crash, exception, panic, or whatever else represents a runtime error in those languages.
 
