@@ -300,7 +300,7 @@ Then just run:
 certbot certonly -d "marcelgarus.dev,www.marcelgarus.dev,marcelgarus.de,www.marcelgarus.de,mgar.us,www.mgar.us,marcel.jetzt,www.marcel.jetzt,schreib.marcel.jetzt,schreibe.marcel.jetzt,folg.marcel.jetzt,folge.marcel.jetzt,bezahl.marcel.jetzt,bezahle.marcel.jetzt,zahl.marcel.jetzt,zahle.marcel.jetzt"
 ```
 
-</deatils>
+</details>
 
 The command will also output the paths of the certificates, for example:
 
@@ -310,3 +310,5 @@ Key is saved at:         /etc/letsencrypt/live/marcelgarus.dev/privkey.pem
 ```
 
 Ensure there's an `[https]` section in the `Config.toml` file that links to these files (like in the example file above).
+
+To renew certificates, just do `cerbot renew`.
