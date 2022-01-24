@@ -7,7 +7,7 @@ You can sort programming languages into two camps:
 - **Statically-typed languages** determine what sort of values variables store just by looking at the program.
 - **Dynamically-typed languages** can't statically infer what sort of values variables store. They have to run the program to find out.
 
-If given a choice, I prefer statically typed languages. Because they know the types of variables, they can offer clever suggestions. Additionally, the compiler catches many errors while you write the code, so you get immediate feedback.
+If given a choice, I prefer statically-typed languages. Because they know the types of variables, they can offer clever suggestions. Additionally, the compiler catches many errors while you write the code, so you get immediate feedback.
 
 On the other hand, most type systems limit what you can express in a language.
 Types act like rigid meta-languages that sit on top of your actual code.
