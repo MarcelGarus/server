@@ -39,6 +39,7 @@ lazy_static! {
             Asset::internal("JetBrainsMono-LatinExt.woff2", "font/woff2"),
             Asset::internal("JosefinSans-Latin.woff2", "font/woff2"),
             Asset::internal("JosefinSans-LatinExt.woff2", "font/woff2"),
+            Asset::file("coronoise-slides.pdf", "application/pdf"),
             Asset::file("energy-slides.pdf", "application/pdf"),
             Asset::file("federated-learning-slides.pdf", "application/pdf"),
             Asset::file("fourierreihe.pdf", "application/pdf"),
