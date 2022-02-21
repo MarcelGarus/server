@@ -1,20 +1,23 @@
 use crate::utils::*;
-use chrono::{Date, Utc};
 use comrak::{
     arena_tree::Children,
     nodes::{Ast, AstNode, ListType, NodeValue},
     parse_document, Arena, ComrakOptions,
 };
-use log::{error, info, warn};
+use itertools::Itertools;
+use log::{info, warn};
 use rand::prelude::SliceRandom;
+use std::fs;
 use std::{cell::RefCell, collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
+
+type Date = chrono::Date<chrono::Utc>;
 
 #[derive(Clone, Debug)]
 pub struct Article {
     pub key: String,
     pub title: String,
-    pub published: Option<Date<Utc>>,
+    pub published: Option<Date>,
     pub read_duration: Duration,
     pub content: String,
     pub teaser: String,
@@ -31,54 +34,44 @@ pub struct Blog {
     article_keys: Arc<RwLock<Vec<String>>>,
 }
 impl Blog {
-    const BASE_URL: &'static str = "https://raw.githubusercontent.com/MarcelGarus/server/main/blog";
+    const BASE_PATH: &'static str = "blog";
 
     pub async fn new() -> Self {
         let db = Self {
             articles: Default::default(),
             article_keys: Default::default(),
         };
-        db.load().await.unwrap();
+        db.load_from_filesystem().await.unwrap();
         db
     }
 
-    pub async fn load(&self) -> Result<(), String> {
-        let lines = download(&format!("{}/published.md", Self::BASE_URL))
-            .await?
-            .split('\n')
-            .map(|line| line.trim())
-            .filter(|line| !line.is_empty())
-            .filter(|line| !line.starts_with('#'))
-            .map(|line| line.to_owned())
-            .collect::<Vec<String>>();
+    pub async fn load_from_filesystem(&self) -> Result<(), String> {
+        let articles: HashMap<String, Article> = fs::read_dir(Self::BASE_PATH)
+            .expect("Couldn't read blog articles.")
+            .filter_map(|it| it.ok())
+            .filter_map(|entry| {
+                let name = entry.file_name().into_string().ok()?;
+                let (key, date) = article_line::parse(&name)?;
+                Some((key, date, entry.path()))
+            })
+            .map(|(key, date, path)| {
+                info!("Loading article {}", key);
+                let content = String::from_utf8(
+                    fs::read(path).expect(&format!("Can't read article {}.", key)),
+                )
+                .expect(&format!("Article {} contains non-UTF8 chars.", key));
+                let article = Article::from_key_and_date_and_markdown(key.clone(), date, &content);
+                (key, article)
+            })
+            .collect();
 
-        let mut articles: HashMap<String, Article> = Default::default();
-        let mut keys = vec![];
-        let mut timeless_keys = vec![];
-        for line in lines {
-            let (date, key) = match article_line::to_date_and_key(&line) {
-                Ok(it) => it,
-                Err(err) => {
-                    error!("Invalid article line {}: {:?}", line, err);
-                    continue;
-                }
-            };
-            let content = download(&format!("{}/{}.md", Self::BASE_URL, line)).await?;
-            articles.insert(
-                key.clone(),
-                Article::from_key_and_date_and_markdown(key.clone(), date, &content),
-            );
-            match date {
-                Some(_) => keys.push(key),
-                None => timeless_keys.push(key),
-            }
-        }
+        let keys = articles
+            .values()
+            .filter(|it| it.published.is_some())
+            .sorted_by_key(|it| it.published)
+            .map(|it| it.key.clone())
+            .collect_vec();
 
-        info!("Loaded articles: {}", itertools::join(&keys, ", "));
-        info!(
-            "Timeless articles: {}",
-            itertools::join(&timeless_keys, ", ")
-        );
         *self.articles.write().await = articles;
         *self.article_keys.write().await = keys;
         Ok(())
@@ -121,50 +114,36 @@ impl Blog {
 }
 
 mod article_line {
-    use chrono::{Date, TimeZone, Utc};
+    use super::Date;
+    use chrono::{TimeZone, Utc};
     use nom::{
-        bytes::complete::tag,
-        character::complete::digit1,
-        combinator::{map_res, opt},
-        sequence::tuple,
-        IResult,
+        bytes::complete::tag, character::complete::digit1, combinator::map_res, sequence::tuple,
     };
 
-    pub fn to_date_and_key(line: &str) -> Result<(Option<Date<Utc>>, String), String> {
-        parse(line)
-            .map(|it| it.1)
-            .map_err(|err| format!("Error while parsing article id: {:?}", err))
-    }
-    fn parse(input: &str) -> IResult<&str, (Option<Date<Utc>>, String)> {
-        let (input, date) = opt(tuple((
+    pub fn parse(filename: &str) -> Option<(String, Option<Date>)> {
+        let mut with_date_parser = tuple::<_, _, (), _>((
             map_res(digit1, |it: &str| it.parse::<i32>()),
             tag("-"),
             map_res(digit1, |it: &str| it.parse::<u32>()),
             tag("-"),
             map_res(digit1, |it: &str| it.parse::<u32>()),
             tag("-"),
-        )))(input)?;
-        Ok(match date {
-            Some((year, _, month, _, day, _)) => {
-                ("", (Some(Utc.ymd(year, month, day)), input.to_owned()))
-            }
-            None => {
-                if input.len() <= "timeless-".len() {
-                    ("", (None, input.to_owned()))
-                } else {
-                    ("", (None, input["timeless-".len()..].to_owned()))
-                }
-            }
-        })
+        ));
+        let timeless_parser = tag::<_, _, ()>("timeless-");
+
+        let filename = filename.trim_end_matches(".md");
+        if let Ok((key, (year, _, month, _, day, _))) = with_date_parser(filename) {
+            return Some((key.to_owned(), Some(Utc.ymd(year, month, day))));
+        }
+        if let Ok((key, _)) = timeless_parser(filename) {
+            return Some((key.to_owned(), None));
+        }
+        None
     }
 }
 
 impl Article {
-    fn from_key_and_date_and_markdown(
-        key: String,
-        date: Option<Date<Utc>>,
-        markdown: &str,
-    ) -> Self {
+    fn from_key_and_date_and_markdown(key: String, date: Option<Date>, markdown: &str) -> Self {
         let arena = Arena::new();
         let mut options = ComrakOptions::default();
         options.extension.footnotes = true;
@@ -189,8 +168,10 @@ impl Article {
         let read_duration = seconds_per_byte * (markdown.len() as u32);
 
         Self {
-            key,
-            title: root.find_title().expect("Blog contains no title"),
+            key: key.clone(),
+            title: root
+                .find_title()
+                .expect(&format!("Article \"{}\" contains no title", key)),
             published: date,
             read_duration,
             content: root.to_html(),
@@ -272,7 +253,6 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 output.end_tag("strong");
             }
             NodeValue::Strikethrough => {
-                println!("Strikethrough");
                 output.start_tag("s");
                 self.children().to_html_parts(output);
                 output.end_tag("s");

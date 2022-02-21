@@ -4,12 +4,14 @@ use crate::shortcuts::ShortcutDb;
 use crate::utils::*;
 use crate::visits::{Visit, VisitsLog};
 use actix_service::Service;
-use actix_web::body::AnyBody;
-use actix_web::dev::{self, HttpServiceFactory, RequestHead, ServiceResponse};
-use actix_web::http::ContentEncoding;
-use actix_web::middleware::{self, ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{
-    delete, get, guard, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    body::AnyBody,
+    delete,
+    dev::{self, HttpServiceFactory, RequestHead, ServiceResponse},
+    get, guard,
+    http::ContentEncoding,
+    middleware::{self, ErrorHandlerResponse, ErrorHandlers},
+    post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use blog::Blog;
 use futures::future::{self, FutureExt};
@@ -18,8 +20,7 @@ use log::{debug, info, warn, LevelFilter};
 use rustls::{NoClientAuth, ServerConfig};
 use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
-use std::io::BufReader;
-use std::net::SocketAddr;
+use std::{io::BufReader, net::SocketAddr};
 use tokio::fs;
 
 mod assets;
@@ -319,7 +320,6 @@ fn api(admin_key: &str) -> impl HttpServiceFactory {
                 .service(shortcuts_api::update)
                 .service(shortcuts_api::remove),
         )
-        .service(web::scope("/blog").service(blog_api::refresh))
         .service(
             web::scope("/visits")
                 .service(visits_api::tail)
@@ -367,18 +367,6 @@ mod shortcuts_api {
         let (shortcut,) = path.into_inner();
         shortcut_db.delete(&shortcut).await;
         HttpResponse::Ok().body("Deleted shortcut.")
-    }
-}
-
-mod blog_api {
-    use super::*;
-
-    #[get("/refresh")]
-    pub async fn refresh(blog: web::Data<Blog>) -> impl Responder {
-        match blog.load().await {
-            Ok(_) => HttpResponse::Ok().body("Refreshed blog articles."),
-            Err(error) => HttpResponse::InternalServerError().body(error),
-        }
     }
 }
 

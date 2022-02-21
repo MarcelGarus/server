@@ -1,6 +1,6 @@
 use actix_web::{body::AnyBody, http::HeaderMap, HttpResponse, HttpResponseBuilder};
 use chrono::{Date, Utc};
-use http::{HeaderValue, StatusCode};
+use http::HeaderValue;
 use serde::Serialize;
 
 pub trait VecStringExt {
@@ -107,27 +107,6 @@ impl RedirectHttpResponseExt for HttpResponse {
             .append_header(("Location", location))
             .body("")
     }
-}
-
-/// Fetches the body from a URL. It should return a 200 code and valid UTF-8 content.
-pub async fn download(url: &str) -> Result<String, String> {
-    let response = reqwest::get(url)
-        .await
-        .map_err(|err| format!("Couldn't get {}: {:?}", url, err))?;
-    if response.status() != StatusCode::OK {
-        return Err(format!(
-            "Fetching {} returned a non-200 code: {}",
-            url,
-            response.status()
-        ));
-    }
-    let content = response
-        .bytes()
-        .await
-        .map_err(|err| format!("Body of {} has invalid bytes: {}.", url, err))?;
-    let content = String::from_utf8(content.to_vec())
-        .map_err(|_| format!("Body of {} is not UTF-8.", url))?;
-    Ok(content)
 }
 
 pub trait HtmlResponse {
