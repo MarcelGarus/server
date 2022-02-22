@@ -124,6 +124,7 @@ async fn main() -> std::io::Result<()> {
             .service(pay)
             .service(pay_amount)
             .service(go_shortcut)
+            .service(blog_file)
             .service(rss)
             .service(api(&cloned_config2.admin_key))
             .service(url_with_key)
@@ -274,6 +275,27 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
         return HttpResponse::Ok()
             .append_header(("Cache-Control", "public,max-age=3600"))
             .html(templates::article_page(&article, &blog.get_suggestion(&key).await).await);
+    }
+
+    error_page_404(&req).await
+}
+
+#[get("/files/{filename}")]
+async fn blog_file(req: HttpRequest, path: web::Path<(String,)>) -> impl Responder {
+    let (filename,) = path.into_inner();
+
+    if filename
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || ".-".contains(c))
+    {
+        match fs::read(&format!("blog/files/{}", filename)).await {
+            Ok(content) => {
+                return HttpResponse::Ok()
+                    .append_header(("Cache-Control", "public,max-age=3600"))
+                    .body(content);
+            }
+            Err(_) => {}
+        }
     }
 
     error_page_404(&req).await
