@@ -301,6 +301,16 @@ async fn blog_file(req: HttpRequest, path: web::Path<(String,)>) -> impl Respond
     error_page_404(&req).await
 }
 
+#[get("/study")]
+async fn study_before() -> impl Responder {
+    HttpResponse::redirect_to("https://docs.google.com/forms/d/e/1FAIpQLSdFnPCdLK71KmJb4_RM6gndnmQ11Qbb4idByVl2fZLg8TPDXg/viewform")
+}
+
+#[get("/study-2")]
+async fn study_after() -> impl Responder {
+    HttpResponse::redirect_to("https://docs.google.com/forms/d/e/1FAIpQLSdyI2fqMGI9O0a8-Xd6KhUlKI1z4najMrKoYXNG4g2wgVEWTg/viewform")
+}
+
 #[get("/pay")]
 async fn pay() -> impl Responder {
     HttpResponse::redirect_to("https://paypal.me/marcelgarus")
