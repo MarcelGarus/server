@@ -44,6 +44,7 @@ lazy_static! {
             Asset::file("federated-learning-slides.pdf", "application/pdf"),
             Asset::file("fourierreihe.pdf", "application/pdf"),
             Asset::file("jogging-in-the-cold.mp3", "audio/mpeg"),
+            Asset::file("jupyter-energy-slides.pdf", "application/pdf"),
         ]
         .into_iter()
         .map(|asset| (asset.key.clone(), asset))
