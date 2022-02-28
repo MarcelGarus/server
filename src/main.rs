@@ -121,6 +121,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Compress::new(ContentEncoding::Auto))
             .wrap(middleware::NormalizePath::default())
             .service(index)
+            .service(study_before)
+            .service(study_after)
             .service(pay)
             .service(pay_amount)
             .service(go_shortcut)
