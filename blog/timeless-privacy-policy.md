@@ -7,7 +7,7 @@ I'm the person responsible within the meaning of the data protection laws, in pa
 Enfieldstraße 85  
 45966 Gladbeck
 
-marcel.garus@gmail.com  
+privacypolicy@marcelgarus.dev  
 +49 15751770663
 
 ## Collection of General Information When You Visit My Website

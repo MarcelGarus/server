@@ -2,10 +2,10 @@
 
 Marcel Garus
 
-Enfieldstr. 85
+Enfieldstr. 85  
 45966 Gladbeck
 
-marcel.garus@gmail.com
+imprint@marcelgarus.dev  
 +49 15751770663
 
 This website contains links to external websites – mainly the `mgar.us/go/...` URLs redirect to external websites.

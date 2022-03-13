@@ -7,7 +7,7 @@ So, if you want to talk, these are ways to contact me, sorted in my preference o
 
 * [Telegram](https://t.me/MarcelGarus)
 * [WhatsApp](https://wa.me/+4915751770663)
-* [Email](mailto:marcel.garus@gmail.com)
+* [Email](mailto:hello@marcelgarus.dev)
 * [Twitter](https://twitter.com/MarcelGarus)
 * [Reddit](https://reddit.com/u/MarcelGarus)
 * [Instagram](https://instagram.com/marcel.garus)
