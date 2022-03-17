@@ -128,26 +128,22 @@ Here's how a composed horror music might sound like:
 
 ## Study
 
-[1]
-Potential triggers for inconsistency in social behavior.
-What has a positive behavior change in response to the pandemic (e.g. social distancing, improved hand hygiene):
-- fear of the virus
-- moral foundations
-- political orientation
-n = 324 (international)
+Many papers investigate potential triggers for positive behavior changes in response to the pandemic (such as practicing social distancing or improving hand hygiene).
+Among 324 international participants, Harper et al. looked at potential correlations with fear of the virus, moral foundations, and political orientation. They found that the fear of the virus is the primary factor for these behavior changes. [1]
+Notably, ... et al. found that people actually comply less when they fear the authorities. [2] This indicates that **fear of the virus itself** primarily motivates people to be careful.
 
-[2]
-People actually compless less when they fear the authorities.
+... et al. indentifies **empathy with those most vulnerable to the virus** as another factor for physical distancing and wearing a face mask. Especially above a certain baseline, inspiring empathy in people can motivate them to follow these two important measures, while only giving them plain information had a negligible effect on their behavior. [7]
 
-[7]
-"Empathy for those most vulnerable to the virus represents and emotional basis regarding the motivation for physical distancing and wearing a face mask"
-"we can actually use empathy to promote the motivation in people to follow these two important measures"
-"providing individuals with mere background information […] was not enough to significantly increase the behavioral motivation; only if empathy was added motivation increase"
+My hypothesis for this app is as follows:
 
+> While working, employees/students empathize more with the decisions of olleagues to take protective measures against the corona pandemic, if they are acutely made aware of the infection risk via sonic feedback.
 
-Hypothesis: While working, employees/students empathize more with the decisions of olleagues to take protective measures against the corona pandemic, if they are acutely made aware of the infection risk via sonic feedback.
+To investigate this, I spent a day at the Neurodesign office at the HPI.
+After introducing participants to the project, I silently recorded data indicating increased risks (like, the CO2 levels, the number of people in the room, whether they wore masks) and asked them to fill out a questionnaire.
+Then, I activated the sonification of the risk level and continued recording risk-relevant data.
+Finally, I asked them to fill out the survey again.
 
-Questionnaire
+Here's a timeline of what happened:
 
 Timeline
 
@@ -155,13 +151,16 @@ Results
 
 Careful interpretation
 
-## Challenges, Future work
+## Conclusion
 
-- limitations: Incidence, Exposure Notifications, CO2
-- exponential scale
-- sonify rate instead of risk?
-- sometimes small breaks in music / slightly misaligned voices
-  - adds to the horror, but should be better handled
+This project is long from being finished.
+Here are some ideas for future work:
+
+- Improve the inputs: The incidence isn't yet based on the phone's position, but instead hardcoded to Potsdam. The CO2 levels still need to be manually entered.
+- Add more sonifications: The risk can span an exponential scale, so there's still lots of room for different sounds and noises to be incorporated. Some instruments could sonify the rate of risk, warning users of rapid risk increases.
+- Improve music generation: Sometimes there are small breaks in the music or voices are slightly misaligned relative to each other. This kind of adds to the horrow, but could be better handled by switching to a lower-level sound library.
+
+Working on this project was fun! During the seminar lectures, I learned a lot about Neuroscience, empathy, and sound.
 
 ## Sources
 
