@@ -4,9 +4,11 @@ As you might have noticed, we are currently in a pandemic.
 Luckily, there are several steps you can take to protect yourself and others: You can get vaccinated, wear a mask, avoid large groups of people, regularly ventilate when you're indoors with others, etc.
 Some of those measures are easier to follow than others – for example, getting vaccinated is a one-off action, but remembering to open the window every few minutes is a lot harder if you're also concentrating on something else, such as working or studying together with others.
 
-In the context of the Sonic Thinking and the Neurodesign lectures at our university, I developed an app that continuously evaluates the current situation with regards to the infection risk and sonifies that risk.
+In the context of the Sonic Thinking and the Neurodesign lectures at our university, I developed an app that continuously evaluates the current situation with regards to the infection risk and turns the risk into sound.
 
 ![architecture](...)
+
+--snip--
 
 The app takes three inputs: the incidence rate in the area, the number of people nearby, and the CO2 level.
 You can adjust each of these inputs manually using a slider, or you can check the box on the left to make the app automatically try to choose an appropriate value.
@@ -61,9 +63,20 @@ Here are the results:
 
 Don't be fooled: This is a line chart, not a bar chart.
 The number of Exposure Notifications scanned really goes up and down like that.
-I suppose this is an artifact of Android rate limiting the app or trying to be clever and not actually re-scanning for devices every time the app tells it to, which leads to either the same number of Exposure Notifications being reported multiple consecutive times or no Exposure Notifications being reported at all.
+I suppose this is an artifact of Android rate limiting the app or trying to be clever and not actually re-scanning for devices every time the app tells it to, which leads to either the same number of Exposure Notifications being reported multiple consecutive times or none at all being reported.
 
-- Already a useful sonification!
+The ... data series is me shopping in the local supermarket.
+If you're wondering about the gap in the data, that's just me turning the phone into standby mode while putting items on the cash register tape – for now, the app has to run in the foreground in order to record data.
+That being said, you can see  in the end of the data series that compared to browsing the supermarket, me waiting in line with multiple people actually leads to a higher number of exposure notifications.
+
+The measurements at home report a mostly constant number of notifications.
+The small noise could result from some people changing the room that they're in, people walking by on the outside, or just the corruption of some Bluetooth packets that get sent threw a few walls.
+This data series recorded at home also shows that the app isn't perfect for measuring the number of people: There's only me in my flat, but because I live in a buzzing student residence, about ... people are reported.
+In some cases, it makes sense to not use the automatic estimatino of the number of people: If I'm in a room with a fixed number of people for a long time, I could just manually enter the number of people in the app and benefit from much more accurate data.
+
+For the measurements in the forest, I took a long walk, listened to podcasts, and opened the app in the foreground.
+I enabled the sonification, so that I'll hear a sound when some Exposure Notifications are detected.
+I met the occasional hiker, but the higher bump was interesting: While I was walking down a narrow path, I heard the sound of Exposure Notifications being recorded. I looked around and, fair enough, two bikers were pulling up from behind. I stepped aside and let them pass through. To me, this showed that even a very simple sonification – like turning Exposure Notifications to piano blimps – can be useful in everyday life: If I hadn't used the app, I wouldn't have heard the bikers approaching and they'd have to ring or yell. 
 
 ## CO2 levels
 
@@ -72,42 +85,46 @@ Here's a hint:
 
 ![humans make co2](...)
 
-CO2 levels are usually at about 400 ppm on the outside and at 500+ ppm inside of buildings.
-Here, ppm stands for *parts per million*, ...
-Because that extra CO2 comes from exhaled air, lower CO2 levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, less people, and less kinetic strength (a measure of how much movement occurs). [4]
-In the 2021 paper "Predictive and retrospective modelling of airborne infection risk using monitored carbon dioxide," Burridge et al. even recommend "that more widespread monitoring of CO2 is carried out within occupied spaces."
+Inside, CO2 levels are usually at ...+ ppm; outside they are about ... ppm.
+Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 400 / 1000000 = ... % of the air being CO2.
+Because that extra CO2 mostly comes from exhaled air, lower CO2 levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, less people, and less kinetic strength (a measure of how much movement occurs). [4]
+So, CO2 levels are a great indicator for the airborne COVID-19 infection risk.
 
+This information can be helpful for people:
 A group of Japanese researchers visualized a graph of the CO2 concentration during a concert and made about half of the audience feel "much safer."
 They strongly expect for this visualization to become part of the standard operational precedure of concerts. [5]
 
-...
+While I do have a CO2 sensor you can manually read, in the context of the lectures, I didn't manage to integrate another CO2 sensor.
+For now, the CO2 value needs to be manually entered into the app.
 
 ## Sound generation
 
-Let's now shift from inputs to outputs!
-In the end, we want to play some scary, spooky sound.
+Let's shift from inputs to outputs!
+While visual indicators are nice, they don't proactively notify you of increased infection risks: Although I have the CO2 set up above my computer display, I rarely look at it if I'm deeply focused on some programming task.
+Instead, I'm often surprised if I look up and see how high the levels are.
 
-Why sound?
+Sound, on the other hand, is the only sense that proactively comes to us and that can't be easily ignored – there's a reason alarm clocks make sound.
+My idea was to play some scary, spooky sound that emotionally conveys the dangerousness of infections.
+Forgetting to open the window for some time would lead to ominous music playing, just like you're in a horror film!
 
-What sounds?
-
-Creating suspense in music and sound: [6]
-- sustained high tone
-- deep drone
-- an annoying repetitive motive
-- specific noises such as the howling wind
+... Heimerdinger investigated the music of horror movies and found some common factors for creating suspense in sound: sustained high tones, deep drones, annoying repetitive motives, and specific noises such as the howling wind. [6]
+I took all of those inspirations, and composed a song with multiple voices.
+For that, I connected my electric piano's MIDI output to my iPad and played different instruments through GarageBand:
 
 ![screenshot](...)
 
-Disorienting Off-beat
+Here are some single voices:
 
-How combined?
-Organizing code like musicians works great
+[listening example](...)
 
-- Fading in and out
-- Start and end at predefined beats
-- Start on some beats, fade out
-- Randomly start
+To programatically combine those instruments, I initially tried to have one control loop that turns instruments on and off. This became complicated pretty fast – you have to track which instruments are playing, when they started (some should only end at some pre-defined beats or have a minimum amount of time between consecutive activations).
+In the end, I settled on an architecture where instruments have access to some ambient values such as the current beat number and the inputs, but could do whenever they want. This allows me to implement many different types of effects: fade in and out, start and end at predefined beats, start on some beats and then fade out, or randomly start.
+
+Here's how a composed horror music might sound like:
+
+[listening example](...)
+
+> One other tidbit: First, you only hear one piano note, but as soon as the second instrument starts, you realize the first one was actually played off-beat. That makes the music even more disorienting.
 
 ## Study
 
@@ -148,7 +165,7 @@ Careful interpretation
 
 ## Sources
 
-[^1]: **Functional Fear Predicts Public Health Compliance in the COVID-19 Pandemic:** paper from April 2020 by Craig A. Harper, Liam P. Stchell, Dean Fido & Robert D. Latzman
+[^1]: **Functional Fear Predicts Public Health Compliance in the COVID-19 Pandemic** paper from April 2020 by Craig A. Harper, Liam P. Stchell, Dean Fido & Robert D. Latzman
 [^2]: Compliance with COVID-19 Mitigation Measures in the United States
 [^3]: Exposure Notification Framework
 [^4]: Predictive and retrospective modelling of airborne infection risk using monitored carbon dioxide
@@ -161,3 +178,4 @@ Careful interpretation
 - title case
 - CO2
 - Grammarly
+- sources
