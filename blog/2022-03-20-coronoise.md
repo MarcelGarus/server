@@ -248,7 +248,6 @@ Working on this project was fun! During the seminar lectures, I learned a lot ab
 - sources
 - units of measure
 - Grammarly
-- fix chart colors
 
 ---
 
