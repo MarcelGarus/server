@@ -243,12 +243,12 @@ Working on this project was fun! During the seminar lectures, I learned a lot ab
 
 - content
 - title case
+- code blocks
 - CO2
 - sources
 - units of measure
 - Grammarly
-- Fix chart colors
-
+- fix chart colors
 
 ---
 
