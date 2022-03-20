@@ -322,11 +322,18 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             }
             NodeValue::FootnoteReference(key) => {
                 println!("Footnote reference with key {:?}", key);
-                output.push(format!("<sup>{}</sup>", key.utf8_or_panic()));
+                output.push(format!(
+                    "<sup><a href=\"#footnote-{}\">{}</a></sup>",
+                    key.clone().utf8_or_panic(),
+                    key.utf8_or_panic()
+                ));
             }
             NodeValue::FootnoteDefinition(key) => {
                 println!("Footnote definition with key {:?}", key);
-                output.start_tag("small");
+                output.push(format!(
+                    "<small id=\"footnote-{}\">",
+                    key.clone().utf8_or_panic()
+                ));
                 output.push(key.utf8_or_panic());
                 output.push(": ".into());
                 self.children().to_html_parts(output);
