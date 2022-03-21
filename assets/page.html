@@ -68,6 +68,15 @@
             line-height: 1;
         }
 
+        .only-screen { display: none; }
+        @media screen {
+            .only-screen { display: inline-block; }
+        }
+        .only-print { display: none; }
+        @media print {
+            .only-print { display: inline-block; }
+        }
+
         /* styles for the side bar */
         aside {
             position: fixed;
@@ -90,6 +99,9 @@
             aside h1 { margin: 0; }
             aside .content { margin: auto !important; }
         }
+        /* @media print {
+            aside { display: none; }
+        } */
         aside .content {
             margin: auto;
             margin-right: 0;
@@ -213,7 +225,14 @@
             margin: 3em auto;
             border: none;
             border-radius: 1mm;
-            background: #7ece64;
+            background: var(--green);
+        }
+        @media print {
+            hr {
+                background: none;
+                border-radius: 0;
+                border-top: 1mm solid var(--green);
+            }
         }
 
         code { font-family: 'JetBrains Mono'; }
@@ -232,13 +251,28 @@
             border-radius: 1em;
         }
 
-        .footnote-key {
-            background: var(--yellow);
-            padding: 1mm;
-            border-radius: 2mm;
-            color: white;
-            text-decoration: none;
-            font-family: 'Josefin Sans';
+        audio {
+            margin-top: 4mm;
+            border-radius: 1em;
+        }
+
+        @media screen {
+            .footnote-key {
+                background: var(--yellow);
+                padding: 1mm;
+                border-radius: 2mm;
+                color: white;
+                text-decoration: none;
+                font-family: 'Josefin Sans';
+            }
+        }
+        @media print {
+            .footnote-key {
+                padding: 0;
+                font-family: 'Roboto', sans-serif;
+            }
+            .footnote-key::before { content: '['; }
+            .footnote-key::after { content: ']'; }
         }
 
         .footnote-def {
@@ -261,7 +295,7 @@
 </head>
 
 <body>
-    <aside>
+    <aside class="only-screen">
         <div class="content">
             <div class="my-name"><h1><a href="/">Marcel Garus</a></h1></div>
             <div class="my-image"><img id="my-image" src="/me.webp" /></div>
@@ -295,7 +329,7 @@
     <main>
         <div class="content">
             {{content}}
-            <footer class="secondary">
+            <footer class="secondary only-screen">
                 You're wondering who wrote this stuff? <a href="/about-me">Here's some information about me.</a>
                 By the way: This website doesn't track you and doesn't use cookies, but feel free to <a
                     href="https://zahl.marcel.jetzt/1€">buy me one</a>. 🍪
