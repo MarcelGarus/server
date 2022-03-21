@@ -1,4 +1,4 @@
-# Making People Aware of Increased Infection Risk
+# Encouraging People to Be More Careful in Situations With High Infection Risk
 
 As you might have noticed, we are currently in a pandemic.
 Luckily, there are several steps you can take to protect yourself and others: You can get vaccinated, wear a mask, avoid large groups of people, regularly ventilate when being indoors with others, etc.
