@@ -175,11 +175,13 @@ Therefore, my hypothesis for my app is as follows:
 Investigating this in a controlled study is difficult: It takes time for people to empathize with each other and I don't feel comfortable with intentionally putting people into risky situations.
 Rather, I spent a day at the Neurodesign office at the HPI. The process went like this:
 
-1. I introduced participants to the project.
+1. I introduced three main participants to the project.
 2. I silently recorded data indicating increased risks (CO2 level, number of people and opened windows)
 3. After 1½ hours, I asked the participants to fill out a questionnaire.
 4. Again, I recorded data indicating increased risk. This time, the sonification was enabled.
 5. Finally, I asked the participants to fill out the survey again.
+
+### Recorded data
 
 This is the data I recorded (the CO2 levels have their own scale on the right because they have much larger values):
 
@@ -187,61 +189,85 @@ This is the data I recorded (the CO2 levels have their own scale on the right be
 
 There's a lot to unpack! Here are some findings:
 
-- **The CO2 levels in the office are generally low.**
-  Normally, values recorded indoors reach 700+ ppm once in a while (that also happens at my home). The CO2 sensor has a built-in traffic light, which was always green.
+
+**The CO2 levels in the office are generally low.**
+Normally, values recorded indoors reach 700+ ppm once in a while (that also happens at my home). The CO2 sensor has a built-in traffic light, which was always green.
   This also means that not a huge range of sound was explored – the sonification became active only once for a short period of time.
-- **CO2 levels move a lot faster than the other data series.**
-  I manually recorded the data (so there are still small steps/plateaus from when I didn't look at the sensor), but other data changes only in discrete steps at specific points in time.
-- **Opening windows reduces CO2 levels – up to some point.**
-  When the window is first opened and when the second window is opened, the CO2 level drops significantly – the room ventilation was improved. Notably, the CO2 levels never drop below 300 ppm; apparently, the outdoor air has a CO2 level similar to that.
-- **More people require more ventilation.**
-  After around 2 o'clock, although one window is opened, the CO2 levels still rise.
-- **Sound encourages people to be more careful.**
-  As soon as the sound went off, one participant looked up and opened a window. It took around three minutes for the sound to fade away again.
+
+**CO2 levels move a lot faster than the other data series.**
+I manually recorded the data (so there are still small steps/plateaus from when I didn't look at the sensor), but other data changes only in discrete steps at specific points in time.
+
+**Opening windows reduces CO2 levels – up to some point.**
+When the window is first opened and when the second window is opened, the CO2 level drops significantly – the room ventilation was improved. Notably, the CO2 levels never drop below 300 ppm; apparently, the outdoor air has a CO2 level similar to that.
+
+**More people require more ventilation.**
+After around 2 o'clock, although one window is opened, the CO2 levels still rise.
+
+**Sound encourages people to be more careful.**
+Because the infection risk was generally low, the sonification produced sound only once.
+As soon as the sound went off, a study participant looked up and opened a window.
+After that, it took around three minutes for the sound to fade away again.
+
+### Questionnaire
 
 In the questionnaire I gave to the participants, I asked the following questions:
 
-- How high do you think was the infection risk?  
-  <small>(5-point scale from "very low" to "very high")</small>
-- How sure are you about that?  
-  <small>(5-point scale from "it's hard to estimate" to "I'm pretty confident")</small>
-- How safe did you feel?  
-  <small>(5-point scale from "very unsafe" to "very safe")</small>
-- If someone else opened a window: How appropriate did you find this?  
-  <small>(5-point scale from "inappropriate" to "appropriate")</small>
-- If someone else wore a mask: How appropriate did you find this?  
-  <small>(5-point scale from "inappropriate" to "appropriate")</small>
-- If *you* took protective measures: How do you think other people felt about that?  
-  <small>("I didn't take protective measures." *or* "I feel people judged me." *or* "I feel people didn't really care." *or* "I feel like people sympathized with me, but had mixed feelings about it." *or* "I feel like people appreciated me for doing this.")</small>
-- If infection risk sounds were played: What adjective describes them best?  
-  <small>(free text question)</small>
+**How high do you think was the infection risk?**  
+<small>(5-point scale from "very low" to "very high")</small>  
+When no sound was played, the average rating was 1.7, with sound it was 3.0.
+Maybe, because the sound makes people more aware of the infection risk in general, it also causes people to estimate the risk to be higher.
 
+**How sure are you about that?**  
+<small>(5-point scale from "it's hard to estimate" to "I'm pretty confident")</small>  
+Here, the average was 2.7 without sound, and 3.0 with sound.
+Interestingly, one person previously was pretty confident (4) that the risk was "very low", but when the sound was played they became less confident (3) and thought the risk was higher.
 
+**How safe did you feel?**  
+<small>(5-point scale from "very unsafe" to "very safe")</small>  
+With sound, people felt slightly less safe; the average rating went from 4.3 down to 3.7.
 
+**If someone else opened a window: How appropriate did you find this?**  
+<small>(5-point scale from "inappropriate" to "appropriate")</small>  
+Participants' opinions didn't change significantly.
 
+**If someone else wore a mask: How appropriate did you find this?**  
+<small>(5-point scale from "inappropriate" to "appropriate")</small>  
+Neither did people's opinion change here.
 
-Results
+**If *you* took protective measures: How do you think other people felt about that?**  
+<small>("I didn't take protective measures." *or* "I feel people judged me." *or* "I feel people didn't really care." *or* "I feel like people sympathized with me, but had mixed feelings about it." *or* "I feel like people appreciated me for doing this.")</small>  
+When no sound was played, two people took protective measures. They felt like people didn't care of sympathized with mixed feelings.
+When sound was played, only one person took protective measures, but felt appreciated.
+It seems like the project did indeed make people feel like they received more empathy.
 
-Careful interpretation
+**If infection risk sounds were played: What adjective describes them best?**  
+<small>(free text question)</small>  
+Participants described the sounds as mellow and mild for a short time. Some were wondering why there were no sounds at all most of the time.
 
 ## Conclusion
 
-This project is far from being finished and there's still lots of potential for future work.
+The project was at least partially successful.
+The concept of sonifying infection risk to inspire empathy and make people take more measures has itself proven, although with a very small data set.
+Because participants only heard the second level (a dissonant piano tune with no melody yet), the full range of risky sounds wasn't explored.
+Whether people would perceive the full sound as scary is still open.
+
+In general, there'is still lots of potential for future work.
 Here are some ideas:
 
 - **Improve the inputs:** The incidence isn't yet based on the phone's position, but instead hardcoded to Potsdam. The CO2 levels still need to be manually entered.
 - **Add more inputs:** Survey participants remarked that the vaccination status of others could also be a factor for the safety.
 - **Add more sonifications:** The risk can span an exponential scale, so there's still lots of room for different sounds and noises to be incorporated. Some instruments could sonify the rate of risk, warning users of rapid risk increases.
 - **Improve music generation:** Sometimes there are small breaks in the music or voices are slightly misaligned relative to each other. This kind of adds to the horrow, but could be better handled by switching to a lower-level sound library.
+- **Do bigger studies:** The conducted study had a very small number of participants (n=3). This is enough for a proof-of-concept, but to have more confidence in the scientific validity of the project, other studies with larger groups should be conducted.
 
-...
+While there's still a lot to do, working on this project was fun!
+Over the course of the semester, I learned a lot about Neuroscience, study design, and empathy.
+I was also pleasantly surprised by the variety of applications in which sonifications can be used and I also learned to appreciate the unique characteristics of sound in everyday tools.
 
-Working on this project was fun! During the seminar lectures, I learned a lot about Neuroscience, empathy, and sound.
-
+Cheers, and stay healty!
 
 ## Todos
 
-- content
 - title case
 - code blocks
 - CO2
