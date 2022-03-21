@@ -323,7 +323,7 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             NodeValue::FootnoteReference(key) => {
                 println!("Footnote reference with key {:?}", key);
                 output.push(format!(
-                    "<sup><a href=\"#footnote-{}\">{}</a></sup>",
+                    "<a href=\"#footnote-{}\" class=\"footnote-key\">{}</a>",
                     key.clone().utf8_or_panic(),
                     key.utf8_or_panic()
                 ));
@@ -331,13 +331,17 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             NodeValue::FootnoteDefinition(key) => {
                 println!("Footnote definition with key {:?}", key);
                 output.push(format!(
-                    "<small id=\"footnote-{}\">",
+                    "<div id=\"footnote-{}\" class=\"footnote-def\">",
                     key.clone().utf8_or_panic()
                 ));
-                output.push(key.utf8_or_panic());
-                output.push(": ".into());
+                output.push(format!(
+                    "<div class=\"footnote-def-key\"><span class=\"footnote-key\">{}</span></div>",
+                    key.utf8_or_panic()
+                ));
+                output.push("<div class=\"footnote-def-value\">".to_string());
                 self.children().to_html_parts(output);
-                output.end_tag("small");
+                output.end_tag("div");
+                output.end_tag("div");
             }
             _ => warn!("Not handling node {:?} yet.", self),
         }

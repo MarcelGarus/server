@@ -17,6 +17,11 @@
 
         /* colors */
         :root {
+            --pink: #f97191;
+            --yellow: #ffb152;
+            --green: #7ece64;
+            --purple: #c59bff;
+            
             --accent-color: #f97191;
             --main-bg-color: white;
             --main-fg-color: black;
@@ -118,7 +123,7 @@
         }
         aside .my-name ::selection { background: var(--nav-fg-color); }
         aside .my-image {
-            background-color: #ffb152;
+            background-color: var(--yellow);
             width: 7em;
             height: 7em;
             border-radius: 3.5em;
@@ -130,7 +135,7 @@
             overflow: hidden;
         }
         aside .description {
-            background-color: #7ece64;
+            background-color: var(--green);
             padding: 1em;
             border-radius: 1em;
             transform: rotate(1deg);
@@ -139,7 +144,7 @@
             margin-bottom: -0.3em;
         }
         aside .more-about-me {
-            background-color: #c59bff;
+            background-color: var(--purple);
             padding: 0.5em;
             z-index: 3;
             translate: -1em 0;
@@ -225,6 +230,27 @@
             max-width: 100%;
             max-height: 30em;
             border-radius: 1em;
+        }
+
+        .footnote-key {
+            background: var(--yellow);
+            padding: 1mm;
+            border-radius: 2mm;
+            color: white;
+            text-decoration: none;
+            font-family: 'Josefin Sans';
+        }
+
+        .footnote-def {
+            display: flex;
+            margin-bottom: 4mm;
+        }
+        .footnote-def-key {
+            min-width: 48px;
+        }
+        .footnote-def-value > p {
+            margin: 0;
+            margin-right: 4mm;
         }
 
         footer {
