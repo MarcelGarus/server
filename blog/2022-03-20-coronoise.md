@@ -105,10 +105,10 @@ A hint:
 
 Outdoors, CO2 levels are usually at 300 – 500 ppm, indoors at 500+ ppm.
 Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 400 / 1000000 = 0.04 % of the air being CO2.
-Because that extra CO2 comes primarily from exhaled air, it's unsurprising that Burridge [^4] found that lower CO2 levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, fewer people, and less kinetic strength (a measure of how much movement occurs).
+Because that extra CO2 comes primarily from exhaled air, it's unsurprising that Burridge [^co2] found that lower CO2 levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, fewer people, and less kinetic strength (a measure of how much movement occurs).
 So, CO2 levels can be a useful indicator for the airborne COVID-19 infection risk.
 
-In 2021, a group of Japanese researchers [^5] visualized a graph of the CO2 concentration during a concert and made about half of the audience feel "much safer."
+In 2021, a group of Japanese researchers [^concert] visualized a graph of the CO2 concentration during a concert and made about half of the audience feel "much safer."
 They strongly expect this visualization to become part of the standard operating procedure of concerts.
 
 In the context of the lectures, I didn't manage to programmatically integrate a CO2 sensor; for now, the CO2 value needs to be manually entered into the app.
@@ -123,7 +123,7 @@ Sound, on the other hand, is a sense that proactively comes to us and that can't
 My idea was to play scary, spooky sounds that emotionally convey the dangerousness of infections.
 Forgetting to open the window for some time would lead to ominous music playing, just like you're in a horror film!
 
-Heimerdinger [^6] investigated the music of horror movies and found some common factors for creating suspense in sound: sustained high tones, deep drones, annoying repetitive motives, and specific noises such as the howling wind.
+Heimerdinger [^scary] investigated the music of horror movies and found some common factors for creating suspense in sound: sustained high tones, deep drones, annoying repetitive motives, and specific noises such as the howling wind.
 I took all of those inspirations and composed a song with multiple voices.
 For that, [I connected my electric piano's MIDI output to my iPad](midi-music) and played different instruments through GarageBand:
 
@@ -156,17 +156,17 @@ Arrangement with increasing, then decreasing risk:
 ## Study
 
 Many papers investigate potential triggers for positive behavior changes in response to the pandemic (such as practicing social distancing or improving hand hygiene).
-Among 324 international participants, Harper et al. [^1] looked at correlations with these factors:
+Among 324 international participants, Harper et al. [^fear] looked at correlations with these factors:
 
 - fear of the virus
 - moral foundations
 - political orientation
 
 They found that the fear of the virus is the primary factor for these behavior changes.
-Notably, Rooij et al. [^2] found that people comply *less* when they fear the authorities.
+Notably, Rooij et al. [^us] found that people comply *less* when they fear the authorities.
 This indicates that **fear of the virus itself** primarily motivates people to be careful.
 
-Pfattheicher et al. [^7] identifies **empathy with those most vulnerable to the virus** as another factor for physical distancing and wearing a face mask. Especially above a certain baseline, inspiring empathy in people can motivate them to follow these two measures, while only giving them mere information has a negligible effect on their behavior.
+Pfattheicher et al. [^empathy] identifies **empathy with those most vulnerable to the virus** as another factor for physical distancing and wearing a face mask. Especially above a certain baseline, inspiring empathy in people can motivate them to follow these two measures, while only giving them mere information has a negligible effect on their behavior.
 
 Therefore, my hypothesis for my app is as follows:
 
@@ -269,25 +269,25 @@ Cheers, and stay healthy!
 ## Todos
 
 - CO2
-- sources
 - units of measure
+- add music
 
 ---
 
-[^1]: [Functional Fear Predicts Public Health Compliance in the COVID-19 Pandemic](https://link.springer.com/article/10.1007/s11469-020-00281-5)  
+[^fear]: [Functional Fear Predicts Public Health Compliance in the COVID-19 Pandemic](https://link.springer.com/article/10.1007/s11469-020-00281-5)  
 April 2020; Craig A. Harper, Liam P. Stchell, Dean Fido, Robert D. Latzman
 
-[^2]: [Compliance with COVID-19 Mitigation Measures in the United States](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3582626)  
+[^us]: [Compliance with COVID-19 Mitigation Measures in the United States](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3582626)  
 August 2021; Benjamin van Rooij, Anne Leonore de Bruijn, Chris Reinders Folmer, Emmeke Barbara Kooistra, Malouke Esra Kuiper, Megan Brownlee, Elke Olthuis, Adam Fine
 
-[^4]: [Predictive and retrospective modeling of airborne infection risk using monitored carbon dioxide](https://journals.sagepub.com/doi/10.1177/1420326X211043564)  
+[^empathy]: [The emotional path to action: Empathy promotes physical distancing and wearing of face masks during the COVID-19 pandemic](https://psyarxiv.com/y2cg5)  
+March 2020; Stefan Pfattheicher, Laila Nockur, Robert Böhm, Claudia Sassenrath, Michael Bang Petersen
+
+[^co2]: [Predictive and retrospective modeling of airborne infection risk using monitored carbon dioxide](https://journals.sagepub.com/doi/10.1177/1420326X211043564)  
 September 2021; Henry C. Burridge, Shiwei Fan, Roderic L. Jones, Catherine J. Noakes, P. F. Linden
 
-[^5]: [CO2 concentration visualization for COVID-19 infection prevention in concert halls](https://doi.org/10.1539/eohp.2021-0010-OA)  
+[^concert]: [CO2 concentration visualization for COVID-19 infection prevention in concert halls](https://doi.org/10.1539/eohp.2021-0010-OA)  
 October 2021; Hiroko Kitamura, Yo Ishigaki, Tomoko Kuriyama, Takashi Moritake
 
-[^6]: [Music and sound in the horror film & why some modern and avant-garde music lends itself to it so well](https://www.academia.edu/1510776/Music_and_sound_in_the_horror_film_and_why_some_modern_and_avant_garde_music_lends_itself_to_it_so_well)  
+[^scary]: [Music and sound in the horror film & why some modern and avant-garde music lends itself to it so well](https://www.academia.edu/1510776/Music_and_sound_in_the_horror_film_and_why_some_modern_and_avant_garde_music_lends_itself_to_it_so_well)  
 April 2012; Julia Heimerdinger
-
-[^7]: [The emotional path to action: Empathy promotes physical distancing and wearing of face masks during the COVID-19 pandemic](https://psyarxiv.com/y2cg5)  
-March 2020; Stefan Pfattheicher, Laila Nockur, Robert Böhm, Claudia Sassenrath, Michael Bang Petersen
