@@ -4,7 +4,7 @@ As you might have noticed, we are currently in a pandemic.
 Luckily, there are several steps you can take to protect yourself and others: You can get vaccinated, wear a mask, avoid large groups of people, regularly ventilate when being indoors with others, etc.
 Some of these measures are easier to follow than others. Getting vaccinated is a one-off action, but remembering to open the window every few minutes is a lot harder if you also concentrate on something else, such as working or studying.
 
-In the context of the *Sonic Thinking* and *Neurodesign* lectures at our university, I developed an app that continuously evaluates the current infection risk and turns it into music.
+In the context of the *Sonic Thinking* and *Neurodesign* lectures at our university, I developed [an app](https://github.com/MarcelGarus/coronoise) that continuously evaluates the current infection risk and turns it into music.
 
 The aspirational goal of the project is to enable scenarios like these:
 
