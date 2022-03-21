@@ -129,27 +129,22 @@ For that, [I connected my electric piano's MIDI output to my iPad](midi-music) a
 
 ![GarageBand on my iPad with various voices: Constant Piano Blimp, Piano Melody, Dududududu Bass, Dissonant Piano, Organ Bass, Wind Bass, Guqin Improvisation, Horror Effects](files/coronoise-garageband.jpeg)
 
-Here are some of the voices of my arrangement:
+Here are some of the voices of my arrangement. Feel free to play around with playing them simultaneously:
 
-Piano Melody:
-<audio controls src="/jogging-in-the-cold" />
-
-Dissonant Piano:
-<audio controls src="/jogging-in-the-cold" />
-
-Guqin Improvisation:
-<audio controls src="/jogging-in-the-cold" />
+- Dissonant Piano:  
+  <audio controls src="/files/coronoise-song-dissonant-piano.mp3" />
+- Accent:  
+  <audio controls src="/files/coronoise-song-accent.mp3" />
+- Guqin (traditional Chinese instrument):  
+  <audio controls src="/files/coronoise-song-guqin.mp3" />
 
 To programmatically combine those instruments, I initially tried to have one control loop that turns instruments on and off.
 This became complicated pretty fast – you have to track which instruments are playing on which volume as well as when they started (some should only end at some pre-defined beats or have a minimum amount of time between consecutive activations).
 In the end, I settled on an architecture where instruments have access to some ambient values such as the current beat number and the inputs but could do whatever they want on every beat.
 This allows me to implement many different types of effects: fade in and out, start and end at predefined beats, start on some beats and then fade out, or randomly start.
 
-Here's what a piece of composed horror music might sound like:
-
-Arrangement with increasing, then decreasing risk:
-<audio controls src="/jogging-in-the-cold" />
-
+Here's what a piece of composed music might sound like if the risk first steadily increases and then decreases again:  
+<audio controls src="/files/coronoise-song-full.mp3" />
 
 > **One other tidbit:** First, you only hear one piano note, but as soon as the second instrument starts, you realize the first one was played off-beat. That creates a short moment of disorientation.
 
@@ -265,10 +260,6 @@ Over the semester, I learned a lot about Neuroscience, study design, and empathy
 I was also pleasantly surprised by the variety of applications in which sonifications can be used and learned to appreciate the unique characteristics of sound in everyday tools.
 
 Cheers, and stay healthy!
-
-## Todos
-
-- add music
 
 ---
 
