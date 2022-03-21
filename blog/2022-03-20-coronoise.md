@@ -11,11 +11,11 @@ The aspirational goal of the project is to enable scenarios like these:
 * You walk into an office that hasn’t been ventilated for a long time. As soon as you step inside, scary music starts to play, like you're in a horror film.
 * Over one hour, your study room gradually fills with people. An alarming tune slowly fades in and gets more dissonant the more people there are.
 
-![The Coronoise app takes incidence rate, number of people, and CO2 levels as inputs and produces sounds.](files/coronoise-idea.png)
+![The Coronoise app takes incidence rate, number of people, and CO₂ levels as inputs and produces sounds.](files/coronoise-idea.png)
 
 --snip--
 
-The app takes three inputs: the incidence rate in the area, the number of people nearby, and the CO2 level.
+The app takes three inputs: the incidence rate in the area, the number of people nearby, and the CO₂ level.
 You can adjust each of these inputs manually with a slider, or you can check the box on the left to make the app automatically try to choose an appropriate value.
 
 ## Incidence Rate
@@ -96,27 +96,27 @@ I met the occasional hiker, but the higher bump was interesting:
 While I was walking down a narrow path, I heard the sound of RPIs being recorded.
 I looked around and, fair enough, two bikers were pulling up from behind. I stepped aside and let them pass through. To me, this showed that even a very simple sonification – like turning Exposure Notifications to piano blimps – can be useful in everyday life: If I hadn't used the app, I wouldn't have heard the bikers approaching and they'd have to ring or yell. 
 
-## CO2 Levels
+## CO₂ Levels
 
-You might be wondering: Why use CO2 levels as an indicator?
+You might be wondering: Why use CO₂ levels as an indicator?
 A hint:
 
 ![humans make co2](files/humans-make-co2.png)
 
-Outdoors, CO2 levels are usually at 300 – 500 ppm, indoors at 500+ ppm.
-Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 400 / 1000000 = 0.04 % of the air being CO2.
-Because that extra CO2 comes primarily from exhaled air, it's unsurprising that Burridge [^co2] found that lower CO2 levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, fewer people, and less kinetic strength (a measure of how much movement occurs).
-So, CO2 levels can be a useful indicator for the airborne COVID-19 infection risk.
+Outdoors, CO₂ levels are usually at 300 – 500 ppm, indoors at 500+ ppm.
+Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 400 / 1000000 = 0.04 % of the air being CO₂.
+Because that extra CO₂ comes primarily from exhaled air, it's unsurprising that Burridge [^co2] found that lower CO₂ levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, fewer people, and less kinetic strength (a measure of how much movement occurs).
+So, CO₂ levels can be a useful indicator for the airborne COVID-19 infection risk.
 
-In 2021, a group of Japanese researchers [^concert] visualized a graph of the CO2 concentration during a concert and made about half of the audience feel "much safer."
+In 2021, a group of Japanese researchers [^concert] visualized a graph of the CO₂ concentration during a concert and made about half of the audience feel "much safer."
 They strongly expect this visualization to become part of the standard operating procedure of concerts.
 
-In the context of the lectures, I didn't manage to programmatically integrate a CO2 sensor; for now, the CO2 value needs to be manually entered into the app.
+In the context of the lectures, I didn't manage to programmatically integrate a CO₂ sensor; for now, the CO₂ value needs to be manually entered into the app.
 
 ## Sound Generation
 
 Let's shift from inputs to outputs!
-While visual indicators are nice, they don't proactively notify you of increased infection risks: Although I have a CO2 sensor set up above my computer display, I rarely look at it if I'm deeply focused on some programming task.
+While visual indicators are nice, they don't proactively notify you of increased infection risks: Although I have a CO₂ sensor set up above my computer display, I rarely look at it if I'm deeply focused on some programming task.
 Instead, I'm often surprised if I look up and see how high the levels are.
 
 Sound, on the other hand, is a sense that proactively comes to us and that can't be easily ignored – that's why alarm clocks make a sound.
@@ -176,32 +176,32 @@ Investigating this in a controlled study is difficult: It takes time for people 
 Instead, I spent a day at the Neurodesign office at the HPI. The process went like this:
 
 1. I introduced three main participants to the project.
-2. I silently recorded data indicating increased risks (CO2 level, number of people, and number of opened windows)
+2. I silently recorded data indicating increased risks (CO₂ level, number of people, and number of opened windows)
 3. After 1½ hours, I asked the participants to fill out a questionnaire.
 4. Again, I recorded data indicating increased risk. This time, the risk got sonified.
 5. Finally, I asked the participants to fill out the survey again.
 
 ### Recorded Data
 
-This is the data I recorded (the CO2 levels have their scale on the right because they have much larger values):
+This is the data I recorded (the CO₂ levels have their scale on the right because they have much larger values):
 
-![A graph showing the number of people and open windows, the CO2 level, and the sound level over time.](files/coronoise-study.png)
+![A graph showing the number of people and open windows, the CO₂ level, and the sound level over time.](files/coronoise-study.png)
 
 There's a lot to unpack! Here are some findings:
 
 
-**The CO2 levels in the office are generally low.**
-Normally, values recorded indoors reach 700+ ppm once in a while (that also happens at my home). The CO2 sensor has a built-in traffic light, which was always green.
+**The CO₂ levels in the office are generally low.**
+Normally, values recorded indoors reach 700+ ppm once in a while (that also happens at my home). The CO₂ sensor has a built-in traffic light, which was always green.
   This also means that only a small range of music was explored – the sonification became active only once for a short time.
 
-**CO2 levels move a lot faster than the other data series.**
+**CO₂ levels move a lot faster than the other data series.**
 I manually recorded the data (so there are still small steps/plateaus from when I didn't look at the sensor), but other data changes only in discrete steps at specific points in time.
 
-**Opening windows reduces CO2 levels – up to some point.**
-When the window is first opened and when the second window is opened, the CO2 level drops significantly – the room ventilation was improved. Notably, the CO2 levels never drop below 300 ppm; apparently, the outdoor air has a CO2 level similar to that.
+**Opening windows reduces CO₂ levels – up to some point.**
+When the window is first opened and when the second window is opened, the CO₂ level drops significantly – the room ventilation was improved. Notably, the CO₂ levels never drop below 300 ppm; apparently, the outdoor air has a CO₂ level similar to that.
 
 **More people require more ventilation.**
-After around 2 o'clock, although one window is opened, the CO2 levels still rise.
+After around 2 o'clock, although one window is opened, the CO₂ levels still rise.
 
 **Sound encourages people to be more careful.**
 Because the infection risk was generally low, the sonification produced sound only once.
@@ -254,7 +254,7 @@ Whether people would perceive the entire composition as scary is still open.
 In general, there is still lots of potential for future work.
 Here are some ideas:
 
-- **Improve the inputs:** The incidence isn't yet based on the phone's position, but instead hardcoded to Potsdam. The CO2 levels still need to be manually entered.
+- **Improve the inputs:** The incidence isn't yet based on the phone's position, but instead hardcoded to Potsdam. The CO₂ levels still need to be manually entered.
 - **Add more inputs:** Survey participants remarked that the vaccination status of others could also be a factor for safety.
 - **Add more sonifications:** The risk can span an exponential scale, so there's still lots of room for different sounds and noises to be incorporated. Some instruments could sonify the rate of risk, warning users of rapid risk increases.
 - **Improve the sonification:** Sometimes there are small breaks in the music or voices are slightly misaligned relative to each other. This kind of adds to the horror, but could be better handled by switching to a lower-level sound library.
@@ -268,7 +268,6 @@ Cheers, and stay healthy!
 
 ## Todos
 
-- CO2
 - units of measure
 - add music
 
@@ -286,7 +285,7 @@ March 2020; Stefan Pfattheicher, Laila Nockur, Robert Böhm, Claudia Sassenrath,
 [^co2]: [Predictive and retrospective modeling of airborne infection risk using monitored carbon dioxide](https://journals.sagepub.com/doi/10.1177/1420326X211043564)  
 September 2021; Henry C. Burridge, Shiwei Fan, Roderic L. Jones, Catherine J. Noakes, P. F. Linden
 
-[^concert]: [CO2 concentration visualization for COVID-19 infection prevention in concert halls](https://doi.org/10.1539/eohp.2021-0010-OA)  
+[^concert]: [CO₂ concentration visualization for COVID-19 infection prevention in concert halls](https://doi.org/10.1539/eohp.2021-0010-OA)  
 October 2021; Hiroko Kitamura, Yo Ishigaki, Tomoko Kuriyama, Takashi Moritake
 
 [^scary]: [Music and sound in the horror film & why some modern and avant-garde music lends itself to it so well](https://www.academia.edu/1510776/Music_and_sound_in_the_horror_film_and_why_some_modern_and_avant_garde_music_lends_itself_to_it_so_well)  
