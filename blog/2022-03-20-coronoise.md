@@ -108,7 +108,7 @@ Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 4
 Because that extra CO2 comes primarily from exhaled air, it's unsurprising that Burridge [^4] found that lower CO2 levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, less people, and less kinetic strength (a measure of how much movement occurs).
 So, CO2 levels can be a useful indicator for the airborne COVID-19 infection risk.
 
-In ..., a group of Japanese researchers [^5] visualized a graph of the CO2 concentration during a concert and made about half of the audience feel "much safer."
+In 2021, a group of Japanese researchers [^5] visualized a graph of the CO2 concentration during a concert and made about half of the audience feel "much safer."
 They strongly expect for this visualization to become part of the standard operational precedure of concerts.
 
 In the context of the lectures, I didn't manage to programmatically integrate a CO2 sensor; for now, the CO2 value needs to be manually entered into the app.
