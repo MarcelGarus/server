@@ -43,7 +43,7 @@ You can use this information to calculate the incidence rate.
 In this example, the incidence rate in Potsdam is `dart:100000 * cases7_lk / EWZ = 100000 * 3298 / 182112 = 1810.97`.
 
 By setting `rust:returnGeometry=true` in the URL, the API also returns a list of outline coordinates for each district.
-Because the response will be enormous (~7 MB, bigger than the app itself) and the task of determining your district is computation-heavy, a more powerful server should take care of this.
+Because the response will be enormous (~7 MB, bigger than the app itself) and the task of determining your district is computation-heavy, a more powerful server should take care of this.
 For now, I just hardcoded the location to Potsdam.
 
 ## Exposure Notifications
@@ -103,8 +103,8 @@ A hint:
 
 ![humans make co2](files/humans-make-co2.png)
 
-Outdoors, CO₂ levels are usually at 300 – 500 ppm, indoors at 500+ ppm.
-Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 400 / 1000000 = 0.04 % of the air being CO₂.
+Outdoors, CO₂ levels are usually at 300 – 500 ppm, indoors at 500+ ppm.
+Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 400 / 1000000 = 0.04 % of the air being CO₂.
 Because that extra CO₂ comes primarily from exhaled air, it's unsurprising that Burridge [^co2] found that lower CO₂ levels naturally correlate with measures that protect against COVID-19 infections: increased ventilation, fewer people, and less kinetic strength (a measure of how much movement occurs).
 So, CO₂ levels can be a useful indicator for the airborne COVID-19 infection risk.
 
@@ -191,14 +191,14 @@ There's a lot to unpack! Here are some findings:
 
 
 **The CO₂ levels in the office are generally low.**
-Normally, values recorded indoors reach 700+ ppm once in a while (that also happens at my home). The CO₂ sensor has a built-in traffic light, which was always green.
+Normally, values recorded indoors reach 700+ ppm once in a while (that also happens at my home). The CO₂ sensor has a built-in traffic light, which was always green.
   This also means that only a small range of music was explored – the sonification became active only once for a short time.
 
 **CO₂ levels move a lot faster than the other data series.**
 I manually recorded the data (so there are still small steps/plateaus from when I didn't look at the sensor), but other data changes only in discrete steps at specific points in time.
 
 **Opening windows reduces CO₂ levels – up to some point.**
-When the window is first opened and when the second window is opened, the CO₂ level drops significantly – the room ventilation was improved. Notably, the CO₂ levels never drop below 300 ppm; apparently, the outdoor air has a CO₂ level similar to that.
+When the window is first opened and when the second window is opened, the CO₂ level drops significantly – the room ventilation was improved. Notably, the CO₂ levels never drop below 300 ppm; apparently, the outdoor air has a CO₂ level similar to that.
 
 **More people require more ventilation.**
 After around 2 o'clock, although one window is opened, the CO₂ levels still rise.
@@ -268,7 +268,6 @@ Cheers, and stay healthy!
 
 ## Todos
 
-- units of measure
 - add music
 
 ---
