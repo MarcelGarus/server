@@ -170,7 +170,7 @@ Pfattheicher et al. [^empathy] identifies **empathy with those most vulnerable t
 
 Therefore, my hypothesis for my app is as follows:
 
-> While working, employees/students empathize more with the decisions of colleagues to take protective measures against the corona pandemic, if they are acutely made aware of the infection risk via sonic feedback.
+> While working, employees/students empathize more with the decisions of colleagues to take protective measures against the COVID-19 pandemic, if they are acutely made aware of the infection risk via sonic feedback.
 
 Investigating this in a controlled study is difficult: It takes time for people to empathize with each other and I don't feel comfortable with intentionally putting people into risky situations.
 Instead, I spent a day at the Neurodesign office at the HPI. The process went like this:
