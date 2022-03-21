@@ -40,9 +40,9 @@ You can use these information to calculate the incidence rate.
 }
 ```
 
-In this example, the incidence rate in Potsdam is `txt:100000 * cases7_lk / EWZ = 100000 * 3298 / 182112 = 1810.97`.
+In this example, the incidence rate in Potsdam is `dart:100000 * cases7_lk / EWZ = 100000 * 3298 / 182112 = 1810.97`.
 
-By setting `returnGeometry=true` in the URL, you'll also get a list of outline coordinates for each district.
+By setting `rust:returnGeometry=true` in the URL, you'll also get a list of outline coordinates for each district.
 Because the API response will be big (~7MB, larger than the app itself) and the task of determining in which district you are is computation-heavy, it should probably be outsourced to a more powerful server.
 For this project, I just harcoded the location to Potsdam.
 
@@ -268,7 +268,6 @@ Cheers, and stay healty!
 
 ## Todos
 
-- code blocks
 - CO2
 - sources
 - units of measure
