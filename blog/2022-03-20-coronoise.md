@@ -78,25 +78,25 @@ Here are the results:
 Don't be fooled: This is a line chart, not a bar chart; the number of scanned tokens really goes up and down like that.
 I suppose this is an artifact of Android rate limiting the app or trying to be clever and not actually re-scanning for devices every time the app tells it to, which leads to either the same number of RPIs being reported multiple consecutive times, or none at all being reported.
 
-**In the Supermarket (yellow):**
+**In the supermarket (yellow):**
 This measurement contains me browsing the store and then going to the register.
 You can see that waiting in line with multiple people actually leads to a higher number of RPI tokens towards the end.
 If you're wondering about the gap in the data: That's just me turning the phone into standby mode while putting items on the cash register tape – for now, the app has to run in the foreground in order to record data.
 
-**At Home (purple):**
+**At home (purple):**
 The measurements at home report a mostly constant number of notifications.
 The small noise could result from some people changing the room that they're in, people walking by on the outside, or just the corruption of some Bluetooth packets that get sent threw a few walls.  
 This data series also shows that the app isn't perfect for measuring the number of people relevant for the infection risk:
 I'm alone in my flat, but because I live in a student residence with many neighbors, four people are reported.
 If you're using the app in a room with a fixed number of people for a long time, you should consider manually entering the number of people to benefit from more accurate data.
 
-**In the Forest (green):**
+**In the forest (green):**
 For the measurements in the forest, I took a long walk, listened to podcasts on headphones, opened the app in the foreground, and enabled the sonification, so that I'll hear a sound when some RPIs are detected.
 I met the occasional hiker, but the higher bump was interesting:
 While I was walking down a narrow path, I heard the sound of RPIs being recorded.
 I looked around and, fair enough, two bikers were pulling up from behind. I stepped aside and let them pass through. To me, this showed that even a very simple sonification – like turning Exposure Notifications to piano blimps – can be useful in everyday life: If I hadn't used the app, I wouldn't have heard the bikers approaching and they'd have to ring or yell. 
 
-## CO2 levels
+## CO2 Levels
 
 You might be wondering: Why use CO2 levels as an indicator?
 Here's a hint:
@@ -113,7 +113,7 @@ They strongly expect for this visualization to become part of the standard opera
 
 In the context of the lectures, I didn't manage to programmatically integrate a CO2 sensor; for now, the CO2 value needs to be manually entered into the app.
 
-## Sound generation
+## Sound Generation
 
 Let's shift from inputs to outputs!
 While visual indicators are nice, they don't proactively notify you of increased infection risks: Although I have a CO2 sensor set up above my computer display, I rarely look at it if I'm deeply focused on some programming task.
@@ -181,7 +181,7 @@ Rather, I spent a day at the Neurodesign office at the HPI. The process went lik
 4. Again, I recorded data indicating increased risk. This time, the sonification was enabled.
 5. Finally, I asked the participants to fill out the survey again.
 
-### Recorded data
+### Recorded Data
 
 This is the data I recorded (the CO2 levels have their own scale on the right because they have much larger values):
 
@@ -257,7 +257,7 @@ Here are some ideas:
 - **Improve the inputs:** The incidence isn't yet based on the phone's position, but instead hardcoded to Potsdam. The CO2 levels still need to be manually entered.
 - **Add more inputs:** Survey participants remarked that the vaccination status of others could also be a factor for the safety.
 - **Add more sonifications:** The risk can span an exponential scale, so there's still lots of room for different sounds and noises to be incorporated. Some instruments could sonify the rate of risk, warning users of rapid risk increases.
-- **Improve music generation:** Sometimes there are small breaks in the music or voices are slightly misaligned relative to each other. This kind of adds to the horrow, but could be better handled by switching to a lower-level sound library.
+- **Improve the sonification:** Sometimes there are small breaks in the music or voices are slightly misaligned relative to each other. This kind of adds to the horrow, but could be better handled by switching to a lower-level sound library.
 - **Do bigger studies:** The conducted study had a very small number of participants (n=3). This is enough for a proof-of-concept, but to have more confidence in the scientific validity of the project, other studies with larger groups should be conducted.
 
 While there's still a lot to do, working on this project was fun!
@@ -268,7 +268,6 @@ Cheers, and stay healty!
 
 ## Todos
 
-- title case
 - code blocks
 - CO2
 - sources
