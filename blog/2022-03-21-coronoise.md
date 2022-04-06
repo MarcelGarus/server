@@ -11,7 +11,7 @@ The aspirational goal of the project is to enable scenarios like these:
 * You walk into an office that hasn’t been ventilated for a long time. As soon as you step inside, scary music starts to play, like you're in a horror film.
 * Over one hour, your study room gradually fills with people. An alarming tune slowly fades in and gets more dissonant the more people there are.
 
-![The Coronoise app takes incidence rate, number of people, and CO₂ levels as inputs and produces sounds.](files/coronoise-idea.png)
+![The Coronoise app takes incidence rate, number of people, and CO₂ levels as inputs and produces sounds.](files/coronoise-idea.webp)
 
 --snip--
 
@@ -67,13 +67,13 @@ That's why my app *doesn't* talk with the operating system's Exposure Notificati
 Roughly every second, it scans all Bluetooth devices nearby and filters for those that are RPIs.
 The [Exposure Notification Bluetooth Specification](https://blog.google/documents/70/Exposure_Notification_-_Bluetooth_Specification_v1.2.2.pdf) shows how the layout of a Bluetooth advertisement with an RPI looks like and that they contain a special _Service UUID_ of `text:0xFD6F` that is reserved for RPIs:
 
-![The Bluetooth advertisement layout screenshotted from the Exposure Notification specification.](files/exposure-notification-spec.png)
+![The Bluetooth advertisement layout screenshotted from the Exposure Notification specification.](files/exposure-notification-spec.webp)
 
 Next, I evaluated if the scanning works.
 I measured the number of received RPI tokens when shopping in the local supermarket, staying at home, and taking a walk in the forest.
 Here are the results:
 
-![A graph showing the number of tokens scanned in different places. The number of tokens in the supermarket is high, has a gap, and rises towards the end. The number of tokens at home is lower and more consistent. The number of tokens in a forest is mostly zero, with occasional bursts of one or two tokens.](files/coronoise-graph.png)
+![A graph showing the number of tokens scanned in different places. The number of tokens in the supermarket is high, has a gap, and rises towards the end. The number of tokens at home is lower and more consistent. The number of tokens in a forest is mostly zero, with occasional bursts of one or two tokens.](files/coronoise-graph.webp)
 
 Don't be fooled: This is a line chart, not a bar chart; the number of scanned tokens really goes up and down like that.
 I suppose this is an artifact of Android rate-limiting the app or trying to be clever and not re-scanning for devices every time the app tells it to, which leads to either the same number of RPIs being reported multiple consecutive times or none at all being reported.
@@ -101,7 +101,7 @@ I looked around and, fair enough, two bikers were pulling up from behind. I step
 You might be wondering: Why use CO₂ levels as an indicator?
 A hint:
 
-![humans make co2](files/humans-make-co2.png)
+![invert:Humans make CO₂.](files/humans-make-co2.webp)
 
 Outdoors, CO₂ levels are usually at 300 – 500 ppm, indoors at 500+ ppm.
 Here, ppm stands for *parts per million*, so a value of 400 ppm corresponds to 400 / 1000000 = 0.04 % of the air being CO₂.
@@ -180,7 +180,7 @@ Instead, I spent a day at the Neurodesign office at the HPI. The process went li
 
 This is the data I recorded (the CO₂ levels have their scale on the right because they have much larger values):
 
-![A graph showing the number of people and open windows, the CO₂ level, and the sound level over time.](files/coronoise-study.png)
+![A graph showing the number of people and open windows, the CO₂ level, and the sound level over time.](files/coronoise-study.webp)
 
 There's a lot to unpack! Here are some findings:
 

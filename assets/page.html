@@ -244,6 +244,12 @@
             max-height: 30em;
             border-radius: 1em;
         }
+        @media (prefers-color-scheme: dark) {
+            .invertable-image {
+                -webkit-filter: invert(100%);
+                filter: invert(100%);
+            }
+        }
 
         video {
             max-width: 100%;

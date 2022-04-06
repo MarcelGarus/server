@@ -24,7 +24,7 @@ Some development environments like IntelliJ actually offer a meta-view of a stri
 Rust offers an alternative to these escape sequences: Raw strings!
 If you open a string not with `rust:"`, but with `rust:r#"` instead, you can only end the string using `rust:"#`. Even better: How many hash signs (also known as "octothorpes") you put at the beginning, you have to use the same number at the end of the string to close it. Here's this behavior expressed in a state machine:
 
-![state machine of Rust strings](files/rust-strings.png)
+![invert:state machine for Rust raw strings](files/rust-strings.webp)
 
 This means you can copy-paste any content into your program and use it directly in a string without escaping individual characters. Instead, you just slap a bunch of hash signs at the beginning and end, and you're ready to use those bytes you pasted as a string:
 
@@ -42,9 +42,9 @@ We think about implementing something similar in [Candy](https://github.com/cand
 
 Unlike Rust's raw strings, we also want to also allow string interpolation, as long as the interpolated code is wrapped in the same number of `{` and `}` as there are leading characters:
 
-![state machine for Candy strings](files/meta-strings.png)
+![invert:state machine for Candy strings](files/meta-strings.webp)
 
-```rust
+```txt
 "A normal string with {interpolation}, but no double quotes."
 '"A meta string can have double quotes. Here's a single one: ""'
 '""Hello, {{name}}!" is what I said to {{name}}."'

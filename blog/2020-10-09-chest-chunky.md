@@ -9,7 +9,7 @@ Files are a linear stream of bytes, and that doesn't quite fit our use case. So,
 
 --snip--
 
-![Chest abstracts files](files/chest-chunky-layers.png)
+![invert:Chest abstracts files](files/chest-chunky-layers.webp)
 
 Also, writing to the file might fail for various reasons – whether the OS kills our program, the user plugs out the storage medium, the power supply vanishes, or a black hole consumes the earth. Chunky also ensures that we handle such cases gracefully by fulfilling the four ACID goals:
 
@@ -28,7 +28,7 @@ At the end of the transaction, Chunky writes all the changed chunks to the file.
 
 Here's a schematic diagram of how the file looks like:
 
-![Chunks are placed in the file one after another](files/chest-chunky-chunks.png)
+![invert:Chunks are placed in the file one after another](files/chest-chunky-chunks.webp)
 
 And here's how a usage might look like in actual code:
 

@@ -283,10 +283,24 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
             }
             NodeValue::Image(image) => {
                 output.start_tag("center");
+                let mut title = vec![];
+                self.children().to_html_parts(&mut title);
+                let title = title.join("");
+                println!("Image title is {:?}.", title);
+                let (is_invertable, title) = if title.starts_with("invert:") {
+                    (true, title["invert:".len()..].to_string())
+                } else {
+                    (false, title)
+                };
                 output.push(format!(
-                    "<img src=\"{}\" alt=\"{}\" />",
+                    "<img src=\"{}\" alt=\"{}\" class=\"{}\" />",
                     image.url.utf8_or_panic(),
-                    image.title.utf8_or_panic()
+                    title,
+                    if is_invertable {
+                        "invertable-image"
+                    } else {
+                        ""
+                    }
                 ));
                 output.end_tag("center");
             }
