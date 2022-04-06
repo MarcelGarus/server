@@ -100,3 +100,9 @@ The only innovation is to use it as a fundamental part of programming language d
 
 Let's hope something fancy comes out of this!
 I'm already excited about the result.
+
+---
+
+Discussions about this article:
+
+- [On Reddit in r/ProgrammingLanguages](https://www.reddit.com/r/ProgrammingLanguages/comments/swglii/using_fuzzing_as_a_replacement_for_static_typing)
