@@ -130,12 +130,16 @@ mod article_line {
             tag("-"),
         ));
         let timeless_parser = tag::<_, _, ()>("timeless-");
+        let draft_parser = tag::<_, _, ()>("draft-");
 
         let filename = filename.trim_end_matches(".md");
         if let Ok((key, (year, _, month, _, day, _))) = with_date_parser(filename) {
             return Some((key.to_owned(), Some(Utc.ymd(year, month, day))));
         }
         if let Ok((key, _)) = timeless_parser(filename) {
+            return Some((key.to_owned(), None));
+        }
+        if let Ok((key, _)) = draft_parser(filename) {
             return Some((key.to_owned(), None));
         }
         None
