@@ -1,45 +1,72 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:toml/toml.dart';
 import 'package:http/http.dart' as http;
 
-const _baseApiUrl = 'https://marcelgarus.dev/api';
-late final String _adminKey;
+import 'admin_key.dart';
 
-final _cache = <String, String>{};
+const _adminApi = 'https://marcelgarus.dev/admin';
 
-Future<void> initialize() async {
-  _adminKey = await _loadAdminKey();
-}
-
-Future<String> _loadAdminKey() async {
-  final content = await File('../Config.toml').readAsString();
-  final doc = TomlDocument.parse(content).toMap();
-  return doc['admin_key'];
-}
-
-Future<dynamic> _fetchJson(String apiPath) async {
-  final url = '$_baseApiUrl$apiPath';
-  if (_cache.containsKey(url)) {
-    return json.decode(_cache[url]!);
-  }
-  print('Fetching $url');
+Future<Response> fetchApi() async {
   final response = await http.get(
-    Uri.parse(url),
+    Uri.parse(_adminApi),
     headers: {
-      'Admin-Key': _adminKey,
+      'Admin-Key': adminKey,
       'User-Agent': 'CompanionApp',
     },
   );
-  if (response.statusCode != 200) {
-    throw 'Got a ${response.statusCode} response: ${response.body}';
+  AdminData? data;
+  if (response.statusCode == 200) {
+    try {
+      data = AdminData.fromJson(json.decode(response.body));
+    } catch (error) {
+      print('Parsing the data failed: $error');
+      print('Original data: ${response.body}');
+    }
   }
-  _cache[url] = response.body;
-  return json.decode(response.body);
+  return Response(response.statusCode, data);
 }
 
-// The Visits API
+class Response {
+  final int statusCode;
+  final DateTime timestamp;
+  final AdminData? data;
+
+  Response(this.statusCode, this.data) : timestamp = DateTime.now();
+}
+
+class AdminData {
+  final String serverUptime;
+  final Duration programUptime;
+  final int logFileSize;
+  final List<Visit> tail;
+  final Map<DateTime, int> visitsByDay;
+
+  AdminData({
+    required this.serverUptime,
+    required this.programUptime,
+    required this.logFileSize,
+    required this.tail,
+    required this.visitsByDay,
+  });
+
+  AdminData.fromJson(dynamic json)
+      : this(
+          serverUptime: json['server_uptime'] as String,
+          programUptime: Duration(
+            seconds: json['server_program_uptime'] as int,
+          ),
+          logFileSize: json['log_file_size'] as int,
+          tail: (json['visits_tail'] as List<dynamic>)
+              .map(Visit.fromJson)
+              .toList(),
+          visitsByDay: {
+            for (final entry
+                in (json['number_of_visits_by_day'] as Map<String, dynamic>)
+                    .entries)
+              DateTime.parse(entry.key): entry.value as int,
+          },
+        );
+}
 
 class Visit {
   final DateTime timestamp;
@@ -80,19 +107,4 @@ class Visit {
           language: json['language'] as String?,
           referer: json['referer'] as String?,
         );
-}
-
-Future<List<Visit>> visitsTail() async {
-  final json = await _fetchJson('/visits/tail');
-  return (json as List<dynamic>).map((json) => Visit.fromJson(json)).toList();
-}
-
-Future<Map<DateTime, Map<String, int>>> visitsUserAgents() async {
-  final json = await _fetchJson('/visits/user-agents');
-  return (json as Map<String, dynamic>).map((date, userAgents) {
-    return MapEntry(
-      DateTime.parse(date),
-      userAgents.cast<String, int>(),
-    );
-  }).cast<DateTime, Map<String, int>>();
 }

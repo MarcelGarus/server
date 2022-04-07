@@ -1,4 +1,4 @@
-package dev.marcelgarus.server
+package dev.marcelgarus.app
 
 import io.flutter.embedding.android.FlutterActivity
 

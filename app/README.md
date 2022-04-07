@@ -1,6 +1,9 @@
 # The Server Companion App
 
-This folder contains the companion app for my server.
+This folder contains the companion app for my server:
+
+![screenshot](screenshot.png)
+
 It's written in Flutter; if you're new to Flutter, these resources might help:
 
 - [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
