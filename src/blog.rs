@@ -290,7 +290,6 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 let mut title = vec![];
                 self.children().to_html_parts(&mut title);
                 let title = title.join("");
-                println!("Image title is {:?}.", title);
                 let (is_invertable, title) = if title.starts_with("invert:") {
                     (true, title["invert:".len()..].to_string())
                 } else {
@@ -339,7 +338,6 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 output.end_tag("blockquote");
             }
             NodeValue::FootnoteReference(key) => {
-                println!("Footnote reference with key {:?}", key);
                 output.push(format!(
                     "<a href=\"#footnote-{}\" class=\"footnote-key\">{}</a>",
                     key.clone().utf8_or_panic(),
@@ -347,7 +345,6 @@ impl<'a> ToHtml<'a> for AstNode<'a> {
                 ));
             }
             NodeValue::FootnoteDefinition(key) => {
-                println!("Footnote definition with key {:?}", key);
                 output.push(format!(
                     "<div id=\"footnote-{}\" class=\"footnote-def\">",
                     key.clone().utf8_or_panic()
