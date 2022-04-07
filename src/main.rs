@@ -1,31 +1,29 @@
 #![feature(async_closure)]
 
-use crate::shortcuts::ShortcutDb;
+use crate::maintenance::Maintenance;
 use crate::utils::*;
 use crate::visits::{Visit, VisitsLog};
 use actix_service::Service;
 use actix_web::{
     body::AnyBody,
-    delete,
-    dev::{self, HttpServiceFactory, RequestHead, ServiceResponse},
-    get, guard,
+    dev::{self, ServiceResponse},
+    get,
     http::ContentEncoding,
     middleware::{self, ErrorHandlerResponse, ErrorHandlers},
-    post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use blog::Blog;
 use futures::future::{self, FutureExt};
 use http::StatusCode;
 use log::{debug, info, warn, LevelFilter};
 use rustls::{NoClientAuth, ServerConfig};
-use shortcuts::Shortcut;
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
 use std::{io::BufReader, net::SocketAddr};
 use tokio::fs;
 
 mod assets;
 mod blog;
-mod shortcuts;
+mod maintenance;
 mod templates;
 mod utils;
 mod visits;
@@ -77,9 +75,9 @@ async fn main() -> std::io::Result<()> {
     .unwrap();
 
     let config = web::Data::new(Config::load().await);
+    let maintenance = web::Data::new(Maintenance::new());
     let visits_log = web::Data::new(VisitsLog::new().await);
     let blog = web::Data::new(Blog::new().await);
-    let shortcut_db = web::Data::new(ShortcutDb::new().await);
     let address = config.address.clone();
 
     let cloned_log = visits_log.clone();
@@ -87,11 +85,11 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         let cloned_log = cloned_log.clone();
         let cloned_config = cloned_config.clone();
-        let cloned_config2 = cloned_config.clone();
         App::new()
+            .app_data(cloned_config.clone())
             .app_data(cloned_log.clone())
             .app_data(blog.clone())
-            .app_data(shortcut_db.clone())
+            .app_data(maintenance.clone())
             .wrap_fn(move |req, srv| {
                 let log = cloned_log.clone();
                 let visit = Visit::for_request(&req);
@@ -121,14 +119,11 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Compress::new(ContentEncoding::Auto))
             .wrap(middleware::NormalizePath::default())
             .service(index)
-            .service(study_before)
-            .service(study_after)
             .service(pay)
             .service(pay_amount)
-            .service(go_shortcut)
             .service(blog_file)
             .service(rss)
-            .service(api(&cloned_config2.admin_key))
+            .service(admin)
             .service(url_with_key)
             .default_service(web::route().to(default_handler))
     });
@@ -303,16 +298,6 @@ async fn blog_file(req: HttpRequest, path: web::Path<(String,)>) -> impl Respond
     error_page_404(&req).await
 }
 
-#[get("/study")]
-async fn study_before() -> impl Responder {
-    HttpResponse::redirect_to("https://docs.google.com/forms/d/e/1FAIpQLSdFnPCdLK71KmJb4_RM6gndnmQ11Qbb4idByVl2fZLg8TPDXg/viewform")
-}
-
-#[get("/study-2")]
-async fn study_after() -> impl Responder {
-    HttpResponse::redirect_to("https://docs.google.com/forms/d/e/1FAIpQLSdyI2fqMGI9O0a8-Xd6KhUlKI1z4najMrKoYXNG4g2wgVEWTg/viewform")
-}
-
 #[get("/pay")]
 async fn pay() -> impl Responder {
     HttpResponse::redirect_to("https://paypal.me/marcelgarus")
@@ -324,20 +309,6 @@ async fn pay_amount(amount: web::Path<(String,)>) -> impl Responder {
     HttpResponse::redirect_to(&format!("https://paypal.me/marcelgarus/{}", amount))
 }
 
-/// Shortcuts are not content of the website itself. Rather, they redirect to somewhere else.
-#[get("/go/{shortcut}")]
-async fn go_shortcut(
-    req: HttpRequest,
-    path: web::Path<(String,)>,
-    shortcut_db: web::Data<ShortcutDb>,
-) -> impl Responder {
-    let (shortcut,) = path.into_inner();
-    if let Some(shortcut) = shortcut_db.shortcut_for(&shortcut).await {
-        return HttpResponse::redirect_to(&shortcut.url);
-    }
-    error_page_404(&req).await
-}
-
 #[get("/rss")]
 async fn rss(blog: web::Data<Blog>) -> impl Responder {
     HttpResponse::Ok()
@@ -345,102 +316,53 @@ async fn rss(blog: web::Data<Blog>) -> impl Responder {
         .body(templates::rss_feed(&blog.list().await).await)
 }
 
-fn api(admin_key: &str) -> impl HttpServiceFactory {
-    web::scope("/api")
-        .guard(AuthGuard(admin_key.into()))
-        .service(
-            web::scope("/shortcuts")
-                .service(shortcuts_api::list)
-                .service(shortcuts_api::update)
-                .service(shortcuts_api::remove),
-        )
-        .service(
-            web::scope("/visits")
-                .service(visits_api::tail)
-                .service(visits_api::error_tail)
-                .service(visits_api::number_of_visits)
-                .service(visits_api::urls)
-                .service(visits_api::user_agents)
-                .service(visits_api::languages)
-                .service(visits_api::referers),
-        )
-}
-pub struct AuthGuard(String);
-impl guard::Guard for AuthGuard {
-    fn check(&self, req: &RequestHead) -> bool {
-        if let Some(val) = req.headers.get("admin-key") {
-            return consistenttime::ct_u8_slice_eq(val.as_bytes(), self.0.as_bytes());
-        }
+#[get("/admin")]
+async fn admin(
+    req: HttpRequest,
+    config: web::Data<Config>,
+    maintenance: web::Data<Maintenance>,
+    visits_log: web::Data<VisitsLog>,
+) -> impl Responder {
+    let is_authenticated = if let Some(key) = req.headers().get("admin-key") {
+        consistenttime::ct_u8_slice_eq(key.as_bytes(), config.admin_key.as_bytes())
+    } else {
         false
-    }
-}
-
-mod shortcuts_api {
-    use super::*;
-
-    #[get("/")]
-    async fn list(shortcut_db: web::Data<ShortcutDb>) -> impl Responder {
-        let shortcuts = shortcut_db.list().await;
-        HttpResponse::Ok().json(shortcuts)
+    };
+    if !is_authenticated {
+        warn!("Unauthenticated access attempt to the admin API.");
+        return error_page_403().await;
     }
 
-    #[post("/")]
-    async fn update(
-        shortcut: web::Json<Shortcut>,
-        shortcut_db: web::Data<ShortcutDb>,
-    ) -> impl Responder {
-        shortcut_db.register(shortcut.0).await;
-        HttpResponse::Ok().body("Added shortcut.")
-    }
+    let mut json = serde_json::Map::new();
 
-    #[delete("/{shortcut}")]
-    async fn remove(
-        path: web::Path<(String,)>,
-        shortcut_db: web::Data<ShortcutDb>,
-    ) -> impl Responder {
-        let (shortcut,) = path.into_inner();
-        shortcut_db.delete(&shortcut).await;
-        HttpResponse::Ok().body("Deleted shortcut.")
-    }
-}
+    json.insert(
+        "server_uptime".to_string(),
+        match maintenance.server_uptime().await {
+            Ok(uptime) => uptime.into(),
+            Err(err) => err.into(),
+        },
+    );
+    json.insert(
+        "server_program_uptime".to_string(),
+        serde_json::Value::Number(maintenance.server_program_uptime().num_seconds().into()),
+    );
+    json.insert(
+        "log_file_size".to_string(),
+        match maintenance.log_size().await {
+            Ok(size) => size.into(),
+            Err(err) => err.into(),
+        },
+    );
+    json.insert(
+        "visits_tail".to_string(),
+        serde_json::to_value(visits_log.get_tail().await).unwrap(),
+    );
+    json.insert(
+        "number_of_visits_by_day".to_string(),
+        serde_json::to_value(visits_log.get_number_of_visits_by_day().await).unwrap(),
+    );
 
-mod visits_api {
-    use super::*;
-
-    #[get("/tail")]
-    async fn tail(visits_log: web::Data<VisitsLog>) -> impl Responder {
-        HttpResponse::Ok().json(visits_log.get_tail().await)
-    }
-
-    #[get("/error-tail")]
-    async fn error_tail(visits_log: web::Data<VisitsLog>) -> impl Responder {
-        HttpResponse::Ok().json(visits_log.get_error_tail().await)
-    }
-
-    #[get("/number-of-visits")]
-    async fn number_of_visits(visits_log: web::Data<VisitsLog>) -> impl Responder {
-        HttpResponse::Ok().json(visits_log.get_number_of_visits_by_day().await)
-    }
-
-    #[get("/urls")]
-    async fn urls(visits_log: web::Data<VisitsLog>) -> impl Responder {
-        HttpResponse::Ok().json(visits_log.get_urls_by_day().await)
-    }
-
-    #[get("/user-agents")]
-    async fn user_agents(visits_log: web::Data<VisitsLog>) -> impl Responder {
-        HttpResponse::Ok().json(visits_log.get_user_agents_by_day().await)
-    }
-
-    #[get("/languages")]
-    async fn languages(visits_log: web::Data<VisitsLog>) -> impl Responder {
-        HttpResponse::Ok().json(visits_log.get_languages_by_day().await)
-    }
-
-    #[get("/referers")]
-    async fn referers(visits_log: web::Data<VisitsLog>) -> impl Responder {
-        HttpResponse::Ok().json(visits_log.get_referers_by_day().await)
-    }
+    HttpResponse::Ok().json(json)
 }
 
 async fn default_handler(req: HttpRequest) -> impl Responder {
@@ -448,8 +370,16 @@ async fn default_handler(req: HttpRequest) -> impl Responder {
     error_page_404(&req).await
 }
 
+async fn error_page_403() -> HttpResponse {
+    error_page(
+        StatusCode::FORBIDDEN,
+        "Hello, potentially-me!",
+        "<p><b>In case you're future me:</b> Add the <code>admin-key</code> to the request headers. I know, easy to forget.</p><p><b>In case you're <i>not</i> me:</b> Please don't do this, bro. Hacking is not appreciated.",
+    )
+    .await
+}
+
 async fn error_page_404(req: &HttpRequest) -> HttpResponse {
-    info!("Headers: {:?}", req.headers());
     let description = match req.headers().get_utf8("referer") {
         Some(referer) => format!(
             "Looks like you got here by following an invalid link from <code>{}</code> – there's no content here.",
@@ -465,12 +395,6 @@ async fn error_page_404(req: &HttpRequest) -> HttpResponse {
     .await
 }
 
-async fn error_page(status: StatusCode, title: &str, description: &str) -> HttpResponse {
-    HttpResponse::Ok()
-        .status(status)
-        .html(templates::error_page(status, title, description).await)
-}
-
 fn error_500_handler(
     service_response: dev::ServiceResponse<AnyBody>,
 ) -> actix_web::Result<ErrorHandlerResponse<AnyBody>> {
@@ -478,7 +402,18 @@ fn error_500_handler(
     Ok(ErrorHandlerResponse::Future(Box::pin(async {
         Ok(ServiceResponse::new(
             req,
-            error_page(StatusCode::INTERNAL_SERVER_ERROR, "", "").await,
+            error_page(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "TODO: Fix server",
+                "Ooops. Looks like I didn't do error handling for this condition.",
+            )
+            .await,
         ))
     })))
+}
+
+async fn error_page(status: StatusCode, title: &str, description: &str) -> HttpResponse {
+    HttpResponse::Ok()
+        .status(status)
+        .html(templates::error_page(status, title, description).await)
 }
