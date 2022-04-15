@@ -6,7 +6,7 @@ Free Jupyter Notebook services such as [Google Colab](https://colab.research.goo
 It doesn't help that Jupyter Notebooks are most commonly used in data science and Machine Learning, two of the most power-hungry disciplines.
 Hence, in my last semester, I developed [an extension](https://github.com/MarcelGarus/jupyter-energy) for Jupyter Notebooks that alerts you of your energy consumption.
 
-The most similar extension is called [jupyter-resource-usage](https://github.com/jupyter-server/jupyter-resource-usage) and uses [`psutil`](https://pypi.org/project/psutil) to retrieve data from the kernel infrastructure.
+The most similar extension is called [Jupyter Resource Usage](https://github.com/jupyter-server/jupyter-resource-usage) and uses [`psutil`](https://pypi.org/project/psutil) to retrieve data from the kernel infrastructure.
 That allows it to monitor RAM and CPU usage, but other resources are not supported – [not even GPUs,](https://github.com/jupyter-server/jupyter-resource-usage/issues/12) which play a big part in training Machine Learning models.
 
 ## Getting the energy consumption
@@ -81,12 +81,13 @@ printf("In 10 seconds, you used %0.3f %s.\n", used_energy, unit);
 // "In 10 seconds, you used 3.458 Joules."
 ```
 
-### MCP
+### Microchip MCP39F511N Power Monitor
 
 The Operating Systems and Middleware chair has a *Microchip MCP39F511N Power Monitor* (which we call MCP).
 That's actual physical hardware that you can plug between the wall socket and the computer.
 It then measures the power consumption of the entire system with all components, including external peripherals like connected displays, disks, or USB drives.
-Here's a photo:
+
+Here's a photo of the MCP:
 
 ![The MCP connects the wall socket with the device to test. Via USB, you can get the measured energy consumption.](files/mcp.webp)
 
@@ -107,13 +108,13 @@ double watts = 0.01 * (double)data[0];
 printf("The MCP's first channel is currently drawing %0.3f watts.\n", watts);
 ```
 
-Contrary to the RAPL, the MCP only reports the current power draw instead of a cumulative measure.
+Contrary to the RAPL, the MCP only reports the power draw right now instead of a cumulative measure.
 Therefore, you need to continuously ask the MCP for measurements to gauge how much energy long-running tasks consume.
 
-### NVML
+### Nvidia Management Library
 
 Finally, I looked at the *Nvidia Management Library* (NVML).
-In Python, the `py3nvml` package allows us to request the self-reported energy usage of Nvidia GPUs:
+In Python, the `python:py3nvml` package allows us to request the self-reported energy usage of Nvidia GPUs:
 
 ```python
 from py3nvml import py3nvml as nvml
@@ -129,11 +130,11 @@ It doesn't get much easier than this!
 Now that we know how to get the energy from several sources, we need to somehow show that data in Jupyter Notebooks.
 Those support two types of extensions:
 
-- **server extension:** These types of extensions run in the Juypter Notebook process itself – that's the process on the machine that executes the Python code. Because the Jupyter Notebook server is written in Python, you install those as Python modules.
-- **notebook extension:** These extensions run in the client's browser. They are written in JavaScript and can interact with the notebook the same way that the user can.
+- **server extensions:** These types of extensions run in the Juypter Notebook process itself – it's running on the machine that executes the Python code. Because the Jupyter Notebook server is written in Python, you install these extensions as Python modules.
+- **notebook extensions:** These extensions run in the client's browser. They are written in JavaScript and can interact with the notebook the same way that the user can.
 
 To record the energy data and display it, we need both types of extensions.
-I took the Jupyter Resource Usage extension as a reference, which also uses this approach.
+By the way: The Jupyter Resource Usage also uses this approach – it was a helpful reference.
 One difference to that extension is that the `perf_event_open` syscall can only be executed as root unless you change `proc/sys/kernel/perf_event_paranoid` to allow more processes to listen for hardware events.
 Therefore, I put the energy data gathering in a separate process, the *energy server.* This separation allows the energy server to run as root without also running the Jupyter Notebook server as root (and thereby all the code written inside notebooks).
 
@@ -155,7 +156,7 @@ And here's how it looks:
 
 ![A screenshot of the extension running. In the top right of the notebook, a button says "Now: 2.5 W" and "Total: 10.0 kJ" with a piano emoji. Below the button, an open popup shows the text "Your computer used 10.0 kJ since you started the Jupyter server. This is enough energy to play an eight-minute song on an electric keyboard." Below is a graph showing the energy usage over the last 100 seconds. You can see graphs for the whole CPU component, the CPU cores, the RAM usage, the integrated GPU, and two external measurements from the MCP. In some parts of the graph, the background is green to indicate that this is where the Juypter Notebook ran. In those sections, the usage of the CPU component is going up significantly. At the bottom of the popup, there's a button to switch the units between joules and watt-hours and to start benchmarking the currently selected Juypter Notebook cell.](files/jupyter-energy-screenshot.webp)
 
-<img src="files/jupyter-energy-screenshot-2.webp" style="height:30em;float:right;margin-left:1em;margin-bottom:1em;" alt="This image shows another popup with a different comparison text: You computer used 952.2 kJ since you started the Jupyter server. This is enough to brew a cup of tea. The graph below shows a long-term view of the energy usage since the server started more than 11 hours ago. The graph's background is colored partially red and green to indicate how much of the energy at that time of the day was coming from renewable sources.">
+![This image shows another popup with a different comparison text: "You computer used 952.2 kJ since you started the Jupyter server. This is enough to brew a cup of tea." The graph below shows a long-term view of the energy usage since the server started more than 11 hours ago. The graph's background is colored partially red and green to indicate how much of the energy at that time of the day was coming from renewable sources.](files/jupyter-energy-screenshot-2.webp)
 
 It also shows comparison values with emojis.
 Some of these references are from public sources (for example, how much energy the sun produces or how much energy it takes to bake a pizza).
@@ -173,7 +174,7 @@ The extension aggregates sources into four types:
 - **other:** sources that could not be classified or that are unclear to the ENTS-OE
 
 Currently, the extension is hardcoded to load data for Germany.
-In the future, it should support other countries (the data for EU countries is already public) and be more precise within a country.
+In the future, it could support other countries (the data for EU countries is already public) and be more precise within a country.
 
 ## Evaluation
 
@@ -181,7 +182,7 @@ To assess if the recorded energy consumption is accurate and to measure the over
 
 I measured on my Asus ZenBook 14 laptop with Ubuntu 20.04.3. I disabled many factors that may affect energy usage and put the device into a well-defined state to get good results:
 
-- disable power savings (BIOS)
+- no power savings (BIOS)
 - fully charged
 - no plugs (USB, HDMI) except the power cable
 - full brightness on screen and keyboard
