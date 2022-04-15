@@ -6,8 +6,10 @@ Free Jupyter Notebook services such as [Google Colab](https://colab.research.goo
 It doesn't help that Jupyter Notebooks are most commonly used in data science and Machine Learning, two of the most power-hungry disciplines.
 Hence, in my last semester, I developed [an extension](https://github.com/MarcelGarus/jupyter-energy) for Jupyter Notebooks that alerts you of your energy consumption.
 
-The most similar extension is called [Jupyter Resource Usage](https://github.com/jupyter-server/jupyter-resource-usage) and uses [`psutil`](https://pypi.org/project/psutil) to retrieve data from the kernel infrastructure.
+The most similar extension is called [Jupyter Resource Usage](https://github.com/jupyter-server/jupyter-resource-usage) and uses [`python:psutil`](https://pypi.org/project/psutil) to retrieve data from the kernel infrastructure.
 That allows it to monitor RAM and CPU usage, but other resources are not supported – [not even GPUs,](https://github.com/jupyter-server/jupyter-resource-usage/issues/12) which play a big part in training Machine Learning models.
+
+--snip--
 
 ## Getting the energy consumption
 
@@ -135,11 +137,11 @@ Those support two types of extensions:
 
 To record the energy data and display it, we need both types of extensions.
 By the way: The Jupyter Resource Usage also uses this approach – it was a helpful reference.
-One difference to that extension is that the `perf_event_open` syscall can only be executed as root unless you change `proc/sys/kernel/perf_event_paranoid` to allow more processes to listen for hardware events.
+One difference to that extension is that the `c:perf_event_open` syscall can only be executed as root unless you change `proc/sys/kernel/perf_event_paranoid` to allow more processes to listen for hardware events.
 Therefore, I put the energy data gathering in a separate process, the *energy server.* This separation allows the energy server to run as root without also running the Jupyter Notebook server as root (and thereby all the code written inside notebooks).
 
 The energy server aggregates energy consumption data from multiple sources, saving both a short-term history of the power draw and a long-term recording of the energy usage.
-It communicates with sources in different ways: Accessing the RAPL and the MCP works best in C, so I wrote small C wrappers that can be compiled into shared libraries (with something like `gcc --shared rapl.c -o rapl.so`). The energy server written in Python can then call the defined C functions using [*Foreign Function Interfaces*](https://en.wikipedia.org/wiki/Foreign_function_interface) (FFI).
+It communicates with sources in different ways: Accessing the RAPL and the MCP works best in C, so I wrote small C wrappers that can be compiled into shared libraries (with something like `bash:gcc --shared rapl.c -o rapl.so`). The energy server written in Python can then call the defined C functions using [*Foreign Function Interfaces*](https://en.wikipedia.org/wiki/Foreign_function_interface) (FFI).
 For the NVML, I directly used the existing Python library.
 
 The Jupyter Energy server extension runs in the Jupyter Notebook process and communicates with the energy server using HTTP.
@@ -190,7 +192,7 @@ I measured on my Asus ZenBook 14 laptop with Ubuntu 20.04.3. I disabled many fac
 - no GUI (everything in terminal mode)
 
 I could not eliminate all factors. The biggest remaining ones are wifi (because the notebook needed to be accessible from other devices in the network) and critical system services.
-I ran the Jupyter Notebook on a single core (pinned using `numactl -C 1 jupyter notebook`) to get more predictable results.
+I ran the Jupyter Notebook on a single core (pinned using `bash:numactl -C 1 jupyter notebook`) to get more predictable results.
 
 This setup allows me to compare the internally reported energy consumption (from the RAPL) with the one measured externally (with the MCP):
 
@@ -198,7 +200,7 @@ This setup allows me to compare the internally reported energy consumption (from
 
 To put some load on the system, I used the following benchmarks:
 
-- **idle:** Just running a notebook with a `sleep(60)` as a baseline of energy usage.
+- **idle:** Just running a notebook with a `python:sleep(60)` as a baseline of energy usage.
 - **k-means:** A common clustering approach from data science that is memory-bound. I used an [implementation from the SciPy benchmark](https://github.com/scipy/scipy/blob/b5ffe9/benchmarks/benchmarks/cluster.py).
 - **BLAS/LAPACK:** The *Basic Linear Algebra Subprograms & Linear Algebra PACKage,* a set of linear algebra libraries implemented for many languages. The implementation is [from the SciPy benchmark](https://github.com/scipy/scipy/blob/b5ffe9/benchmarks/benchmarks/blas_lapack.py) as well.
 - **bible:** A benchmark querying n-grams as search terms against a rudimentary database index. This was especially interesting to me because this program comes from the *Information Retrieval* seminar from a previous semester when I first got in contact with Jupyter Notebooks at university.
@@ -238,7 +240,7 @@ There are lots of areas where the extension can be improved:
   You could allow the user to enter an electricity price to automatically convert the amount of energy consumed into the added cost on the electricity bill.
 
 - **Make the installation easier:**
-  The installation experience can be improved by turning the extension into a package to be published on a Python package manager such as `pip`.
+  The installation experience can be improved by turning the extension into a package to be published on a Python package manager such as `bash:pip`.
 
 - **Conduct user studies:**
   An under-explored aspect is whether the extension encourages people to use less energy.
@@ -263,7 +265,3 @@ For instance, cloud providers currently use CPU cycles and RAM for billing purpo
 The current state of tooling for measuring the energy efficiency of code still leaves a lot to be desired.
 
 Let's hope this changes soon – I'm looking forward to a future with more energy-aware computing.
-
-# Todo
-
-- C syntax highlighting

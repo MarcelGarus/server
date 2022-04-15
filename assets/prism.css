@@ -1,9 +1,9 @@
 /* PrismJS 1.24.1
-https://prismjs.com/download.html#themes=prism-okaidia&languages=clike+dart+json+json5+rust+toml+yaml */
+https: //prismjs.com/download.html#themes=prism&languages=clike+bash+c+dart+json+json5+python+rust
+*/
 /**
- * okaidia theme for JavaScript, CSS and HTML
- * Loosely based on Monokai textmate theme by http://www.monokai.nl/
- * @author ocodia
+ * This is a custom theme matched to the blog.
+ * Languages: C-like, Bash + Shell, C, Dart, JSON + Web App Manifest, JSON5, Python, Rust
  */
 
 code[class*="language-"],
