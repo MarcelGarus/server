@@ -79,37 +79,22 @@
 
         /* styles for the side bar */
         aside {
-            position: fixed;
+            position: relative;
             top: 0;
             bottom: 0;
-            width: calc(30% - 2em);
+            right: 0;
+            width: calc(100% - 8mm);
             min-width: 10em;
-            padding: 0 4mm;
-            text-align: right;
-        }
-        @media (max-width: 1000px) {
-            aside {
-                position: relative;
-                width: calc(100% - 8mm);
 
-                text-align: center;
-                padding-top: 3em;
-                padding-bottom: 1em;
-            }
-            aside h1 { margin: 0; }
-            aside .content { margin: auto !important; }
+            padding: 3em 4mm 1mm 4mm;
+            text-align: center;
         }
-        /* @media print {
-            aside { display: none; }
-        } */
+        aside h1 { margin: 0; }
         aside .content {
-            margin: auto;
+            margin: auto !important;
             margin-right: 0;
             max-width: 25em;
-            text-align: right;
-        }
-        @media (max-width: 1000px) {
-            aside .content { text-align: center; }
+            text-align: center;
         }
         aside div {
             position: relative;
@@ -167,18 +152,11 @@
 
         /* styles for the main part */
         main {
-            margin-left: 30%;
-            width: 70%;
-        }
-        @media (max-width: 1000px) {
-            main {
-                margin-left: 0;
-                width: 100%;
-            }
+            width: 100%;
         }
         main .content {
             width: 100%;
-            max-width: 40em;
+            max-width: 50em;
             margin: auto;
             padding-bottom: 2em;
         }
