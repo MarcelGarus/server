@@ -2,7 +2,9 @@
     <h1 id="title-of-{{key}}"><a href="/{{key}}" data-read-more="{{key}}">{{title}}</a></h1>
     <div class="infos secondary">{{info}}</div>
     {{teaser}}
-    <a id="read-more-of-{{key}}" href="/{{key}}" data-read-more="{{key}}">Read more</a>
+    <p class="read-more-paragraph">
+        <a class="read-more-button" id="read-more-of-{{key}}" href="/{{key}}" data-read-more="{{key}}">Read more</a>
+    </p>
     <script>
         // When you click "Read more", you shouldn't jump up to the beginning of
         // the article on the new page.
