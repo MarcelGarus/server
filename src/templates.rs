@@ -122,8 +122,7 @@ async fn article_full(article: &Article, suggestion: &Article) -> String {
         .await
         .unwrap()
         .fill_in_article(&article)
-        .replace("{{suggestion-key}}", &suggestion.key)
-        .replace("{{suggestion-title}}", &suggestion.title)
+        .replace("{{suggestion}}", &article_teaser(&suggestion).await)
 }
 
 pub async fn rss_feed(articles: &[Article]) -> String {

@@ -15,7 +15,7 @@
     </script>
 </article>
 
-<footer class="secondary only-screen" style="margin-top: 2em;">
+<footer class="after-article-card only-screen">
 
     <!-- Shortlink -->
     <script>
@@ -47,7 +47,7 @@
             font-family: 'JetBrains Mono', monospace;
         }
     </style>
-    <span>You liked this article? Feel free to share it using this shortlink:</span>
+    <p>You liked this article? Feel free to share it using this shortlink:</p>
     <button id="shortlink" title="Click to copy the shortlink" onclick="copyShortlink()"
         onmouseout="resetShortlink()">mgar.us/{{key}}</button>
 
@@ -57,7 +57,7 @@
             margin-left: 0;
             margin-right: 0;
         }
-        
+
         .suggestion {
             font-size: 2em;
             text-decoration: none;
@@ -68,6 +68,7 @@
         }
     </style>
     <p class="suggestion-label">Looking for another article? This one might be interesting:</p>
-    <a href="/{{suggestion-key}}" class="suggestion">{{suggestion-title}}</a>
 
 </footer>
+
+{{suggestion}}

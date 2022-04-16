@@ -32,6 +32,7 @@ lazy_static! {
             Asset::internal("icon.png", "image/png"),
             Asset::internal("me.png", "image/png"),
             Asset::internal("me.webp", "image/webp"),
+            Asset::internal("style.css", "text/css"),
             Asset::internal("prism.css", "text/css"),
             Asset::internal("prism.js", "text/javascript"),
             Asset::internal("fonts.css", "text/css"),

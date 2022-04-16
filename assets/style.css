@@ -1,0 +1,386 @@
+@import url("/fonts.css");
+
+/* colors */
+:root {
+    --pink: #f97191;
+    --yellow: #ffb152;
+    --green: #7ece64;
+    --purple: #c59bff;
+
+    --accent-color: #f97191;
+    --main-bg-color: white;
+    --main-fg-color: black;
+    --main-selection-bg-color: var(--accent-color);
+    --main-selection-fg-color: white;
+    --nav-bg-color: var(--accent-color);
+    --nav-fg-color: white;
+    --nav-selection-bg-color: white;
+    --nav-selection-fg-color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --main-bg-color: #222;
+        --main-fg-color: white;
+        --nav-fg-color: #222;
+        --nav-selection-bg-color: #222;
+        --nav-selection-fg-color: white;
+    }
+}
+
+/* general styles */
+html,
+body {
+    margin: 0;
+    padding: 0;
+
+    font-family: "Roboto", sans-serif;
+    background-color: var(--main-bg-color);
+    color: var(--main-fg-color);
+}
+
+.secondary {
+    opacity: 0.5;
+}
+
+a {
+    font-family: "Josefin Sans", sans-serif;
+    color: var(--main-fg-color);
+}
+
+h1 {
+    margin: 1em 0 0 0;
+
+    font-family: "Josefin Sans", sans-serif;
+    font-size: 3em;
+    line-height: 1;
+}
+
+.only-screen {
+    display: none;
+}
+
+@media screen {
+    .only-screen {
+        display: inline-block;
+    }
+}
+
+.only-print {
+    display: none;
+}
+
+@media print {
+    .only-print {
+        display: inline-block;
+    }
+}
+
+/* styles for the header */
+aside {
+    position: relative;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: calc(100% - 8mm);
+    min-width: 10em;
+
+    padding: 3em 4mm 1mm 4mm;
+    text-align: center;
+}
+
+aside h1 {
+    margin: 0;
+}
+
+aside .content {
+    margin: auto !important;
+    margin-right: 0;
+    max-width: 25em;
+    text-align: center;
+}
+
+aside div {
+    position: relative;
+    padding: 1em;
+    border-radius: 1em;
+    z-index: 1;
+    text-align: left;
+    color: var(--nav-fg-color);
+    display: inline-block;
+    color: black;
+}
+
+aside div ::selection {
+    background: white;
+}
+
+aside .my-name {
+    background-color: var(--nav-bg-color);
+    transform: rotate(-5deg);
+    z-index: 1;
+    margin-bottom: -1.4em;
+    inline-size: min-content;
+}
+
+aside h1 a {
+    color: var(--nav-fg-color);
+    text-decoration: none !important;
+}
+
+aside .my-name ::selection {
+    background: var(--nav-fg-color);
+}
+
+aside .my-image {
+    background-color: var(--yellow);
+    width: 7em;
+    height: 7em;
+    border-radius: 3.5em;
+    z-index: 3;
+    translate: 0 0.4em;
+    padding: 0;
+    margin-left: -0.5em;
+    margin-bottom: -0.7em;
+    overflow: hidden;
+}
+
+aside .description {
+    background-color: var(--green);
+    padding: 1em;
+    border-radius: 1em;
+    transform: rotate(1deg);
+    z-index: 2;
+    margin-top: 0.5em;
+    margin-bottom: -0.3em;
+}
+
+aside .more-about-me {
+    background-color: var(--purple);
+    padding: 0.5em;
+    z-index: 3;
+    translate: -1em 0;
+}
+
+aside a {
+    color: black;
+}
+
+aside h1 {
+    margin: 0;
+}
+
+aside p {
+    margin: 0;
+}
+
+/* styles for the main part */
+/* Instead of having a fixed amount of margin on the left and right of the
+ * article content, the contents have those margins themselves. This way, we
+ * add exceptions. For example, on small displays, code blocks and images
+ * stretch from edge to edge. */
+main {
+    width: 100%;
+    /* the amount of padding to the screen border */
+    --padding: 4mm;
+}
+
+main .content {
+    width: 100%;
+    max-width: 50em;
+    margin: auto;
+    padding-bottom: 2em;
+}
+
+main ::selection {
+    background: var(--main-selection-bg-color);
+    color: var(--main-selection-fg-color);
+}
+
+main a {
+    color: var(--accent-color);
+}
+
+.read-more-container {
+    padding: 1em 0;
+    margin-top: 1em;
+}
+
+.read-more-button {
+    border: 1mm solid;
+    padding: 1em;
+    border-radius: 42cm;
+}
+
+.after-article-card {
+    width: calc(100% - 2 * var(--padding));
+    padding: 1em var(--padding);
+    margin: 2em 0 3em 0;
+
+    background: var(--yellow);
+    color: black;
+    border-radius: 1em;
+}
+
+/* style for the footer */
+footer {
+    font-size: 0.8em;
+    margin: 0 var(--padding);
+}
+
+/* the article content */
+article {
+    line-height: 1.7;
+    font-size: 1em;
+}
+
+article .infos {
+    font-size: 0.8em;
+}
+
+article>* {
+    margin: 0 var(--padding);
+}
+
+article>center {
+    /* images are wrapped in center */
+    margin: 0;
+}
+
+p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+ul,
+ol {
+    margin: 1em var(--padding);
+}
+
+ul>*,
+ol>* {
+    --padding: 0em;
+}
+
+article h1 a {
+    color: var(--main-fg-color);
+    text-decoration: none;
+}
+
+article h1 a:hover {
+    text-decoration: underline;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin-top: 2em;
+    margin-bottom: 1em;
+    line-height: 1;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6,
+strong {
+    font-family: 'Josefin Sans';
+}
+
+hr {
+    width: 50%;
+    height: 2mm;
+    margin: 3em auto;
+    border: none;
+    border-radius: 1mm;
+    background: var(--green);
+}
+
+@media print {
+    hr {
+        background: none;
+        border-radius: 0;
+        border-top: 1mm solid var(--green);
+    }
+}
+
+article pre {
+    margin: 0;
+    padding: 1em max(1em, var(--padding));
+}
+
+code {
+    font-family: 'JetBrains Mono';
+}
+
+blockquote {
+    border-left: 2mm solid var(--accent-color);
+    padding-left: 1em;
+}
+
+img {
+    max-width: 100%;
+    max-height: 30em;
+    border-radius: 1em;
+}
+
+@media (prefers-color-scheme: dark) {
+    .invertable-image {
+        -webkit-filter: invert(100%);
+        filter: invert(100%);
+    }
+}
+
+video {
+    max-width: 100%;
+    max-height: 30em;
+    border-radius: 1em;
+}
+
+audio {
+    margin-top: 4mm;
+    border-radius: 1em;
+}
+
+@media screen {
+    .footnote-key {
+        background: var(--yellow);
+        padding: 1mm;
+        border-radius: 2mm;
+        color: black;
+        text-decoration: none;
+        font-family: 'Josefin Sans';
+    }
+}
+
+@media print {
+    .footnote-key {
+        padding: 0;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .footnote-key::before {
+        content: '[';
+    }
+
+    .footnote-key::after {
+        content: ']';
+    }
+}
+
+.footnote-def {
+    display: flex;
+    margin-bottom: 1em;
+}
+
+.footnote-def-key {
+    min-width: 48px;
+}
+
+.footnote-def-value>p {
+    margin: 0;
+    margin-right: 1em;
+}
