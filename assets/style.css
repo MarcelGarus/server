@@ -89,10 +89,6 @@ aside {
     text-align: center;
 }
 
-aside h1 {
-    margin: 0;
-}
-
 aside .content {
     margin: auto !important;
     margin-right: 0;
@@ -168,6 +164,17 @@ aside a {
 
 aside h1 {
     margin: 0;
+}
+
+@media (max-width: 400px) {
+    aside h1 {
+        font-size: 2em;
+    }
+
+    aside .my-image {
+        width: 6em;
+        height: 6em;
+    }
 }
 
 aside p {
@@ -269,6 +276,12 @@ article h1 a {
 
 article h1 a:hover {
     text-decoration: underline;
+}
+
+@media (max-width: 750px) {
+    article h1 {
+        font-size: 2em;
+    }
 }
 
 h2,
