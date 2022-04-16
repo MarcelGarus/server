@@ -1,3 +1,7 @@
+topics = [ "this blog" ]
+
+--start--
+
 # Templating engine? No thanks.
 
 [Here](https://github.com/MarcelGarus/server/blob/f0688236abbe9f25ff296a6197130a19e3c6d562/src/templates.rs) is the Rust code that produces the page you're currently reading (at least at the time of writing).

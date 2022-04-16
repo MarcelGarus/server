@@ -1,3 +1,7 @@
+topics = [ "university stuff" ]
+
+--start--
+
 # Encouraging People to Be More Careful in Situations With High Infection Risk
 
 As you might have noticed, we are currently in a pandemic.

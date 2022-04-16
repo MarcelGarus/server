@@ -1,9 +1,18 @@
 #![feature(async_closure)]
 
+mod assets;
+mod blog;
+mod maintenance;
+mod templates;
+mod utils;
+mod visits;
+
+use crate::blog::{canonicalize_topic, Blog};
 use crate::maintenance::Maintenance;
 use crate::utils::*;
 use crate::visits::{Visit, VisitsLog};
 use actix_service::Service;
+use actix_web::HttpResponseBuilder;
 use actix_web::{
     body::AnyBody,
     dev::{self, ServiceResponse},
@@ -12,21 +21,14 @@ use actix_web::{
     middleware::{self, ErrorHandlerResponse, ErrorHandlers},
     web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
-use blog::Blog;
 use futures::future::{self, FutureExt};
 use http::StatusCode;
+use itertools::Itertools;
 use log::{debug, info, warn, LevelFilter};
 use rustls::{NoClientAuth, ServerConfig};
 use simplelog::{ColorChoice, TermLogger, TerminalMode};
 use std::{io::BufReader, net::SocketAddr};
 use tokio::fs;
-
-mod assets;
-mod blog;
-mod maintenance;
-mod templates;
-mod utils;
-mod visits;
 
 #[derive(Clone)]
 struct Config {
@@ -121,6 +123,8 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(pay)
             .service(pay_amount)
+            .service(timeline)
+            .service(filtered_timeline)
             .service(blog_file)
             .service(rss)
             .service(admin)
@@ -246,8 +250,8 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 #[get("/")]
 async fn index(blog: web::Data<Blog>) -> impl Responder {
     HttpResponse::Ok()
-        .append_header(("Cache-Control", "public,max-age=3600"))
-        .html(templates::blog_page(blog.list().await.into_iter().rev().collect::<Vec<_>>()).await)
+        .cached()
+        .html(templates::blog_page(blog.list().await).await)
 }
 
 /// For brevity, most URLs consist of a single key.
@@ -260,7 +264,7 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
         return match fs::read(&asset.path).await {
             Ok(content) => HttpResponse::Ok()
                 .content_type(asset.content_type)
-                .append_header(("Cache-Control", "public,max-age=3600"))
+                .cached()
                 .body(content),
             Err(_) => panic!("The file is missing."),
         };
@@ -270,11 +274,41 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     let blog = req.app_data::<web::Data<Blog>>().unwrap();
     if let Some(article) = blog.get(&key).await {
         return HttpResponse::Ok()
-            .append_header(("Cache-Control", "public,max-age=3600"))
+            .cached()
             .html(templates::article_page(&article, &blog.get_suggestion(&key).await).await);
     }
 
     error_page_404(&req).await
+}
+
+#[get("/articles")]
+async fn timeline(blog: web::Data<Blog>) -> impl Responder {
+    HttpResponse::Ok()
+        .cached()
+        .html(templates::timeline_page(None, &blog.list().await).await)
+}
+
+#[get("/articles/{topic}")]
+async fn filtered_timeline(path: web::Path<(String,)>, blog: web::Data<Blog>) -> impl Responder {
+    let (topic,) = path.into_inner();
+    let topic = blog
+        .topics()
+        .await
+        .into_iter()
+        .filter(|it| canonicalize_topic(it) == topic)
+        .next()
+        .unwrap_or("".to_string());
+
+    let articles = blog
+        .list()
+        .await
+        .into_iter()
+        .filter(|article| article.matches_topic(&topic))
+        .collect_vec();
+
+    HttpResponse::Ok()
+        .cached()
+        .html(templates::timeline_page(Some(&topic), &articles).await)
 }
 
 #[get("/files/{filename}")]
@@ -287,9 +321,7 @@ async fn blog_file(req: HttpRequest, path: web::Path<(String,)>) -> impl Respond
     {
         match fs::read(&format!("blog/files/{}", filename)).await {
             Ok(content) => {
-                return HttpResponse::Ok()
-                    .append_header(("Cache-Control", "public,max-age=3600"))
-                    .body(content);
+                return HttpResponse::Ok().cached().body(content);
             }
             Err(_) => {}
         }
@@ -416,4 +448,13 @@ async fn error_page(status: StatusCode, title: &str, description: &str) -> HttpR
     HttpResponse::Ok()
         .status(status)
         .html(templates::error_page(status, title, description).await)
+}
+
+trait HttpResponseBuilderExt {
+    fn cached(&mut self) -> &mut Self;
+}
+impl HttpResponseBuilderExt for HttpResponseBuilder {
+    fn cached(&mut self) -> &mut Self {
+        self.append_header(("Cache-Control", "public,max-age=3600"))
+    }
 }

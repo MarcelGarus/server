@@ -1,4 +1,8 @@
- # Increasing Awareness of Energy Consumption in Jupyter Notebooks
+topics = [ "university stuff" ]
+
+--start--
+
+# Increasing Awareness of Energy Consumption in Jupyter Notebooks
 
 [Jupyter Notebooks](https://jupyter.org) are becoming an increasingly popular tool: These Python-based notebooks run in your browser and combine running code with writing explanatory documentation.
 Notebooks have a client-server architecture – even if they run on a powerful machine, you can still write your code on a light endpoint, such as a laptop.

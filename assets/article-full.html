@@ -15,9 +15,7 @@
     </script>
 </article>
 
-<footer class="after-article-card only-screen">
-
-    <!-- Shortlink -->
+<div class="after-article-card only-screen">
     <script>
         const shortlink = "mgar.us/{{key}}";
         async function copyShortlink() {
@@ -41,34 +39,24 @@
         #shortlink {
             background-color: transparent;
             color: inherit;
-            border: 0.1em solid #f97191;
+            border: 0.1em solid black;
             border-radius: 0.2em;
             cursor: pointer;
             font-family: 'JetBrains Mono', monospace;
         }
     </style>
-    <p>You liked this article? Feel free to share it using this shortlink:</p>
-    <button id="shortlink" title="Click to copy the shortlink" onclick="copyShortlink()"
-        onmouseout="resetShortlink()">mgar.us/{{key}}</button>
+    <p>Thanks for reading!</p>
+    <p>
+        <span>If you liked this article, feel free to share it using this shortlink:</span>
+        <button id="shortlink" title="Click to copy the shortlink" onclick="copyShortlink()"
+            onmouseout="resetShortlink()">mgar.us/{{key}}</button>
+    </p>
+    <p>
+        By the way, I wrote other articles about {{topics}}.
+        Here's an article I recommend:
+    </p>
+</div>
 
-    <!-- Suggested article -->
-    <style>
-        .suggestion-label {
-            margin-left: 0;
-            margin-right: 0;
-        }
-
-        .suggestion {
-            font-size: 2em;
-            text-decoration: none;
-            color: var(--main-fg-color);
-        }
-        .suggestion:hover {
-            text-decoration: underline;
-        }
-    </style>
-    <p class="suggestion-label">Looking for another article? This one might be interesting:</p>
-
-</footer>
-
+<div class="only-screen">
 {{suggestion}}
+</div>

@@ -1,5 +1,9 @@
-use crate::{blog::Article, utils::*};
+use crate::{
+    blog::{canonicalize_topic, Article},
+    utils::*,
+};
 use http::StatusCode;
+use itertools::Itertools;
 use tokio::fs;
 
 pub async fn blog_page(articles: Vec<Article>) -> String {
@@ -16,7 +20,7 @@ pub async fn blog_page(articles: Vec<Article>) -> String {
             "Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter.",
             Some(("https://marcelgarus.dev/me.png".into(), "A portrait of me.".into())),
         ),
-        &itertools::join(teasers, "\n"),
+        &teasers.join("\n"),
     )
     .await
 }
@@ -47,6 +51,38 @@ pub async fn error_page(status_code: StatusCode, title: &str, description: &str)
             None,
         ),
         &error(status_code, title, description).await,
+    )
+    .await
+}
+
+pub async fn timeline_page(topic: Option<&str>, articles: &[Article]) -> String {
+    let timeline = if articles.is_empty() {
+        let topic = topic.unwrap();
+        timeline(
+            &format!("I didn't write about {} yet. If you think that's something I should look into, feel free to <a href=\"/about-me\">contact me</a>", topic),
+            &[],
+            &format!("Otherwise, you might want to look at <a href=\"/articles\">all articles.</a>"),
+        ).await
+    } else {
+        timeline(
+            &match topic {
+            Some(topic) => format!("These are my articles about {}:", topic),
+            None => "These are all of my articles:".to_string(),
+        },
+            articles,
+            "Didn't find what you were looking for? Checkout <a href=\"/articles\">all articles.</a>"
+        ).await
+    };
+    page(
+        "Articles",
+        &metadata(
+            "website",
+            "https://marcelgarus.dev/articles",
+            "Articles",
+            "A list of articles written by Marcel Garus.",
+            None,
+        ),
+        &timeline,
     )
     .await
 }
@@ -122,7 +158,39 @@ async fn article_full(article: &Article, suggestion: &Article) -> String {
         .await
         .unwrap()
         .fill_in_article(&article)
+        .replace(
+            "{{topics}}",
+            &article
+                .topics
+                .iter()
+                .map(|it| topic(it))
+                .natural_join()
+                .unwrap_or("interesting topics".to_string()),
+        )
         .replace("{{suggestion}}", &article_teaser(&suggestion).await)
+}
+
+async fn timeline(intro: &str, articles: &[Article], outro: &str) -> String {
+    let mut timeline_entries = vec![];
+    for article in articles {
+        timeline_entries.push(timeline_article(article).await);
+    }
+    fs::read_to_string("assets/timeline.html")
+        .await
+        .unwrap()
+        .replace("{{intro}}", intro)
+        .replace("{{timeline}}", &timeline_entries.join("\n"))
+        .replace("{{outro}}", outro)
+}
+async fn timeline_article(article: &Article) -> String {
+    fs::read_to_string("assets/timeline-article.html")
+        .await
+        .unwrap()
+        .fill_in_article(article)
+        .replace(
+            "{{topics}}",
+            &article.topics.iter().map(|it| topic(it)).join(", "),
+        )
 }
 
 pub async fn rss_feed(articles: &[Article]) -> String {
@@ -157,6 +225,8 @@ trait FillInArticle {
 }
 impl FillInArticle for String {
     fn fill_in_article(&self, article: &Article) -> Self {
+        let read_minutes =
+            (((article.read_duration.as_secs() as f64) / 60.0).round() as u64).max(1);
         let published = article
             .published
             .map(|date| format!("{}", date.format("%Y-%m-%d")));
@@ -164,10 +234,8 @@ impl FillInArticle for String {
         if let Some(date) = published.clone() {
             infos.push(date);
         }
-        infos.push(format!(
-            "{} minute read",
-            (((article.read_duration.as_secs() as f64) / 60.0).round() as u64).max(1),
-        ));
+        infos.push(format!("{} minute read", read_minutes,));
+        infos.append(&mut article.topics.iter().map(|it| topic(it)).collect_vec());
 
         self.replace("{{key}}", &article.key)
             .replace("{{title}}", &article.title)
@@ -175,5 +243,40 @@ impl FillInArticle for String {
             .replace("{{info}}", &itertools::join(infos.into_iter(), " · "))
             .replace("{{teaser}}", &article.teaser)
             .replace("{{body}}", &article.content)
+            .replace("{{read-minutes}}", &format!("{}", read_minutes))
+    }
+}
+
+fn topic(topic: &str) -> String {
+    format!(
+        "<a href=\"/articles/{}\" class=\"topic\">{}</a>",
+        canonicalize_topic(topic),
+        topic
+    )
+}
+
+trait IterExt {
+    fn natural_join(self) -> Option<String>;
+}
+impl<I: Iterator<Item = String>> IterExt for I {
+    fn natural_join(self) -> Option<String> {
+        let all = self.collect_vec();
+        let length = all.len();
+        Some(match length {
+            0 => return None,
+            1 => all.into_iter().next().unwrap(),
+            2 => format!("{} and {}", all[0], all[1]),
+            _ => {
+                let mut parts = vec![];
+                for (i, item) in all.into_iter().enumerate() {
+                    let is_last = i == length - 1;
+                    if !parts.is_empty() {
+                        parts.push(if is_last { ", and " } else { ", " }.to_string());
+                    }
+                    parts.push(item);
+                }
+                parts.join("")
+            }
+        })
     }
 }

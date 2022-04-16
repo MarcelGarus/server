@@ -7,8 +7,9 @@ use comrak::{
 use itertools::Itertools;
 use log::{info, warn};
 use rand::prelude::SliceRandom;
-use std::fs;
+use serde::Deserialize;
 use std::{cell::RefCell, collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashSet, fs};
 use tokio::sync::RwLock;
 
 type Date = chrono::Date<chrono::Utc>;
@@ -19,12 +20,13 @@ pub struct Article {
     pub title: String,
     pub published: Option<Date>,
     pub read_duration: Duration,
+    pub topics: Vec<String>,
     pub content: String,
     pub teaser: String,
 }
 
 /// A database for articles. It gets articles from the GitHub repo.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Blog {
     /// All articles by key.
     articles: Arc<RwLock<HashMap<String, Article>>>,
@@ -32,15 +34,14 @@ pub struct Blog {
     /// Keys of articles with timestamps in the order that they appeared in the
     /// `published.md` file.
     article_keys: Arc<RwLock<Vec<String>>>,
+
+    all_topics: Arc<RwLock<HashSet<String>>>,
 }
 impl Blog {
     const BASE_PATH: &'static str = "blog";
 
     pub async fn new() -> Self {
-        let db = Self {
-            articles: Default::default(),
-            article_keys: Default::default(),
-        };
+        let db = Blog::default();
         db.load_from_filesystem().await.unwrap();
         db
     }
@@ -72,8 +73,15 @@ impl Blog {
             .map(|it| it.key.clone())
             .collect_vec();
 
+        let topics: HashSet<_> = articles
+            .iter()
+            .flat_map(|(_, article)| article.topics.clone())
+            .collect();
+        info!("Found the following topics: {:?}", topics);
+
         *self.articles.write().await = articles;
         *self.article_keys.write().await = keys;
+        *self.all_topics.write().await = topics;
         Ok(())
     }
 
@@ -109,7 +117,16 @@ impl Blog {
         for key in self.article_keys.read().await.iter() {
             articles.push(self.get(key).await.unwrap())
         }
-        articles
+        articles.into_iter().rev().collect_vec()
+    }
+
+    pub async fn topics(&self) -> HashSet<String> {
+        self.all_topics
+            .read()
+            .await
+            .iter()
+            .map(|it| it.to_string())
+            .collect()
     }
 }
 
@@ -146,8 +163,23 @@ mod article_line {
     }
 }
 
+#[derive(Deserialize, Default)]
+struct Config {
+    topics: Vec<String>,
+}
+
 impl Article {
     fn from_key_and_date_and_markdown(key: String, date: Option<Date>, markdown: &str) -> Self {
+        let (config, markdown) = {
+            let mut parts = markdown.split("--start--").collect_vec();
+            let markdown = parts.pop().expect("Article has no content.");
+            let config = parts
+                .pop()
+                .map(|it| toml::from_str(it).expect("Start section is not valid."))
+                .unwrap_or(Config::default());
+            (config, markdown)
+        };
+
         let arena = Arena::new();
         let mut options = ComrakOptions::default();
         options.extension.footnotes = true;
@@ -178,6 +210,7 @@ impl Article {
                 .expect(&format!("Article \"{}\" contains no title", key)),
             published: date,
             read_duration,
+            topics: config.topics,
             content: root.to_html(),
             teaser: parse_document(
                 &arena,
@@ -382,5 +415,15 @@ impl TagVecExt for Vec<String> {
     }
     fn end_tag(&mut self, tag: &str) {
         self.push(format!("</{}>", tag));
+    }
+}
+
+pub fn canonicalize_topic(topic: &str) -> String {
+    topic.to_ascii_lowercase().replace(" ", "-")
+}
+
+impl Article {
+    pub fn matches_topic(&self, topic: &str) -> bool {
+        self.topics.iter().any(|it| it == topic)
     }
 }

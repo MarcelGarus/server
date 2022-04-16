@@ -1,3 +1,7 @@
+topics = [ "programming language design" ]
+
+--start--
+
 # A Critical Look at Static Typing
 
 Nowadays, there are soooo many programming languages.

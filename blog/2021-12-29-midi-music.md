@@ -16,4 +16,3 @@ Of course, some instruments (such as oboe or violin) sound bad, but percussion a
 Here is an example song making use of different keyboards, drumpads, and effects:
 
 <audio controls src="/jogging-in-the-cold" />
-

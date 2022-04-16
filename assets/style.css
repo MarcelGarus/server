@@ -84,8 +84,9 @@ aside {
     right: 0;
     width: calc(100% - 8mm);
     min-width: 10em;
-
+    margin-bottom: 1em;
     padding: 3em 4mm 1mm 4mm;
+
     text-align: center;
 }
 
@@ -126,6 +127,7 @@ aside h1 a {
 
 aside .my-name ::selection {
     background: var(--nav-fg-color);
+    color: var(--nav-bg-color);
 }
 
 aside .my-image {
@@ -152,10 +154,19 @@ aside .description {
 }
 
 aside .more-about-me {
-    background-color: var(--purple);
+    background-color: var(--yellow);
     padding: 0.5em;
     z-index: 3;
     translate: -1em 0;
+    transform: rotate(1deg);
+}
+
+aside .all-articles {
+    background: var(--purple);
+    padding: 0.5em;
+    z-index: 4;
+    translate: -0.3em 0;
+    transform: rotate(-3deg);
 }
 
 aside a {
@@ -208,6 +219,16 @@ main a {
     color: var(--accent-color);
 }
 
+.topic {
+    color: var(--main-fg-color);
+    font-family: sans-serif;
+    text-decoration: none;
+}
+
+.topic:hover {
+    text-decoration: underline;
+}
+
 .read-more-container {
     padding: 1em 0;
     margin-top: 1em;
@@ -229,10 +250,53 @@ main a {
     border-radius: 1em;
 }
 
+.after-article-card .topic {
+    color: black;
+    text-decoration: underline;
+    font-family: "Josefin Sans", sans-serif;
+}
+
+.after-article-card ::selection {
+    background: black;
+    color: white;
+}
+
 /* style for the footer */
 footer {
     font-size: 0.8em;
     margin: 0 var(--padding);
+}
+
+/* the timeline */
+
+.timeline {
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
+.timeline-entry {
+    margin: 0.8em 0;
+    display: flex;
+}
+
+.timeline-date {
+    width: 7em;
+    min-width: 7em;
+    line-height: 1.2;
+}
+
+.timeline-title {
+    margin: 0;
+}
+
+.timeline-title-text {
+    color: var(--main-fg-color);
+    text-decoration: none;
+    line-height: 1.2;
+}
+
+.timeline-title-text:hover {
+    text-decoration: underline;
 }
 
 /* the article content */

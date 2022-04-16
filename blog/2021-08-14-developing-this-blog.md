@@ -1,3 +1,7 @@
+topics = [ "this blog" ]
+
+--start--
+
 # On Developing This Blog
 
 I created the blogging server that hosts this page with my bare hands.
