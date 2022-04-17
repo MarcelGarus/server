@@ -6,87 +6,6 @@ use http::StatusCode;
 use itertools::Itertools;
 use tokio::fs;
 
-pub async fn blog_page(articles: Vec<Article>) -> String {
-    let mut teasers = vec![];
-    for article in articles {
-        teasers.push(article_teaser(&article).await);
-    }
-    page(
-        "Blog",
-        &metadata(
-            "website",
-            "https://marcelgarus.dev",
-            "Blog",
-            "Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter.",
-            Some(("https://marcelgarus.dev/me.png".into(), "A portrait of me.".into())),
-        ),
-        &teasers.join("\n"),
-    )
-    .await
-}
-
-pub async fn article_page(article: &Article, suggestion: &Article) -> String {
-    page(
-        &article.title,
-        &metadata(
-            "article",
-            &format!("https://marcelgarus.dev/{}", article.key),
-            &article.title,
-            &article.teaser.strip_html(),
-            None, // TODO: Add first image.
-        ),
-        &article_full(&article, suggestion).await,
-    )
-    .await
-}
-
-pub async fn error_page(status_code: StatusCode, title: &str, description: &str) -> String {
-    page(
-        &format!("{} – {}", status_code, &title),
-        &metadata(
-            "website",
-            "", // TODO
-            &title,
-            &description,
-            None,
-        ),
-        &error(status_code, title, description).await,
-    )
-    .await
-}
-
-pub async fn timeline_page(topic: Option<&str>, articles: &[Article]) -> String {
-    let timeline = if articles.is_empty() {
-        let topic = topic.unwrap();
-        timeline(
-            &format!("I didn't write about {} yet. If you think that's something I should look into, feel free to <a href=\"/about-me\">contact me</a>", topic),
-            &[],
-            &format!("Otherwise, you might want to look at <a href=\"/articles\">all articles.</a>"),
-        ).await
-    } else {
-        timeline(
-            &match topic {
-            Some(topic) => format!("These are my articles about {}:", topic),
-            None => "These are all of my articles:".to_string(),
-        },
-            articles,
-            "Didn't find what you were looking for? Checkout <a href=\"/articles\">all articles.</a>"
-        ).await
-    };
-    page(
-        "Articles",
-        &metadata(
-            "website",
-            "https://marcelgarus.dev/articles",
-            "Articles",
-            "A list of articles written by Marcel Garus.",
-            None,
-        ),
-        &timeline,
-    )
-    .await
-}
-
 async fn page(title: &str, metadata: &str, content: &str) -> String {
     fs::read_to_string("assets/page.html")
         .await
@@ -146,6 +65,14 @@ fn metadata(
     )
 }
 
+fn topic(topic: &str) -> String {
+    format!(
+        "<a href=\"/articles/{}\" class=\"topic\">{}</a>",
+        canonicalize_topic(topic),
+        topic
+    )
+}
+
 async fn article_teaser(article: &Article) -> String {
     fs::read_to_string("assets/article-teaser.html")
         .await
@@ -153,27 +80,67 @@ async fn article_teaser(article: &Article) -> String {
         .fill_in_article(&article)
 }
 
-async fn article_full(article: &Article, suggestion: &Article) -> String {
-    fs::read_to_string("assets/article-full.html")
-        .await
-        .unwrap()
-        .fill_in_article(&article)
-        .replace(
-            "{{topics}}",
-            &article
-                .topics
-                .iter()
-                .map(|it| topic(it))
-                .natural_join()
-                .unwrap_or("interesting topics".to_string()),
-        )
-        .replace("{{suggestion}}", &article_teaser(&suggestion).await)
+pub async fn blog_page(articles: Vec<Article>) -> String {
+    let mut teasers = vec![];
+    for article in articles {
+        teasers.push(article_teaser(&article).await);
+    }
+    page(
+        "Blog",
+        &metadata(
+            "website",
+            "https://marcelgarus.dev",
+            "Blog",
+            "Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter.",
+            Some(("https://marcelgarus.dev/me.png".into(), "A portrait of me.".into())),
+        ),
+        &teasers.join("\n"),
+    )
+    .await
+}
+
+pub async fn article_page(article: &Article, suggestion: &Article) -> String {
+    page(
+        &article.title,
+        &metadata(
+            "article",
+            &format!("https://marcelgarus.dev/{}", article.key),
+            &article.title,
+            &article.teaser.strip_html(),
+            None, // TODO: Add first image.
+        ),
+        &fs::read_to_string("assets/article-full.html")
+            .await
+            .unwrap()
+            .fill_in_article(&article)
+            .replace(
+                "{{topics}}",
+                &article
+                    .topics
+                    .iter()
+                    .map(|it| topic(it))
+                    .natural_join()
+                    .unwrap_or("interesting topics".to_string()),
+            )
+            .replace("{{suggestion}}", &article_teaser(&suggestion).await),
+    )
+    .await
 }
 
 async fn timeline(intro: &str, articles: &[Article], outro: &str) -> String {
     let mut timeline_entries = vec![];
     for article in articles {
-        timeline_entries.push(timeline_article(article).await);
+        timeline_entries.push(
+            fs::read_to_string("assets/timeline-article.html")
+                .await
+                .unwrap()
+                .fill_in_article(article)
+                .replace(
+                    "{{topics}}",
+                    &article.topics.iter().map(|it| topic(it)).join(", "),
+                )
+                .await,
+        );
     }
     fs::read_to_string("assets/timeline.html")
         .await
@@ -182,42 +149,75 @@ async fn timeline(intro: &str, articles: &[Article], outro: &str) -> String {
         .replace("{{timeline}}", &timeline_entries.join("\n"))
         .replace("{{outro}}", outro)
 }
-async fn timeline_article(article: &Article) -> String {
-    fs::read_to_string("assets/timeline-article.html")
-        .await
-        .unwrap()
-        .fill_in_article(article)
-        .replace(
-            "{{topics}}",
-            &article.topics.iter().map(|it| topic(it)).join(", "),
-        )
+
+pub async fn timeline_page(topic: Option<&str>, articles: &[Article]) -> String {
+    let timeline = if articles.is_empty() {
+        let topic = topic.unwrap();
+        timeline(
+            &format!("I didn't write about {} yet. If you think that's something I should look into, feel free to <a href=\"/about-me\">contact me</a>", topic),
+            &[],
+            &format!("Otherwise, you might want to look at <a href=\"/articles\">all articles.</a>"),
+        ).await
+    } else {
+        timeline(
+            &match topic {
+            Some(topic) => format!("These are my articles about {}:", topic),
+            None => "These are all of my articles:".to_string(),
+        },
+            articles,
+            "Didn't find what you were looking for? Checkout <a href=\"/articles\">all articles.</a>"
+        ).await
+    };
+    page(
+        "Articles",
+        &metadata(
+            "website",
+            "https://marcelgarus.dev/articles",
+            "Articles",
+            "A list of articles written by Marcel Garus.",
+            None,
+        ),
+        &timeline,
+    )
+    .await
+}
+
+pub async fn error_page(status_code: StatusCode, title: &str, description: &str) -> String {
+    page(
+        &format!("{} – {}", status_code, &title),
+        &metadata(
+            "website",
+            "", // TODO
+            &title,
+            &description,
+            None,
+        ),
+        &fs::read_to_string("assets/error.html")
+            .await
+            .unwrap()
+            .replace("{{title}}", title)
+            .replace("{{status}}", &format!("{}", status_code.as_u16()))
+            .replace("{{description}}", description)
+            .await,
+    )
+    .await
 }
 
 pub async fn rss_feed(articles: &[Article]) -> String {
     let mut articles_xml = vec![];
     for article in articles {
-        articles_xml.push(rss_article(&article).await);
+        articles_xml.push(
+            fs::read_to_string("assets/rss-article.xml")
+                .await
+                .unwrap()
+                .fill_in_article(&article)
+                .await,
+        );
     }
     fs::read_to_string("assets/rss-feed.xml")
         .await
         .unwrap()
         .replace("{{content}}", &itertools::join(articles_xml, "\n"))
-}
-
-async fn rss_article(article: &Article) -> String {
-    fs::read_to_string("assets/rss-article.xml")
-        .await
-        .unwrap()
-        .fill_in_article(&article)
-}
-
-async fn error(status_code: StatusCode, title: &str, description: &str) -> String {
-    fs::read_to_string("assets/error.html")
-        .await
-        .unwrap()
-        .replace("{{title}}", title)
-        .replace("{{status}}", &format!("{}", status_code.as_u16()))
-        .replace("{{description}}", description)
 }
 
 trait FillInArticle {
@@ -245,14 +245,6 @@ impl FillInArticle for String {
             .replace("{{body}}", &article.content)
             .replace("{{read-minutes}}", &format!("{}", read_minutes))
     }
-}
-
-fn topic(topic: &str) -> String {
-    format!(
-        "<a href=\"/articles/{}\" class=\"topic\">{}</a>",
-        canonicalize_topic(topic),
-        topic
-    )
 }
 
 trait IterExt {
