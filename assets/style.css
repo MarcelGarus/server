@@ -16,6 +16,9 @@
     --nav-fg-color: white;
     --nav-selection-bg-color: white;
     --nav-selection-fg-color: black;
+
+    --character-font: "Josefin Sans";
+    --code-font: "JetBrains Mono";
 }
 
 @media (prefers-color-scheme: dark) {
@@ -34,7 +37,7 @@ body {
     margin: 0;
     padding: 0;
 
-    font-family: "Roboto", sans-serif;
+    font-family: sans-serif;
     background-color: var(--main-bg-color);
     color: var(--main-fg-color);
 }
@@ -44,14 +47,14 @@ body {
 }
 
 a {
-    font-family: "Josefin Sans", sans-serif;
+    font-family: var(--character-font), sans-serif;
     color: var(--main-fg-color);
 }
 
 h1 {
     margin: 1em 0 0 0;
 
-    font-family: "Josefin Sans", sans-serif;
+    font-family: var(--character-font), sans-serif;
     font-size: 3em;
     line-height: 1;
 }
@@ -253,7 +256,7 @@ main a {
 .after-article-card .topic {
     color: black;
     text-decoration: underline;
-    font-family: "Josefin Sans", sans-serif;
+    font-family: var(--character-font), sans-serif;
 }
 
 .after-article-card ::selection {
@@ -364,7 +367,7 @@ h4,
 h5,
 h6,
 strong {
-    font-family: 'Josefin Sans';
+    font-family: var(--character-font);
 }
 
 hr {
@@ -390,7 +393,7 @@ article pre {
 }
 
 code {
-    font-family: 'JetBrains Mono';
+    font-family: var(--code-font);
 }
 
 blockquote {
@@ -429,14 +432,14 @@ audio {
         border-radius: 2mm;
         color: black;
         text-decoration: none;
-        font-family: 'Josefin Sans';
+        font-family: var(--character-font);
     }
 }
 
 @media print {
     .footnote-key {
         padding: 0;
-        font-family: 'Roboto', sans-serif;
+        font-family: sans-serif;
     }
 
     .footnote-key::before {
