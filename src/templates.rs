@@ -138,8 +138,7 @@ async fn timeline(intro: &str, articles: &[Article], outro: &str) -> String {
                 .replace(
                     "{{topics}}",
                     &article.topics.iter().map(|it| topic(it)).join(", "),
-                )
-                .await,
+                ),
         );
     }
     fs::read_to_string("assets/timeline.html")
@@ -197,8 +196,7 @@ pub async fn error_page(status_code: StatusCode, title: &str, description: &str)
             .unwrap()
             .replace("{{title}}", title)
             .replace("{{status}}", &format!("{}", status_code.as_u16()))
-            .replace("{{description}}", description)
-            .await,
+            .replace("{{description}}", description),
     )
     .await
 }
@@ -210,8 +208,7 @@ pub async fn rss_feed(articles: &[Article]) -> String {
             fs::read_to_string("assets/rss-article.xml")
                 .await
                 .unwrap()
-                .fill_in_article(&article)
-                .await,
+                .fill_in_article(&article),
         );
     }
     fs::read_to_string("assets/rss-feed.xml")
