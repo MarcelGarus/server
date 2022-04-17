@@ -78,7 +78,7 @@ async fn main() -> std::io::Result<()> {
 
     let config = web::Data::new(Config::load().await);
     let maintenance = web::Data::new(Maintenance::new());
-    let visits_log = web::Data::new(VisitsLog::new().await);
+    let visits_log = web::Data::new(VisitsLog::load().await);
     let blog = web::Data::new(Blog::new().await);
     let address = config.address.clone();
 

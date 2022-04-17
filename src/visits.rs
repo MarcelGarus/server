@@ -1,6 +1,7 @@
 use crate::utils::*;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, TimeZone, Utc};
+use itertools::Itertools;
 use log::info;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DurationMicroSeconds, TimestampSeconds};
@@ -81,16 +82,60 @@ pub struct VisitsLog {
     buffer: Arc<RwLock<Vec<Visit>>>,
 
     tail: LimitedLog<Visit>,
-    number_of_visits: Arc<RwLock<HashMap<UtcDate, u64>>>,
+    visits_by_day: Arc<RwLock<HashMap<UtcDate, u64>>>,
 }
+#[derive(Deserialize, Serialize)]
+struct SerializableVisitsByDay {
+    data: HashMap<String, u64>,
+}
+impl SerializableVisitsByDay {
+    fn from_visits(visits: HashMap<UtcDate, u64>) -> Self {
+        Self {
+            data: visits
+                .into_iter()
+                .map(|(key, value)| {
+                    (
+                        format!("{}-{}-{}", key.0.year(), key.0.month(), key.0.day()),
+                        value,
+                    )
+                })
+                .collect(),
+        }
+    }
+    fn to_visits(self) -> HashMap<UtcDate, u64> {
+        self.data
+            .into_iter()
+            .map(|(key, value)| {
+                let parts = key.split("-").collect_vec();
+                let date = Utc.ymd(
+                    parts[0].parse().unwrap(),
+                    parts[1].parse().unwrap(),
+                    parts[2].parse().unwrap(),
+                );
+                (UtcDate(date), value)
+            })
+            .collect()
+    }
+}
+
 impl VisitsLog {
     const BUFFER_SIZE: usize = 100;
 
-    pub async fn new() -> Self {
+    pub async fn load() -> Self {
         Self {
             buffer: Default::default(),
             tail: Default::default(),
-            number_of_visits: Default::default(),
+            visits_by_day: Arc::new(RwLock::new(
+                std::fs::read("visits_by_day.json")
+                    .ok()
+                    .map(|content| {
+                        let date: SerializableVisitsByDay =
+                            serde_json::from_str(&content.utf8_or_panic())
+                                .expect("No valid visits in file.");
+                        date.to_visits()
+                    })
+                    .unwrap_or(HashMap::new()),
+            )),
         }
     }
 
@@ -125,6 +170,13 @@ impl VisitsLog {
             file.write_all(json.as_bytes()).await?;
             file.write_all(&[10]).await?; // '\n'
         }
+
+        let number_of_visits = self.get_number_of_visits_by_day().await;
+        std::fs::write(
+            "visits_by_day.json",
+            serde_json::to_string(&SerializableVisitsByDay::from_visits(number_of_visits)).unwrap(),
+        )?;
+
         info!("Visits successfully flushed to disk.");
         Ok(())
     }
@@ -133,7 +185,7 @@ impl VisitsLog {
         let date = UtcDate(visit.timestamp.date());
         self.tail.add(visit.clone()).await;
 
-        let mut number_of_visits = self.number_of_visits.write().await;
+        let mut number_of_visits = self.visits_by_day.write().await;
         *number_of_visits.entry(date.clone()).or_insert(0) += 1;
         let a_month_ago = Utc::now()
             .date()
@@ -147,7 +199,7 @@ impl VisitsLog {
     }
 
     pub async fn get_number_of_visits_by_day(&self) -> HashMap<UtcDate, u64> {
-        HashMap::from_iter(self.number_of_visits.read().await.clone())
+        HashMap::from_iter(self.visits_by_day.read().await.clone())
     }
 }
 
