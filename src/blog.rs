@@ -21,8 +21,9 @@ pub struct Article {
     pub published: Option<Date>,
     pub read_duration: Duration,
     pub topics: Vec<String>,
-    pub content: String,
     pub teaser: String,
+    pub content: String,
+    pub next: Option<String>,
 }
 
 /// A database for articles. It gets articles from the GitHub repo.
@@ -93,23 +94,44 @@ impl Blog {
             .map(|article| article.clone())
     }
 
-    // Returns a suggestion what to read next based on a key. By default,
-    // returns the article written after the current one. If there is none, it
-    // simply suggests a random one.
-    pub async fn get_suggestion(&self, key: &str) -> Article {
-        let mut keys = self.article_keys.read().await.clone();
-        let index = keys.iter().position(|it| it == key);
-        let mut suggested_key = index.and_then(|index| {
-            let suggested_index = (index as i64) + 1;
-            keys.get(suggested_index as usize)
-        });
-        if suggested_key.is_none() {
-            if let Some(index) = index {
-                keys.remove(index);
-            }
-            suggested_key = keys.choose(&mut rand::thread_rng());
+    pub async fn get_suggestion_for(&self, article: &Article) -> Article {
+        self.get(&self.get_suggestion_key_for(article).await)
+            .await
+            .unwrap()
+    }
+    async fn get_suggestion_key_for(&self, article: &Article) -> String {
+        // If the article has a suggestion, use that.
+        if let Some(next) = &article.next {
+            return next.to_string();
         }
-        self.get(suggested_key.unwrap()).await.unwrap()
+
+        // Otherwise, suggest an article with the same topic.
+        let topics = &article.topics;
+        let articles_about_the_same_topic = self
+            .list()
+            .await
+            .into_iter()
+            .filter(|article| topics.iter().any(|topic| article.matches_topic(topic)))
+            .filter(|it| it.key != article.key)
+            .collect_vec();
+        if !articles_about_the_same_topic.is_empty() {
+            return articles_about_the_same_topic
+                .choose(&mut rand::thread_rng())
+                .expect("There's only one article, so we can't find a suggestion.")
+                .key
+                .to_string();
+        }
+
+        // If the newest article doesn't have a pre-defined suggestion, choose
+        // a random one.
+        let mut keys = self.article_keys.read().await.clone();
+        let index = keys.iter().position(|it| it == &article.key);
+        if let Some(index) = index {
+            keys.remove(index);
+        }
+        keys.choose(&mut rand::thread_rng())
+            .expect("There's only one article, so we can't find a suggestion.")
+            .to_string()
     }
 
     pub async fn list(&self) -> Vec<Article> {
@@ -166,6 +188,7 @@ mod article_line {
 #[derive(Deserialize, Default)]
 struct Config {
     topics: Vec<String>,
+    next: Option<String>,
 }
 
 impl Article {
@@ -211,13 +234,14 @@ impl Article {
             published: date,
             read_duration,
             topics: config.topics,
-            content: root.to_html(),
             teaser: parse_document(
                 &arena,
                 markdown.split("--snip--").next().unwrap(),
                 &ComrakOptions::default(),
             )
             .to_html(),
+            content: root.to_html(),
+            next: config.next,
         }
     }
 }

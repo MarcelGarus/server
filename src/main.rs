@@ -273,9 +273,9 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     // Or maybe it's a blog article?
     let blog = req.app_data::<web::Data<Blog>>().unwrap();
     if let Some(article) = blog.get(&key).await {
-        return HttpResponse::Ok()
-            .cached()
-            .html(templates::article_page(&article, &blog.get_suggestion(&key).await).await);
+        return HttpResponse::Ok().cached().html(
+            templates::article_page(&article, &blog.get_suggestion_for(&article).await).await,
+        );
     }
 
     error_page_404(&req).await
