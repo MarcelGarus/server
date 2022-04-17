@@ -24,7 +24,7 @@ They keep the current path but change the hostname and may add a path prefix at 
 * the `go` subdomain redirects to `marcelgarus.dev/go`
 * German verb domains (like `schreib.marcel.jetzt`) redirect to specific pages
   * a trailing `e` is removed (so both `schreib` and `schreibe` works)
-  * `schreib` and `folg` redirect to `marcelgarus.dev/about-me`
+  * `schreib` and `folg` redirect to `marcelgarus.dev/me`
   * `bezahl` and `zahl` redirect to `marcelgarus.dev/pay`
 * other subdomains just redirect to `marcelgarus.dev`
 

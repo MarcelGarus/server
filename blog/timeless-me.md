@@ -1,4 +1,4 @@
-# About me
+# About Me
 
 I'm a student at the [Hasso Plattner Institute](https://hpi.de), and I develop [open source thingies](https://github.com/MarcelGarus).
 

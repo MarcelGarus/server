@@ -204,7 +204,7 @@ fn normalize_request(req: &HttpRequest) -> Option<String> {
         let subdomain = host[..host.len() - ".marcel.jetzt".len()].to_owned();
         match subdomain.as_ref() {
             "bezahle" | "bezahl" | "zahle" | "zahl" => "/pay",
-            "schreibe" | "schreib" | "folge" | "folg" => "/about-me",
+            "schreibe" | "schreib" | "folge" | "folg" => "/me",
             _ => "",
         }
     } else {
