@@ -106,7 +106,7 @@ pub async fn article_page(article: &Article, suggestion: &Article) -> String {
             "article",
             &format!("https://marcelgarus.dev/{}", article.key),
             &article.title,
-            &article.teaser.strip_html(),
+            &article.description,
             None, // TODO: Add first image.
         ),
         &fs::read_to_string("assets/article-full.html")

@@ -21,6 +21,7 @@ pub struct Article {
     pub published: Option<Date>,
     pub read_duration: Duration,
     pub topics: Vec<String>,
+    pub description: String,
     pub teaser: String,
     pub content: String,
     pub next: Option<String>,
@@ -189,6 +190,7 @@ mod article_line {
 struct Config {
     topics: Vec<String>,
     next: Option<String>,
+    description: Option<String>,
 }
 
 impl Article {
@@ -226,6 +228,13 @@ impl Article {
         let seconds_per_byte = Duration::from_secs(10 * 60 + 10) / 12290;
         let read_duration = seconds_per_byte * (markdown.len() as u32);
 
+        let teaser = parse_document(
+            &arena,
+            markdown.split("--snip--").next().unwrap(),
+            &ComrakOptions::default(),
+        )
+        .to_html();
+
         Self {
             key: key.clone(),
             title: root
@@ -234,12 +243,8 @@ impl Article {
             published: date,
             read_duration,
             topics: config.topics,
-            teaser: parse_document(
-                &arena,
-                markdown.split("--snip--").next().unwrap(),
-                &ComrakOptions::default(),
-            )
-            .to_html(),
+            description: config.description.unwrap_or_else(|| teaser.strip_html()),
+            teaser,
             content: root.to_html(),
             next: config.next,
         }
