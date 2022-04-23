@@ -253,31 +253,34 @@ main a {
     border-radius: 42cm;
 }
 
-.after-article-card {
+.card {
     width: calc(100% - 2 * var(--padding));
+    margin: 0;
     padding: 1rem var(--padding);
-    margin: 2rem 0 3rem 0;
-
-    background: var(--yellow);
     color: black;
     border-radius: 1rem;
 }
 
 @media (max-width: 50rem) {
-    .after-article-card {
+    .card {
         border-radius: 0;
     }
+}
+
+.card ::selection {
+    background: black;
+    color: white;
+}
+
+.after-article-card {
+    margin: 2rem 0 3rem 0;
+    background: var(--yellow);
 }
 
 .after-article-card .topic {
     color: black;
     text-decoration: underline;
     font-family: var(--character-font), sans-serif;
-}
-
-.after-article-card ::selection {
-    background: black;
-    color: white;
 }
 
 /* style for the footer */
