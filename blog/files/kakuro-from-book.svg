@@ -1,0 +1,202 @@
+<svg class="board" viewBox="50 50 1400 1400" xmlns="http://www.w3.org/2000/svg" style="max-height: 42em;">
+<style>
+.cell { fill: white; stroke: black; stroke-width: 2px; }
+.clue { fill: black; font-family: sans-serif; font-size: 24px; }
+</style>
+<text class="clue" x="240" y="90" text-anchor="middle">40</text>
+<text class="clue" x="340" y="90" text-anchor="middle">19</text>
+<text class="clue" x="440" y="90" text-anchor="middle">3</text>
+<text class="clue" x="540" y="90" text-anchor="middle">28</text>
+<text class="clue" x="740" y="90" text-anchor="middle">12</text>
+<text class="clue" x="840" y="90" text-anchor="middle">12</text>
+<text class="clue" x="1040" y="90" text-anchor="middle">34</text>
+<text class="clue" x="1140" y="90" text-anchor="middle">23</text>
+<text class="clue" x="1240" y="90" text-anchor="middle">10</text>
+<text class="clue" x="1340" y="90" text-anchor="middle">7</text>
+<text class="clue" x="140" y="190" text-anchor="middle">10</text>
+<text class="clue" x="195" y="150" text-anchor="end">12</text>
+<rect class="cell" x="200" y="100" width="100" height="100" />
+<rect class="cell" x="300" y="100" width="100" height="100" />
+<rect class="cell" x="400" y="100" width="100" height="100" />
+<rect class="cell" x="500" y="100" width="100" height="100" />
+<text class="clue" x="695" y="150" text-anchor="end">11</text>
+<rect class="cell" x="700" y="100" width="100" height="100" />
+<rect class="cell" x="800" y="100" width="100" height="100" />
+<text class="clue" x="995" y="150" text-anchor="end">10</text>
+<rect class="cell" x="1000" y="100" width="100" height="100" />
+<rect class="cell" x="1100" y="100" width="100" height="100" />
+<rect class="cell" x="1200" y="100" width="100" height="100" />
+<rect class="cell" x="1300" y="100" width="100" height="100" />
+<text class="clue" x="95" y="250" text-anchor="end">21</text>
+<rect class="cell" x="100" y="200" width="100" height="100" />
+<rect class="cell" x="200" y="200" width="100" height="100" />
+<rect class="cell" x="300" y="200" width="100" height="100" />
+<rect class="cell" x="400" y="200" width="100" height="100" />
+<rect class="cell" x="500" y="200" width="100" height="100" />
+<text class="clue" x="640" y="290" text-anchor="middle">10</text>
+<text class="clue" x="695" y="250" text-anchor="end">4</text>
+<rect class="cell" x="700" y="200" width="100" height="100" />
+<rect class="cell" x="800" y="200" width="100" height="100" />
+<text class="clue" x="940" y="290" text-anchor="middle">13</text>
+<text class="clue" x="995" y="250" text-anchor="end">30</text>
+<rect class="cell" x="1000" y="200" width="100" height="100" />
+<rect class="cell" x="1100" y="200" width="100" height="100" />
+<rect class="cell" x="1200" y="200" width="100" height="100" />
+<rect class="cell" x="1300" y="200" width="100" height="100" />
+<text class="clue" x="95" y="350" text-anchor="end">20</text>
+<rect class="cell" x="100" y="300" width="100" height="100" />
+<rect class="cell" x="200" y="300" width="100" height="100" />
+<rect class="cell" x="300" y="300" width="100" height="100" />
+<text class="clue" x="495" y="350" text-anchor="end">7</text>
+<rect class="cell" x="500" y="300" width="100" height="100" />
+<rect class="cell" x="600" y="300" width="100" height="100" />
+<text class="clue" x="740" y="390" text-anchor="middle">42</text>
+<text class="clue" x="795" y="350" text-anchor="end">16</text>
+<rect class="cell" x="800" y="300" width="100" height="100" />
+<rect class="cell" x="900" y="300" width="100" height="100" />
+<rect class="cell" x="1000" y="300" width="100" height="100" />
+<rect class="cell" x="1100" y="300" width="100" height="100" />
+<rect class="cell" x="1200" y="300" width="100" height="100" />
+<text class="clue" x="140" y="490" text-anchor="middle">21</text>
+<text class="clue" x="195" y="450" text-anchor="end">17</text>
+<rect class="cell" x="200" y="400" width="100" height="100" />
+<rect class="cell" x="300" y="400" width="100" height="100" />
+<text class="clue" x="440" y="490" text-anchor="middle">7</text>
+<text class="clue" x="495" y="450" text-anchor="end">40</text>
+<rect class="cell" x="500" y="400" width="100" height="100" />
+<rect class="cell" x="600" y="400" width="100" height="100" />
+<rect class="cell" x="700" y="400" width="100" height="100" />
+<rect class="cell" x="800" y="400" width="100" height="100" />
+<rect class="cell" x="900" y="400" width="100" height="100" />
+<rect class="cell" x="1000" y="400" width="100" height="100" />
+<rect class="cell" x="1100" y="400" width="100" height="100" />
+<text class="clue" x="95" y="550" text-anchor="end">11</text>
+<rect class="cell" x="100" y="500" width="100" height="100" />
+<rect class="cell" x="200" y="500" width="100" height="100" />
+<rect class="cell" x="300" y="500" width="100" height="100" />
+<rect class="cell" x="400" y="500" width="100" height="100" />
+<text class="clue" x="540" y="590" text-anchor="middle">4</text>
+<text class="clue" x="595" y="550" text-anchor="end">12</text>
+<rect class="cell" x="600" y="500" width="100" height="100" />
+<rect class="cell" x="700" y="500" width="100" height="100" />
+<text class="clue" x="840" y="590" text-anchor="middle">8</text>
+<text class="clue" x="895" y="550" text-anchor="end">22</text>
+<rect class="cell" x="900" y="500" width="100" height="100" />
+<rect class="cell" x="1000" y="500" width="100" height="100" />
+<rect class="cell" x="1100" y="500" width="100" height="100" />
+<text class="clue" x="1240" y="590" text-anchor="middle">44</text>
+<text class="clue" x="95" y="650" text-anchor="end">16</text>
+<rect class="cell" x="100" y="600" width="100" height="100" />
+<rect class="cell" x="200" y="600" width="100" height="100" />
+<text class="clue" x="395" y="650" text-anchor="end">5</text>
+<rect class="cell" x="400" y="600" width="100" height="100" />
+<rect class="cell" x="500" y="600" width="100" height="100" />
+<text class="clue" x="640" y="690" text-anchor="middle">5</text>
+<text class="clue" x="695" y="650" text-anchor="end">5</text>
+<rect class="cell" x="700" y="600" width="100" height="100" />
+<rect class="cell" x="800" y="600" width="100" height="100" />
+<text class="clue" x="940" y="690" text-anchor="middle">6</text>
+<text class="clue" x="1095" y="650" text-anchor="end">7</text>
+<rect class="cell" x="1100" y="600" width="100" height="100" />
+<rect class="cell" x="1200" y="600" width="100" height="100" />
+<text class="clue" x="1340" y="690" text-anchor="middle">9</text>
+<text class="clue" x="95" y="750" text-anchor="end">10</text>
+<rect class="cell" x="100" y="700" width="100" height="100" />
+<rect class="cell" x="200" y="700" width="100" height="100" />
+<text class="clue" x="340" y="790" text-anchor="middle">36</text>
+<text class="clue" x="495" y="750" text-anchor="end">25</text>
+<rect class="cell" x="500" y="700" width="100" height="100" />
+<rect class="cell" x="600" y="700" width="100" height="100" />
+<rect class="cell" x="700" y="700" width="100" height="100" />
+<rect class="cell" x="800" y="700" width="100" height="100" />
+<rect class="cell" x="900" y="700" width="100" height="100" />
+<text class="clue" x="1040" y="790" text-anchor="middle">8</text>
+<text class="clue" x="1195" y="750" text-anchor="end">11</text>
+<rect class="cell" x="1200" y="700" width="100" height="100" />
+<rect class="cell" x="1300" y="700" width="100" height="100" />
+<text class="clue" x="195" y="850" text-anchor="end">11</text>
+<rect class="cell" x="200" y="800" width="100" height="100" />
+<rect class="cell" x="300" y="800" width="100" height="100" />
+<text class="clue" x="440" y="890" text-anchor="middle">34</text>
+<text class="clue" x="540" y="890" text-anchor="middle">13</text>
+<text class="clue" x="595" y="850" text-anchor="end">6</text>
+<rect class="cell" x="600" y="800" width="100" height="100" />
+<rect class="cell" x="700" y="800" width="100" height="100" />
+<text class="clue" x="840" y="890" text-anchor="middle">13</text>
+<text class="clue" x="895" y="850" text-anchor="end">4</text>
+<rect class="cell" x="900" y="800" width="100" height="100" />
+<rect class="cell" x="1000" y="800" width="100" height="100" />
+<text class="clue" x="1140" y="890" text-anchor="middle">35</text>
+<rect class="cell" x="1200" y="800" width="100" height="100" />
+<rect class="cell" x="1300" y="800" width="100" height="100" />
+<text class="clue" x="295" y="950" text-anchor="end">13</text>
+<rect class="cell" x="300" y="900" width="100" height="100" />
+<rect class="cell" x="400" y="900" width="100" height="100" />
+<rect class="cell" x="500" y="900" width="100" height="100" />
+<text class="clue" x="640" y="990" text-anchor="middle">25</text>
+<text class="clue" x="695" y="950" text-anchor="end">16</text>
+<rect class="cell" x="700" y="900" width="100" height="100" />
+<rect class="cell" x="800" y="900" width="100" height="100" />
+<text class="clue" x="940" y="990" text-anchor="middle">16</text>
+<text class="clue" x="995" y="950" text-anchor="end">27</text>
+<rect class="cell" x="1000" y="900" width="100" height="100" />
+<rect class="cell" x="1100" y="900" width="100" height="100" />
+<rect class="cell" x="1200" y="900" width="100" height="100" />
+<rect class="cell" x="1300" y="900" width="100" height="100" />
+<text class="clue" x="240" y="1090" text-anchor="middle">10</text>
+<text class="clue" x="295" y="1050" text-anchor="end">36</text>
+<rect class="cell" x="300" y="1000" width="100" height="100" />
+<rect class="cell" x="400" y="1000" width="100" height="100" />
+<rect class="cell" x="500" y="1000" width="100" height="100" />
+<rect class="cell" x="600" y="1000" width="100" height="100" />
+<rect class="cell" x="700" y="1000" width="100" height="100" />
+<rect class="cell" x="800" y="1000" width="100" height="100" />
+<rect class="cell" x="900" y="1000" width="100" height="100" />
+<text class="clue" x="1095" y="1050" text-anchor="end">11</text>
+<rect class="cell" x="1100" y="1000" width="100" height="100" />
+<rect class="cell" x="1200" y="1000" width="100" height="100" />
+<text class="clue" x="1340" y="1090" text-anchor="middle">12</text>
+<text class="clue" x="140" y="1190" text-anchor="middle">6</text>
+<text class="clue" x="195" y="1150" text-anchor="end">16</text>
+<rect class="cell" x="200" y="1100" width="100" height="100" />
+<rect class="cell" x="300" y="1100" width="100" height="100" />
+<rect class="cell" x="400" y="1100" width="100" height="100" />
+<rect class="cell" x="500" y="1100" width="100" height="100" />
+<rect class="cell" x="600" y="1100" width="100" height="100" />
+<text class="clue" x="740" y="1190" text-anchor="middle">9</text>
+<text class="clue" x="795" y="1150" text-anchor="end">11</text>
+<rect class="cell" x="800" y="1100" width="100" height="100" />
+<rect class="cell" x="900" y="1100" width="100" height="100" />
+<text class="clue" x="1040" y="1190" text-anchor="middle">13</text>
+<text class="clue" x="1095" y="1150" text-anchor="end">10</text>
+<rect class="cell" x="1100" y="1100" width="100" height="100" />
+<rect class="cell" x="1200" y="1100" width="100" height="100" />
+<rect class="cell" x="1300" y="1100" width="100" height="100" />
+<text class="clue" x="95" y="1250" text-anchor="end">29</text>
+<rect class="cell" x="100" y="1200" width="100" height="100" />
+<rect class="cell" x="200" y="1200" width="100" height="100" />
+<rect class="cell" x="300" y="1200" width="100" height="100" />
+<rect class="cell" x="400" y="1200" width="100" height="100" />
+<text class="clue" x="595" y="1250" text-anchor="end">16</text>
+<rect class="cell" x="600" y="1200" width="100" height="100" />
+<rect class="cell" x="700" y="1200" width="100" height="100" />
+<text class="clue" x="895" y="1250" text-anchor="end">26</text>
+<rect class="cell" x="900" y="1200" width="100" height="100" />
+<rect class="cell" x="1000" y="1200" width="100" height="100" />
+<rect class="cell" x="1100" y="1200" width="100" height="100" />
+<rect class="cell" x="1200" y="1200" width="100" height="100" />
+<rect class="cell" x="1300" y="1200" width="100" height="100" />
+<text class="clue" x="95" y="1350" text-anchor="end">10</text>
+<rect class="cell" x="100" y="1300" width="100" height="100" />
+<rect class="cell" x="200" y="1300" width="100" height="100" />
+<rect class="cell" x="300" y="1300" width="100" height="100" />
+<rect class="cell" x="400" y="1300" width="100" height="100" />
+<text class="clue" x="595" y="1350" text-anchor="end">10</text>
+<rect class="cell" x="600" y="1300" width="100" height="100" />
+<rect class="cell" x="700" y="1300" width="100" height="100" />
+<text class="clue" x="895" y="1350" text-anchor="end">28</text>
+<rect class="cell" x="900" y="1300" width="100" height="100" />
+<rect class="cell" x="1000" y="1300" width="100" height="100" />
+<rect class="cell" x="1100" y="1300" width="100" height="100" />
+<rect class="cell" x="1200" y="1300" width="100" height="100" />
+</svg>
