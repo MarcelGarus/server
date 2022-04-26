@@ -18,7 +18,14 @@ That allows it to monitor RAM and CPU usage, but other resources are not support
 ## Getting the energy consumption
 
 Unfortunately, there is no established unified way of getting information about energy consumption from the kernel.
-Inspired by [pinpoint](https://github.com/osmhpi/pinpoint), an energy measurement tool developed at the [*Operating Systems and Middleware* chair](https://osm.hpi.de) at my university, I implemented getting data from several sources:
+I implemented getting data from several sources
+The [*Operating Systems and Middleware* chair](https://osm.hpi.de) at my university developed an 
+
+Inspired by [pinpoint](https://github.com/osmhpi/pinpoint), an energy measurement tool developed at the [*Operating Systems and Middleware* chair](https://osm.hpi.de) of my university, I implemented getting data from several sources.
+I'd also like to give a shoutout to [Sven Köhler](https://twitter.com/tzwenn), who not only developed this tool, but also looked after me and my project specifically.
+He was a big help in getting started with measuring energy and had deep knowledge about how energy is measured internally and what factors might influence measurements.
+
+These are the measurement sources I integrated into the tool:
 
 ### Running Average Power Limit
 
