@@ -1,80 +1,171 @@
+topics = [ "programming language design" ]
+
+--start--
+
 # Mehl: A Syntax Experiment
 
-As an experiment, I decided to create my own programming language called **Mehl**.
-Here's an example Mehl program:
+Roughly speaking, there are two ways to describe data transformations:
 
-```mehl
-(1, 2, 3) List.toIterable (., Int.Number) Iterable.sum
+* **top-down:** you first start with a high-level overview of the dataflow
+* **bottom-up:** you describe what exactly you do with data and build up abstractions as you go along
+
+Most programming languages enable both styles of representing data transformations.
+On a small scale, those styles usually happen in the form of *function calls* or *method calls,* respectively.
+For example, here's a prototypical program that sums a list and then calculates the sinus of the result:
+
+```rust
+sin(list.sum)
 ```
 
-```mehl
-(1, 2, 3) List[Int].sum
-```
-
-```mehl
-(1, 2, 3) print
-```
-
-In this article, I'll describe the design of the language in more detail – why the language is the way it is.
-
---snip--
-
-## Bottom-up syntax is useful
-
-Let's take a look at this small lisp program:
+Some function calls are written in a top-down `rust:f(x)` fashion, others in a bottom-up `rust:x.f` style.
+A few languages, such as Nim, even support a [Uniform Function Call Syntax](https://en.wikipedia.org/wiki/Uniform_Function_Call_Syntax), so that you can use both styles equivalently.
+Other languages, such as Lisp, enforce one style over the other:
 
 ```lisp
-(filter (lambda (x) (x > 3))
-        (map (lambda (x) (* x 2))
-             '(1 2 3)))
+(sin (sum list))
 ```
 
-To be honest, I really don't like this syntax.
-Why? Because it's completely top-down – you do a `lisp:filter` of a `lisp:map` of a list.
-Intuitively, most people will think about this piece of code in a bottom-up fashion:
-We take a list of numbers, *then* map that list and *then* filter it – and the syntax doesn't reflect that at all.
+Interestingly, almost no language enforces a bottom-up style.
+A notable exception is shell scripting, where it's common to use the pipe operator `|` to pipe data from one program into the next:
 
-What would a programming language with a bottom-up syntax look like?
+```bash
+ls | grep foo
+```
+
+This resembles how I intuitively think about source code with lots of data manipulation.
+For me, the description "sum the list, then take the sinus of that" feels less complicated than "take the sinus of the sum of the list."
+Especially for longer function chains, the bottom-up approach allows you to mentally simulate the data flowing through the program as you read the code, while the top-down approach results in a mental stack overflow.
+
+So, what would a programming language look like that enforces a bottom-up style?
 
 --snip--
 
-Instead of processing values by wrapping them, we should *chain functions together*.
-Turns out, lots of languages do already work like this.
-For example, Java code looks like this: `java:something.foo().bar()`.
-Shell scripts using pipes also have a similar syntax: `ps aux | grep foo`
-Heck, even some functional languages like F# have a custom operator that chains functions together sequentially instead of wrapping them.
-
-If we turn this concept up to eleven and **only allow bottom-up syntax**, we don't even need arguments behind the function name.
-If a function takes multiple arguments, you could just pass it a tuple:
+To find that out, a few months ago, I decided to create a tiny programming language called [Mehl](https://github.com/MarcelGarus/mehl).
+Here's what the code from above looks like in Mehl:
 
 ```mehl
-# Multiple 2 and 3, then double them
-(2 3) * double
+list sum sin
 ```
 
-Function signatures become very easy: They take *one input* and produce *one output* – pretty elegant.
+Mehl only has some built-in types of values:
 
+```mehl
+42              # integer
+"Hello!"        # string
+:foo            # symbol
+(2, 3)          # tuple
+{:a, :b}        # map
+["Hey!" print]  # code
+```
 
+To be honest, maybe I went a little too far with the bottom-up syntax.
+For example, to declare a variable, you first create the value and then assign it to a name using `=>`:
 
-Note that each function simply takes one arguments as the input and emits another one as the output.
+```mehl
+4 => foo
+```
 
+## Functions
+
+Functions in most programming languages can take multiple inputs but have to produce exactly one output (and even if the function doesn't produce anything, it has a unit output like `dart:void`).
+In Mehl, every function consumes exactly one input and produces exactly one output.
+Functions that don't need an argument just ignore what's given, and functions that have nothing to produce can instead create the empty symbol `mehl::`.
+
+![invert:Function with one input and one output represented as a box.](files/function-with-one-input-one-output.webp)
+
+Defining a function is similar to defining a variable – you just use `->` instead of `=>`:
+
+```mehl
+["Hi" print] -> greet
+greet
+```
+
+As a consequence of the one-argument policy, you don't need to specify arguments to code blocks.
+Instead, functions can directly start working with the input:
+
+```mehl
+[print] -> myPrint
+"Hi" myPrint
+```
+
+You can also access the output of the previous expression using a dot (`.`):
+
+```mehl
+[(., .) *] -> square
+3 square print
+```
+
+Running `square` (or any other function) on some value is equivalent to inserting its source code at that place.
+Here's how the execution of `3 square print` proceeds:
+
+```mehl
+3 square print
+3 (., .) * print
+(3, 3) * print
+9 print
+#> prints 9
+:
+```
+
+I do admit that this simplicity also comes with downsides.
+In particular, passing multiple arguments to a function is quite cumbersome.
+You effectively have to make those functions take a tuple containing the arguments:
+
+```mehl
+(1, 2, 3)
+  (., [square])
+  map
+```
+
+## Whitespace
+
+One aspect I was positively surprised by is that you don't need to worry about indentation *or* semicolons.
+Mehl doesn't even need to cleverly try to distinguish statements – it just executes all code in sequence.
+Take this code:
+
+```mehl
+"Hello, world!" print
+(2, 3) * print
+```
+
+For the execution, we don't care about whitespace:
+
+```mehl
+"Hello, world!" print (2, 3) * print
+#> prints "Hello, world"
+: (2, 3) * print
+(2, 3) * print
+6 print
+#> prints 6
+:
+```
+
+Primitive literals like `(2, 3)` just "overwrite" the existing value.
+You can treat them just like functions that ignore the input and produce a new value.
+
+## My Takeaway
+
+Assembling everything from bottom-up building blocks sounds like a good idea at first, but there are definitely cases where it is *not* the most intuitive approach.
+For example, reading a long function without knowing its name until the end is challenging – most of the time, you don't even know what the goal of the code that you're reading even is.
+
+Another example is declarative UI programming, where it makes sense to first describe the rough structure and only then specifics of the UI.
+A bottom-up approach essentially inverts the nested parts of the UI:
 
 ```mehl
 {
-  :name, :int.+,
-  :in, int? list?,
-  :out, int?,
-  :doc, "This does something",
-  :mayPanic, :true,
-  :alwaysPanics, :true,
-  :code, [do stuff],
-} fun
+  :body, (
+    ("Hello, world!", :bold) text center (., 8) padding
+    ("Count", ["Pressed" print]) button
+  ) column,
+} app
+```
 
-(:int.+, int? list?, int?, "Adds numbers.", [:add-ints magic-primitive]) fun
+My main lesson from this is that some things are better described in a top-down fashion.
 
-3 seconds wait
+Still, most day-to-day data manipulations are straightforward to read.
+While Mehl is very bare-bones and I only implemented a few math operations, printing, and reading from user input, there is also potential for code that can be read naturally:
 
-"Hello, world!" print
-
-42 double prime?
+```
+300 milli seconds wait
+[read eval print] loop
 ```
