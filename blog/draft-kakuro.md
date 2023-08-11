@@ -3,7 +3,7 @@ description = "Have you ever wondered what would happen if crosswords and Sudoku
 
 --start--
 
-# Solving X Kakuro cells per second
+# Solving Kakuros
 
 Have you ever wondered what would happen if crosswords and Sudokus had a baby?
 I know I haven't, but on a vacation in Lisbon, a Sudoku book in our flat introduced me to the concept of Kakuros:
@@ -16,7 +16,7 @@ Like crosswords, the layout is all over the place and you have clues. In this pu
 To get an intuition about how to approach a Kakuro, here's a tiny one:
 
 <style>
-.kakuro { 
+.kakuro {
     background: var(--yellow);
     text-align: center;
     padding-bottom: 0;
@@ -338,7 +338,7 @@ In the current implementation, all recursive calls act on the same memory region
 Compared to the naive solver, this is *fast!*
 It even solves the Wikipedia Kakuro in about 5 seconds.
 It has no chance against the Kakuro from the book though – no solution after half an hour.
-To get a more comprehensive comparison betwen the solvers, I also measured the runtime for solving some Kakuros from [kakuros.com,](https://www.kakuros.com) their sizes ranging from 15x15 to 30x30.
+To get a more comprehensive comparison betwen the solvers, I also measured the runtime for solving some Kakuros from [kakuros.com,](https://www.kakuros.com) their sizes ranging from 15&times;15 to 30&times;30.
 Here are the results:
 
 TODO: Peformance Table
@@ -373,36 +373,34 @@ Let's modify the `rust:is_possible_solution` function so that it doesn't skip th
 Rather, ensure that there exists a constraint-fulfilling combination of digits for the other cells:
 
 ```rust
-impl Input {
-    fn is_possible_solution(&self, attempt: &Game) -> bool {
-        for constraint in self.constraints.iter() {
-            let cells = constraint.cells.iter().map(|i| attempt[*i]).collect_vec();
-            let digits = cells.into_iter().filter_map(|it| it).collect_vec();
-            let unique_digits = digits.clone().into_iter().collect::<HashSet<_>>();
+fn is_possible_solution(&self, attempt: &Game) -> bool {
+    for constraint in self.constraints.iter() {
+        let cells = constraint.cells.iter().map(|i| attempt[*i]).collect_vec();
+        let digits = cells.into_iter().filter_map(|it| it).collect_vec();
+        let unique_digits = digits.clone().into_iter().collect::<HashSet<_>>();
 
-            if unique_digits.len() < digits.len() {
-                return false; // A digit appears twice.
-            }
-            if digits.is_empty() {
-                continue; // No cells filled out yet; we assume the constraint is satisfiable.
-            }
-
-            let sum: Value = digits.iter().sum();
-            let unused_digits: HashSet<Value> = HashSet::from_iter(1..=9)
-                .difference(&unique_digits)
-                .map(|digit| *digit)
-                .collect();
-            let is_sum_reachable = unused_digits
-                .into_iter()
-                .combinations(constraint.cells.len() - digits.len())
-                .map(|additional_digits| sum + additional_digits.into_iter().sum::<Value>())
-                .any(|possible_sum| possible_sum == constraint.sum);
-            if !is_sum_reachable {
-                return false;
-            }
+        if unique_digits.len() < digits.len() {
+            return false; // A digit appears twice.
         }
-        return true;
+        if digits.is_empty() {
+            continue; // No cells filled out yet; we assume the constraint is satisfiable.
+        }
+
+        let sum: Value = digits.iter().sum();
+        let unused_digits: HashSet<Value> = HashSet::from_iter(1..=9)
+            .difference(&unique_digits)
+            .map(|digit| *digit)
+            .collect();
+        let is_sum_reachable = unused_digits
+            .into_iter()
+            .combinations(constraint.cells.len() - digits.len())
+            .map(|additional_digits| sum + additional_digits.into_iter().sum::<Value>())
+            .any(|possible_sum| possible_sum == constraint.sum);
+        if !is_sum_reachable {
+            return false;
+        }
     }
+    return true;
 }
 ```
 
@@ -413,50 +411,273 @@ TODO: Performance Table
 
 ## Which cell to try next?
 
+Another way in which the solver's strategy differs from how humans solve Kakuros is that it fills the cells out line by line in the order that they were given.
+That's not always the best approach.
+For example, in the following Kakuro, it wouldn't make sense to fill it out from top to bottom:
 
+<div class="kakuro card">
+<svg class="board" viewBox="50 50 400 400" xmlns="http://www.w3.org/2000/svg" style="max-height: 12em;">
+<text class="clue" x="140" y="90" text-anchor="middle">14</text>
+<text class="clue" x="340" y="90" text-anchor="middle">23</text>
+<rect class="cell" x="100" y="100" width="100" height="100" />
+<rect class="cell" x="300" y="100" width="100" height="100" />
+<text class="clue" x="95" y="250" text-anchor="end">2</text>
+<rect class="cell" x="100" y="200" width="100" height="100" />
+<text class="clue" x="240" y="290" text-anchor="middle">8</text>
+<text class="clue" x="295" y="250" text-anchor="end">8</text>
+<rect class="cell" x="300" y="200" width="100" height="100" />
+<text class="clue" x="95" y="350" text-anchor="end">24</text>
+<rect class="cell" x="100" y="300" width="100" height="100" />
+<rect class="cell" x="200" y="300" width="100" height="100" />
+<rect class="cell" x="300" y="300" width="100" height="100" />
+</svg>
+</div>
 
-actually slower on bigger Kakuros
+Rather, after filling out a cell, you'd continue filling out neighboring cells.
 
-## No set
+We can model this in code by preferring to fill out cells that are near filled out cells.
+The more partially-filled constraints contain a certain cell, the more likely we are to fill that cell:
 
+```rust
+// For each cell, save how many partially-filled constraints contain it.
+let mut cell_priorities = vec![0; input.num_cells];
+for constraint in &input.constraints {
+    let is_partially_filled = constraint
+        .cells
+        .iter()
+        .any(|index| attempt[*index].is_some());
+    if is_partially_filled {
+        for i in &constraint.cells {
+            if attempt[*i].is_none() {
+                cell_priorities[*i] += 1;
+            }
+        }
+    }
+}
 
+let cell_to_fill = cell_priorities
+    .into_iter()
+    .enumerate()
+    .max_by_key(|(_, priority)| *priority)
+    .and_then(|(cell, priority)| {
+        if priority > 0 {
+            // The cell is guaranteed to be empty because only the priority
+            // of empty cells can be non-zero.
+            Some(cell)
+        } else {
+            // No constraint contains a digit _and_ an empty cell. Just fill
+            // the first empty cell.,
+            attempt.iter().position(|it| it.is_none())
+        }
+    });
 
-we could do some more profiling to see what else to optimize, but I have an idea for an even bigger, algorithmic improvement
+if let Some(cell) = cell_to_fill {
+    for i in 1..=9 {
+        attempt[cell] = Some(i);
+        solve_rec(input, attempt, solutions);
+    }
+    attempt[cell] = None;
+} else {
+    // This is a solution.
+    solutions.push(attempt.iter().map(|it| it.unwrap()).collect());
+}
+```
 
-## Divide and Conquer
+Let's see how we do in benchmarks:
 
-Efficient MinCut for n-ary graphs? -> contact me
+TODO: Performance Table
 
-## Connecting cells
+Huh.
+While the approach sounds promising at first, it's actually a lot slower on bigger Kakuros.
+And that's totally reasonable – if you have a giant Kakuro, looking at all cells to find the best possible one to fill out next is somewhat overkill.
+There's a tradeoff: All the time you spend on deciding which cell to fill out is time you could have spent *actually* filling out cells and trimming down the solution space.
 
-group by connecting cells
+Doing expensive calculations just to decide where to investigate further turned out to not be a great deal in practice.
+And that's okay.
+That's why we measure the performance in the first place.
+For now, I'll continue with the straightforward approach of filling cells out in the order they were given.
 
-## Lazy
+## Checking uniqueness more efficiently
 
-don't actually construct results until needed
+Because the previous optimization did not work out, let's see where the program actually spends most of its time.
+Using `bash:cargo flamegraph`, we can get a chart that shows us how much time is spent in which part of the program.
+It looks like inside the `rust:solve_rec` function, most of the time (apart from going to the next recursion step) is spent in `rust:is_possible_solution`.
+In particular, constructing a `rust:HashSet` for checking the uniqueness of numbers is slow:
 
-`group_by`, you sly little function!
+<style>
+.flamegraph-card {
+    background:var(--green);
+}
+.flamegraph {
+    width: 100%;
+    height: 40rem;
+    border: none;
+}
+</style>
+<div class="flamegraph-card card">
+<iframe class="flamegraph" src="files/kakuro-sum-reachable-flamegraph.svg"></iframe>
+</div>
 
-## Propagating constraints
+Most of my programming experience is with high-level languages and high-level applications, where making your intent clear is the utmost concern and where performance is usually not a problem.
+If you're coming from a systems programming background, you probably already cringed when I introduced uniqueness checking before:
 
-tell the recursion parts of the connecting constraints
+```rust
+let unique_digits = digits.clone().into_iter().collect::<HashSet<_>>();
 
-## Profiling
+if unique_digits.len() < digits.len() {
+    return false; // A digit appears twice.
+}
+
+let sum: Value = digits.iter().sum();
+let unused_digits: HashSet<Value> = HashSet::from_iter(1..=9)
+    .difference(&unique_digits)
+    .map(|digit| *digit)
+    .collect();
+...
+```
+
+While this is nice to read and easy to understand (if you're familiar with sets), it's also a performance sink.
+
+Complexity-wise, `rust:HashSet`s are a good choice, but they pay for that with a *huge* constant factor:
+Every item is hashed into an 8-byte number, and then assigned to a bucket in an array that needs to be maintained.
+When adding an item, several edge cases need to be caught, like hash collisions or growing the bucket array.
+This might make sense if you store many items, but for *nine digits at most,* a `rust:HashSet` is a huge beast you're unleashing on your code.
+It's like using a printer to write your shopping list – sure, it works, but unless you need to buy hundreds of ingredients for a complicated recipe, writing it down by hand is faster. Especially if you only have nine items.
+
+So let's get rid of the `rust:HashSet`s (yes, plural) and replace them with custom code that changes an array of booleans depending on what digits exist:
+
+```rust
+let mut seen = [false; 9];
+for digit in &digits {
+    if seen[(digit - 1) as usize] {
+        return false; // A digit appears twice.
+    } else {
+        seen[(digit - 1) as usize] = true;
+    }
+}
+
+let sum: Value = digits.iter().sum();
+let unused_digits = (1..=9u8).filter(|digit| !seen[(digit - 1) as usize]).collect_vec();
+...
+```
+
+Let's see how that affects performance:
+
+TODO: Performance Table
+
+## Only check changes
+
+TODO: Describe stuff
+
+TODO: Performance Table
+
+<style>
+table {
+  text-align: right;
+  font-family: var(--character-font), sans-serif;
+  font-weight: bold;
+}
+th { padding: 0 1em; }
+td { padding: 0 1em; }
+
+.us { color: var(--turquoise); }
+.ms { color: var(--green); }
+.s { color: var(--orange); }
+.bad { color: var(--pink); }
+</style>
+<table>
+  <tr>
+    <th></th>
+    <th>small</th>
+    <th>wikipedia</th>
+    <th>15&times;15</th>
+    <th>20&times;20</th>
+    <th>30&times;30</th>
+    <th>book</th>
+  </tr>
+  <tr>
+    <td><b>naive</b></td>
+    <td class="s">2.70&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>gradual</b></td>
+    <td class="ms">  1.15&nbsp;ms</td>
+    <td class="ms">831.44&nbsp;ms</td>
+    <td class="s"> 101.93&nbsp;s</td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
+  </tr>
+  <tr>
+    <td><b>sum&nbsp;reachable</b></td>
+    <td class="ms">  1.86&nbsp;ms</td>
+    <td class="ms"> 31.95&nbsp;ms</td>
+    <td class="ms">113.88&nbsp;ms</td>
+    <td class="s">   1.24&nbsp;s</td>
+    <td class="s">  72.74&nbsp;s</td>
+    <td class="s"> 108.57&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>prioritize</b></td>
+    <td class="ms">  1.02&nbsp;ms</td>
+    <td class="ms">324.32&nbsp;ms</td>
+    <td class="ms">390.11&nbsp;ms</td>
+    <td class="s"> 310.38&nbsp;s</td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
+  </tr>
+  <tr>
+    <td><b>no&nbsp;set</b></td>
+    <td class="us">354.99&nbsp;us</td>
+    <td class="ms">  5.41&nbsp;ms</td>
+    <td class="ms"> 21.25&nbsp;ms</td>
+    <td class="ms">216.69&nbsp;ms</td>
+    <td class="s">  14.83&nbsp;s</td>
+    <td class="s">  21.49&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>only&nbsp;changes</b></td>
+    <td class="us">175.38&nbsp;us</td>
+    <td class="us">833.89&nbsp;us</td>
+    <td class="ms">  2.35&nbsp;ms</td>
+    <td class="ms"> 10.72&nbsp;ms</td>
+    <td class="ms">639.44&nbsp;ms</td>
+    <td class="s">   1.61&nbsp;s</td>
+  </tr>
+</table>
+
+Nice! Some solid improvement.
 
 ## Conclusion
 
-Fastest in the world?
+I *could* try to optimize Kakuros even further.
+To be honest though, I feel like I scratched this itch sufficiently.
+Spending some time on a small project with clear metrics is fun, but life goes on.
+
+You're welcome to mess with my code, which is [on GitHub](https://github.com/MarcelGarus/kakuro).
+If you come up with more optimizations or better strategies, feel free to contact me.
+
+---
+
+**Edit:**
+There are some more solution attempts in the repo, but their performance is somewhat unreliable.
+The fastest one solves the Kakuro from the book in 89&nbsp;ms, but runs out of memory on the 30&times;30 Kakuro.
 
 ## Todo
 
 - inline todos
 - proof read
 - Title case
-- Sudoku capitalization
 - Grammarly
 - Code highlighting
 - tables with unit highlighting
 - units
-- times (15x15, etc.)
+- times (15&times;15, etc.)
 - fix read time for this article manually
 - link to GitHub repo at beginning and end of article
+- scale down teaser image?
