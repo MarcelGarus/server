@@ -30,7 +30,6 @@ It exports a function `inc`, which increases the given integer by one:
 inc a :=
   needs (int.is a)
   add a 1
-
 ```
 
 ## Concrete Syntax Tree (CST)
@@ -504,6 +503,8 @@ In the future, we probably need some better heuristics here; when done correctly
 
 ### Applying it
 
+This is the MIR with optimizations applied (note there's still lots of optimization potential):
+
 ```
 $1 = Builtins::equals:6
 $2 = Builtins::intAdd:18
@@ -578,6 +579,179 @@ $65 = [$15: $55]
 
 ## Low-Level Intermediate Representation
 
-- MIR
-- LIR
-- Byte Code
+While the MIR is already quite low-level, it still contains nested functions.
+Nested functions are necessary because they can *close over* (or *capture*) values from the outer scope.
+For example, check out the following function:
+
+```candy
+foo a = { b -> int.add a b }
+```
+
+Here, `foo 4` returns a function that always adds `4` to its argument.
+Thus, the `a` needs to continue existing even after `foo` returns.
+
+In the next compiler stage, those **captured variables** are explicitly tracked.
+That also enables un-nesting functions.
+
+Technically, functions also capture all used other functions.
+To make that easier, the next IR also tracks which values are constants – they don't need to be explicitly captured.
+
+This is the complete LIR for our file:
+
+```
+# Constants
+%0 = Builtins::equals:6
+...
+%9 = builtinEquals
+...
+%13 = False
+...
+%19 = 1
+%20 = "The `condition` must be either `True` or `False`."
+%21 = "The `reason` must be a text."
+%22 = "`a | typeIs Int` was not satisfied"
+%23 = "`int.is a` was not satisfied"
+%24 = { body_0 }
+%25 = { body_1 }
+%26 = { body_6 }
+%27 = { body_7 }
+%28 = [%14: %27]
+
+# Bodies
+body_0 (responsible $0) =
+  # Captured IDs: none
+  $1 = %18
+body_1 (responsible $0) =
+  # Captured IDs: none
+  $1 = %16
+body_2 (responsible $1) =
+  # Captured IDs: $0
+  $2 = %9
+  $3 = dup $0
+  $4 = %13
+  $5 = %8
+  $6 = call $2 with $0 $4 ($5 is responsible)
+  $7 = drop $0
+  $8 = $6
+body_3 (responsible $1) =
+  # Captured IDs: $0
+  $2 = %20
+  $3 = dup $0
+  $4 = panicking because $2 ($0 is at fault)
+  $5 = drop $0
+  $6 = $4
+body_4 (responsible $1) =
+  # Captured IDs: $0
+  $2 = %21
+  $3 = dup $0
+  $4 = panicking because $2 ($0 is at fault)
+  $5 = drop $0
+  $6 = $4
+body_5 (responsible $2) =
+  # Captured IDs: $0, $1
+  $3 = dup $0
+  $4 = dup $1
+  $5 = panicking because $0 ($1 is at fault)
+  $6 = drop $1
+  $7 = drop $0
+  $8 = $5
+body_6 $0 $1 $2 (+ responsible $3) =
+  # Captured IDs: none
+  $4 = %9
+  $5 = dup $0
+  $6 = %18
+  $7 = %8
+  $8 = call $4 with $0 $6 ($7 is responsible)
+  $9 = { body_2 capturing $0 }
+  $10 = %10
+  $11 = dup $8
+  $12 = %24
+  $13 = dup $9
+  $14 = call $10 with $8 $12 $9 ($7 is responsible)
+  $15 = { body_3 capturing $3 }
+  $16 = dup $14
+  $17 = %25
+  $18 = dup $15
+  $19 = call $10 with $14 $17 $15 ($7 is responsible)
+  $20 = %12
+  $21 = dup $1
+  $22 = call $20 with $1 ($3 is responsible)
+  $23 = dup $22
+  $24 = %17
+  $25 = call $4 with $22 $24 ($3 is responsible)
+  $26 = { body_4 capturing $3 }
+  $27 = dup $25
+  $28 = dup $26
+  $29 = call $10 with $25 $17 $26 ($7 is responsible)
+  $30 = { body_5 capturing $1, $2 }
+  $31 = dup $0
+  $32 = dup $30
+  $33 = call $10 with $0 $17 $30 ($7 is responsible)
+  $34 = drop $30
+  $35 = drop $29
+  $36 = drop $26
+  $37 = drop $25
+  $38 = drop $22
+  $39 = drop $19
+  $40 = drop $15
+  $41 = drop $14
+  $42 = drop $9
+  $43 = drop $8
+  $44 = drop $2
+  $45 = drop $1
+  $46 = drop $0
+  $47 = $33
+body_7 $0 (+ responsible $1) =
+  # Captured IDs: none
+  $2 = %12
+  $3 = dup $0
+  $4 = %5
+  $5 = call $2 with $0 ($4 is responsible)
+  $6 = %9
+  $7 = dup $5
+  $8 = %15
+  $9 = %0
+  $10 = call $6 with $5 $8 ($9 is responsible)
+  $11 = %26
+  $12 = dup $10
+  $13 = %23
+  $14 = %6
+  $15 = call $11 with $10 $13 $1 ($14 is responsible)
+  $16 = dup $0
+  $17 = %3
+  $18 = call $2 with $0 ($17 is responsible)
+  $19 = dup $18
+  $20 = %4
+  $21 = call $6 with $18 $8 ($20 is responsible)
+  $22 = dup $21
+  $23 = %22
+  $24 = %7
+  $25 = %2
+  $26 = call $11 with $21 $23 $24 ($25 is responsible)
+  $27 = %11
+  $28 = dup $0
+  $29 = %19
+  $30 = %1
+  $31 = call $27 with $0 $29 ($30 is responsible)
+  $32 = drop $26
+  $33 = drop $21
+  $34 = drop $18
+  $35 = drop $15
+  $36 = drop $10
+  $37 = drop $5
+  $38 = drop $0
+  $39 = $31
+body_8 (responsible $0) =
+  # Captured IDs: none
+  $1 = %28
+```
+
+Candy uses reference counting for garbage collection.
+The operations for increasing and decreasing the reference cout of objects also also explicit in the LIR as `dup` and `drop`.
+
+TODO: Update once we have optimizations
+
+## Byte Code
+
+TODO: Write
+
