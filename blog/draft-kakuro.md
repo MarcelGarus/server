@@ -1,11 +1,11 @@
 topics = []
-description = "Have you ever wondered what would happen if crosswords and Sudokus had a baby? I know I haven't, but on a vacation in Lisbon, a Sudoku book in our flat introduced me to the concept of Kakuros."
+description = "Have you ever wondered what would happen if Crosswords and Sudokus had a baby? I know I haven't, but on a vacation in Lisbon, a Sudoku book in our flat introduced me to the concept of Kakuros."
 
 --start--
 
 # Solving Kakuros
 
-Have you ever wondered what would happen if crosswords and Sudokus had a baby?
+Have you ever wondered what would happen if Crosswords and Sudokus had a baby?
 I know I haven't, but on a vacation in Lisbon, a Sudoku book in our flat introduced me to the concept of Kakuros:
 
 ![Photo of a page of Kakuros of a Sudoku book on a couch in a flat in Lisbon](files/kakuro.webp)
@@ -78,7 +78,7 @@ And that's it:
 
 Tadaa! You just solved your first Kakuro.
 
-Well… to be totally honest, I'm not even sure this is a valid Kakuro.
+Well… to be honest, I'm not even sure this is a valid Kakuro.
 All Kakuros I saw have a clue for *every* row and column.
 For example, here's the first Kakuro from the book, which took us two days to solve:
 
@@ -86,9 +86,9 @@ For example, here's the first Kakuro from the book, which took us two days to so
 <img src="files/kakuro-from-book.svg">
 </div>
 
-Speaking of spending way to much time on something: Getting experience in profiling and optimizing code was on my todo list for some time, so I took this opportunity to [write a Kakuro solver in Rust](https://github.com/MarcelGarus/kakuro)!
+Speaking of spending way too much time on something: Getting experience in profiling and optimizing code was on my todo list for some time, so I took this opportunity to [write a Kakuro solver in Rust](https://github.com/MarcelGarus/kakuro)!
 
-## Modelling Kakuros in code
+## Modelling Kakuros in Code
 
 First, I developed a file format to store Kakuros:
 
@@ -149,7 +149,7 @@ For the purposes of solving the Kakuro, showing someone the small example from a
 </svg>
 </div>
 
-The Rust version of this pretty straightforward:
+The Rust version of this is pretty straightforward:
 
 ```rust
 struct Input {
@@ -157,7 +157,7 @@ struct Input {
     constraints: Vec<Constraint>,
 }
 struct Constraint {
-    cells: Vec<usize>, // The indizes of the cells to which this applies.
+    cells: Vec<usize>, // The indices of the cells to which this applies.
     sum: Value,
 }
 ```
@@ -179,7 +179,7 @@ impl Input {
 impl Constraint {
     pub fn is_solution(&self, solution: &Solution) -> bool {
         let digits = self.cells.iter().map(|i| solution[*i]).collect_vec();
-        let unique_digits = digits.iter().collect::<HashSet<_>>();
+        let unique_digits = digits.iter().copied().collect::<HashSet<_>>();
 
         if unique_digits.len() < digits.len() {
             false // A digit appears twice.
@@ -210,7 +210,7 @@ With that in place, let's write the first solver!
 
 To get started, we'll create a very simple solver:
 It just tries all combinations and checks if they are valid solutions.
-It starts by filling all cells with 1s, and then counts them up, treating them like a single number: For a four cell Kakuro, it first tries 1111, then 1112, 1113, etc. until it reaches 9999.
+It starts by filling all cells with 1s, and then counts them up, treating them like a single number: For a four-cell Kakuro, it first tries 1111, then 1112, 1113, etc. until it reaches 9999.
 
 ```rust
 pub fn solve(input: &Input) -> Output {
@@ -254,15 +254,15 @@ For instance, even after half an hour of running on my computer, the solver hasn
 
 We have our first goal: Solve the Wikipedia Kakuro!
 
-## Filling the cells one by one
+## Filling the Cells One by One
 
 If you reflect on how we humans solve Kakuros, it's obvious that we don't fill out all cells and then check if everything works out.
-Instead, we *gradually* fill the cells one by one, and at each step we are carefully paying attention so that the Kakuro remains valid.
+Instead, we *gradually* fill the cells one by one, and at each step, we are carefully paying attention so that the Kakuro remains valid.
 Let's do something similar in code!
 
 Now, our candidate is no longer a `rust:Vec<Value>`.
 Instead, each value is optional, resembling a cell where we either blank or filled with a digit: `rust:Vec<Option<Value>>`
-This way, we can represent partially filled out Kakuros.
+This way, we can represent partially filled-out Kakuros.
 
 Because we changed how a Kakuro is represented, we also have to adjust how we check a candidate's validity.
 Before, we checked if all constraints are met.
@@ -281,12 +281,12 @@ impl Constraint {
     fn is_possible_solution(&self, attempt: &[Option<Value>]) -> bool {
         let cells = self.cells.iter().map(|i| attempt[*i]).collect_vec();
         let digits = cells.into_iter().filter_map(|it| it).collect_vec();
-        let unique_digits = digits.iter().collect::<HashSet<_>>();
+        let unique_digits = digits.iter().copied().collect::<HashSet<_>>();
 
         if unique_digits.len() < digits.len() {
             false // A digit appears twice.
         } else if digits.len() < self.cells.len() {
-            true // Ignore partially filled out constraints.
+            true // Ignore partially filled-out constraints.
         } else {
             digits.iter().sum::<Value>() != self.sum
         }
@@ -294,7 +294,7 @@ impl Constraint {
 }
 ```
 
-We'll stick with the bruteforce approach of trying out lots of combinations, but we'll fill the cells one by one and abort as soon as the Kakuro becomes invalid.
+We'll stick with the brute force approach of trying out lots of combinations, but we'll fill the cells one by one and abort as soon as the Kakuro becomes invalid.
 We can use recursion to do that:
 
 ```rust
@@ -323,18 +323,62 @@ fn solve_rec(input: &Input, attempt: &mut Vec<Option<Value>>, solutions: &mut Ve
 }
 ```
 
-We could just as easily have given each recursive step its own copy of a game instead of making it fill the first empty cell with digits and then clean up after itselves in the end, but that would require us to copy lots and lots of data.
+We could just as easily have given each recursive step its copy of a game instead of making it fill the first empty cell with digits and then clean up after itself in the end, but that would require us to copy lots and lots of data.
 In the current implementation, all recursive calls act on the same memory region, rapidly modifying it and only copying it if a new solution was found.
 
 Compared to the naive solver, this is *fast!*
 It even solves the Wikipedia Kakuro in about 5 seconds.
-It has no chance against the Kakuro from the book though – no solution after half an hour.
-To get a more comprehensive comparison betwen the solvers, I also measured the runtime for solving some Kakuros from [kakuros.com,](https://www.kakuros.com) their sizes ranging from 15&times;15 to 30&times;30.
+To get a more comprehensive comparison between the solvers, I also attempted to solve some Kakuros from [kakuros.com](https://www.kakuros.com), their sizes ranging from 15&times;15 to 30&times;30.
+It has no chance against most of them though, and the Kakuro from the book also remains unsolved.
 Here are the results:
 
-TODO: Peformance Table
+<style>
+table {
+  text-align: right;
+  font-family: var(--character-font), sans-serif;
+  font-weight: bold;
+  margin: auto;
+}
+th { padding: 0 1em; }
+td { padding: 0 1em; }
 
-## Nine plus what is four?
+.ns { color: var(--purple); }
+.us { color: var(--turquoise); }
+.ms { color: var(--green); }
+.s { color: var(--orange); }
+.bad { color: var(--pink); }
+</style>
+<table>
+  <tr>
+    <th></th>
+    <th>four-cell</th>
+    <th>wikipedia</th>
+    <th>15&times;15</th>
+    <th>20&times;20</th>
+    <th>30&times;30</th>
+    <th>book</th>
+  </tr>
+  <tr>
+    <td><b>naive</b></td>
+    <td class="us">793.01&nbsp;μs</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>gradual</b></td>
+    <td class="us">863.55&nbsp;μs</td>
+    <td class="ms">831.44&nbsp;ms</td>
+    <td class="s"> 101.93&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+</table>
+
+## Nine Plus What Is Four?
 
 Watching the solver doing its work, it sometimes tries to continue working with attempts that we humans would immediately reject.
 For example, do you think the following attempt is valid?
@@ -354,7 +398,7 @@ For example, do you think the following attempt is valid?
 </div>
 
 Duh, obviously not!
-The sum of the center cells can never be 4, if there's a 9 in one of them.
+The sum of the center cells can never be 4 if there's a 9 in one of them.
 
 However, the solver continues looking for a digit to fit in the right cell.
 Only when it eventually succeeds by filling in a 3, does it realize that no digit in the bottom cell satisfies the last constraint.
@@ -368,7 +412,7 @@ impl Constraint {
     fn is_possible_solution(&self, attempt: &[Option<Value>]) -> bool {
         let cells = self.cells.iter().map(|i| attempt[*i]).collect_vec();
         let digits = cells.into_iter().filter_map(|it| it).collect_vec();
-        let unique_digits = digits.clone().into_iter().collect::<HashSet<_>>();
+        let unique_digits = digits.iter().copied().collect::<HashSet<_>>();
 
         if unique_digits.len() < digits.len() {
             return false; // A digit appears twice.
@@ -393,11 +437,48 @@ impl Constraint {
 ```
 
 Lo and behold!
-This change is actually enough to solve the Kakuro from the book, although it took two minutes of computation:
+This change is enough to solve the Kakuro from the book, although it took almost two minutes of computation:
 
-TODO: Performance Table
+<table>
+  <tr>
+    <th></th>
+    <th>four-cell</th>
+    <th>wikipedia</th>
+    <th>15&times;15</th>
+    <th>20&times;20</th>
+    <th>30&times;30</th>
+    <th>book</th>
+  </tr>
+  <tr>
+    <td><b>naive</b></td>
+    <td class="us">793.01&nbsp;μs</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>gradual</b></td>
+    <td class="us">863.55&nbsp;μs</td>
+    <td class="ms">831.44&nbsp;ms</td>
+    <td class="s"> 101.93&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>sum&nbsp;reachable</b></td>
+    <td class="us"> 43.12&nbsp;μs</td>
+    <td class="ms"> 31.95&nbsp;ms</td>
+    <td class="ms">113.88&nbsp;ms</td>
+    <td class="s">   1.24&nbsp;s</td>
+    <td class="s">  72.74&nbsp;s</td>
+    <td class="s"> 108.57&nbsp;s</td>
+  </tr>
+</table>
 
-## Which cell to try next?
+## Which Cell to Try Next?
 
 Another way in which the solver's strategy differs from how humans solve Kakuros is that it fills the cells out line by line in the order that they were given.
 That's not always the best approach.
@@ -473,11 +554,58 @@ if let Some(cell) = cell_to_fill {
 
 Let's see how we do in benchmarks:
 
-TODO: Performance Table
+
+<table>
+  <tr>
+    <th></th>
+    <th>four-cell</th>
+    <th>wikipedia</th>
+    <th>15&times;15</th>
+    <th>20&times;20</th>
+    <th>30&times;30</th>
+    <th>book</th>
+  </tr>
+  <tr>
+    <td><b>naive</b></td>
+    <td class="us">793.01&nbsp;μs</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>gradual</b></td>
+    <td class="us">863.55&nbsp;μs</td>
+    <td class="ms">831.44&nbsp;ms</td>
+    <td class="s"> 101.93&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>sum&nbsp;reachable</b></td>
+    <td class="us"> 43.12&nbsp;μs</td>
+    <td class="ms"> 31.95&nbsp;ms</td>
+    <td class="ms">113.88&nbsp;ms</td>
+    <td class="s">   1.24&nbsp;s</td>
+    <td class="s">  72.74&nbsp;s</td>
+    <td class="s"> 108.57&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>prioritize</b></td>
+    <td class="us"> 97.86&nbsp;μs</td>
+    <td class="ms">324.32&nbsp;ms</td>
+    <td class="ms">390.11&nbsp;ms</td>
+    <td class="s"> 310.38&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="s"> 481.85&nbsp;s</td>
+  </tr>
+</table>
 
 Huh.
-While the approach sounds promising at first, it's actually a lot slower on bigger Kakuros.
-And that's totally reasonable – if you have a giant Kakuro, looking at all cells to find the best possible one to fill out next is somewhat overkill.
+While the approach sounds promising at first, it's a lot slower on bigger Kakuros.
+And that's reasonable – if you have a giant Kakuro, looking at all cells to find the best possible one to fill out next is somewhat overkill.
 There's a tradeoff: All the time you spend on deciding which cell to fill out is time you could have spent *actually* filling out cells and trimming down the solution space.
 
 Doing expensive calculations just to decide where to investigate further turned out to not be a great deal in practice.
@@ -485,7 +613,7 @@ And that's okay.
 That's why we measure the performance in the first place.
 For now, I'll continue with the straightforward approach of filling cells out in the order they were given.
 
-## Checking uniqueness more efficiently
+## Checking Uniqueness More Efficiently
 
 Because the previous optimization did not work out, let's see where the program actually spends most of its time.
 Using `bash:cargo flamegraph`, we can get a chart that shows us how much time is spent in which part of the program.
@@ -494,7 +622,7 @@ In particular, constructing a `rust:HashSet` for checking the uniqueness of numb
 
 <style>
 .flamegraph-card {
-    background:var(--green);
+    background: #c59bff;
 }
 .flamegraph {
     width: 100%;
@@ -503,14 +631,14 @@ In particular, constructing a `rust:HashSet` for checking the uniqueness of numb
 }
 </style>
 <div class="flamegraph-card card">
-<iframe class="flamegraph" src="files/kakuro-sum-reachable-flamegraph.svg"></iframe>
+<iframe class="flamegraph" src="files/kakuro-flamegraph-sum-reachable.svg"></iframe>
 </div>
 
 Most of my programming experience is with high-level languages and high-level applications, where making your intent clear is the utmost concern and where performance is usually not a problem.
 If you're coming from a systems programming background, you probably already cringed when I introduced uniqueness checking before:
 
 ```rust
-let unique_digits = digits.clone().into_iter().collect::<HashSet<_>>();
+let unique_digits = digits.iter().copied().collect::<HashSet<_>>();
 
 if unique_digits.len() < digits.len() {
     return false; // A digit appears twice.
@@ -529,10 +657,10 @@ let unused_digits: HashSet<Value> = HashSet::from_iter(1..=9)
 While this is nice to read and easy to understand (if you're familiar with sets), it's also a performance sink.
 
 Complexity-wise, `rust:HashSet`s are a good choice, but they pay for that with a *huge* constant factor:
-Every item is hashed into an 8-byte number, and then assigned to a bucket in an array that needs to be maintained.
+Every item is hashed into an 8-byte number and then assigned to a bucket in an array that needs to be maintained.
 When adding an item, several edge cases need to be caught, like hash collisions or growing the bucket array.
 This might make sense if you store many items, but for *nine digits at most,* a `rust:HashSet` is a huge beast you're unleashing on your code.
-It's like using a printer to write your shopping list – sure, it works, but unless you need to buy hundreds of ingredients for a complicated recipe, writing it down by hand is faster. Especially if you only have nine items.
+It's like using a library indexing system to store your shopping list – sure, it works, but unless you need to buy hundreds of ingredients for a complicated recipe, writing it down by hand on a single sheet of paper is faster. Especially if you only have nine items.
 
 So let's get rid of the `rust:HashSet`s (yes, plural) and replace them with custom code that changes an array of booleans depending on what digits exist:
 
@@ -551,16 +679,71 @@ let unused_digits = (1..=9u8).filter(|digit| !seen[(digit - 1) as usize]).collec
 ...
 ```
 
-Let's see how that affects performance:
+And fair enough, replacing hash sets with this makes the solver five times faster:
 
-TODO: Performance Table
+<table>
+  <tr>
+    <th></th>
+    <th>four-cell</th>
+    <th>wikipedia</th>
+    <th>15&times;15</th>
+    <th>20&times;20</th>
+    <th>30&times;30</th>
+    <th>book</th>
+  </tr>
+  <tr>
+    <td><b>naive</b></td>
+    <td class="us">793.01&nbsp;μs</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>gradual</b></td>
+    <td class="us">863.55&nbsp;μs</td>
+    <td class="ms">831.44&nbsp;ms</td>
+    <td class="s"> 101.93&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>sum&nbsp;reachable</b></td>
+    <td class="us"> 43.12&nbsp;μs</td>
+    <td class="ms"> 31.95&nbsp;ms</td>
+    <td class="ms">113.88&nbsp;ms</td>
+    <td class="s">   1.24&nbsp;s</td>
+    <td class="s">  72.74&nbsp;s</td>
+    <td class="s"> 108.57&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>prioritize</b></td>
+    <td class="us"> 97.86&nbsp;μs</td>
+    <td class="ms">324.32&nbsp;ms</td>
+    <td class="ms">390.11&nbsp;ms</td>
+    <td class="s"> 310.38&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="s"> 481.85&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>no&nbsp;set</b></td>
+    <td class="us">  8.29&nbsp;μs</td>
+    <td class="ms">  5.41&nbsp;ms</td>
+    <td class="ms"> 21.25&nbsp;ms</td>
+    <td class="ms">216.69&nbsp;ms</td>
+    <td class="s">  14.83&nbsp;s</td>
+    <td class="s">  21.49&nbsp;s</td>
+  </tr>
+</table>
 
-## Only check changes
+## Only Check Changes
 
 Retrospectively, this is an obvious one.
 Whenever we fill in a value, we don't need to validate the entire Kakudo – only the constraints that were affected by the cell.
 
-At the beginning, we can save what constraints are affected for each cell.
+In the beginning, we can save what constraints are affected for each cell.
 Then, we only need to check the affected constraints:
 
 ```rust
@@ -601,7 +784,75 @@ fn solve_rec(
 }
 ```
 
-## Track The Index Of The First Empty Cell
+Nice! This yields an additional 14X speedup:
+
+<table>
+  <tr>
+    <th></th>
+    <th>four-cell</th>
+    <th>wikipedia</th>
+    <th>15&times;15</th>
+    <th>20&times;20</th>
+    <th>30&times;30</th>
+    <th>book</th>
+  </tr>
+  <tr>
+    <td><b>naive</b></td>
+    <td class="us">793.01&nbsp;μs</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>gradual</b></td>
+    <td class="us">863.55&nbsp;μs</td>
+    <td class="ms">831.44&nbsp;ms</td>
+    <td class="s"> 101.93&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>sum&nbsp;reachable</b></td>
+    <td class="us"> 43.12&nbsp;μs</td>
+    <td class="ms"> 31.95&nbsp;ms</td>
+    <td class="ms">113.88&nbsp;ms</td>
+    <td class="s">   1.24&nbsp;s</td>
+    <td class="s">  72.74&nbsp;s</td>
+    <td class="s"> 108.57&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>prioritize</b></td>
+    <td class="us"> 97.86&nbsp;μs</td>
+    <td class="ms">324.32&nbsp;ms</td>
+    <td class="ms">390.11&nbsp;ms</td>
+    <td class="s"> 310.38&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="s"> 481.85&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>no&nbsp;set</b></td>
+    <td class="us">  8.29&nbsp;μs</td>
+    <td class="ms">  5.41&nbsp;ms</td>
+    <td class="ms"> 21.25&nbsp;ms</td>
+    <td class="ms">216.69&nbsp;ms</td>
+    <td class="s">  14.83&nbsp;s</td>
+    <td class="s">  21.49&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>only&nbsp;changes</b></td>
+    <td class="us">  4.84&nbsp;μs</td>
+    <td class="us">740.98&nbsp;μs</td>
+    <td class="ms">  2.05&nbsp;ms</td>
+    <td class="ms">  9.68&nbsp;ms</td>
+    <td class="ms">569.47&nbsp;ms</td>
+    <td class="s">   1.48&nbsp;s</td>
+  </tr>
+</table>
+
+## Track the Index of the First Empty Cell
 
 In each recursion step, we search for the first empty cell:
 
@@ -609,7 +860,7 @@ In each recursion step, we search for the first empty cell:
 let first_empty_cell_index = attempt.iter().position(|it| it.is_none());
 ```
 
-Because we fill out all the cells in their order anyways, we can pass the index of the first empty cell to the recursion function.
+Because we fill out all the cells in their order anyways, we can pass the index of the first empty cell to the recursion function directly, no calculation needed:
 
 ```rust
 fn solve_rec(
@@ -637,24 +888,12 @@ fn solve_rec(
 }
 ```
 
-<style>
-table {
-  text-align: right;
-  font-family: var(--character-font), sans-serif;
-  font-weight: bold;
-}
-th { padding: 0 1em; }
-td { padding: 0 1em; }
+This has an insignificant effect on the runtime though:
 
-.us { color: var(--turquoise); }
-.ms { color: var(--green); }
-.s { color: var(--orange); }
-.bad { color: var(--pink); }
-</style>
 <table>
   <tr>
     <th></th>
-    <th>small</th>
+    <th>four-cell</th>
     <th>wikipedia</th>
     <th>15&times;15</th>
     <th>20&times;20</th>
@@ -663,7 +902,7 @@ td { padding: 0 1em; }
   </tr>
   <tr>
     <td><b>naive</b></td>
-    <td class="s">2.70&nbsp;s</td>
+    <td class="us">793.01&nbsp;μs</td>
     <td class="bad">&gt;&nbsp;1&nbsp;h</td>
     <td class="bad">&gt;&nbsp;1&nbsp;h</td>
     <td class="bad">&gt;&nbsp;1&nbsp;h</td>
@@ -672,7 +911,7 @@ td { padding: 0 1em; }
   </tr>
   <tr>
     <td><b>gradual</b></td>
-    <td class="ms">  1.15&nbsp;ms</td>
+    <td class="us">863.55&nbsp;μs</td>
     <td class="ms">831.44&nbsp;ms</td>
     <td class="s"> 101.93&nbsp;s</td>
     <td class="bad">&gt;&nbsp;1&nbsp;h</td>
@@ -681,7 +920,7 @@ td { padding: 0 1em; }
   </tr>
   <tr>
     <td><b>sum&nbsp;reachable</b></td>
-    <td class="ms">  1.86&nbsp;ms</td>
+    <td class="us"> 43.12&nbsp;μs</td>
     <td class="ms"> 31.95&nbsp;ms</td>
     <td class="ms">113.88&nbsp;ms</td>
     <td class="s">   1.24&nbsp;s</td>
@@ -690,16 +929,16 @@ td { padding: 0 1em; }
   </tr>
   <tr>
     <td><b>prioritize</b></td>
-    <td class="ms">  1.02&nbsp;ms</td>
+    <td class="us"> 97.86&nbsp;μs</td>
     <td class="ms">324.32&nbsp;ms</td>
     <td class="ms">390.11&nbsp;ms</td>
     <td class="s"> 310.38&nbsp;s</td>
-    <td class="bad">todo</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
     <td class="s"> 481.85&nbsp;s</td>
   </tr>
   <tr>
     <td><b>no&nbsp;set</b></td>
-    <td class="us">354.99&nbsp;μs</td>
+    <td class="us">  8.29&nbsp;μs</td>
     <td class="ms">  5.41&nbsp;ms</td>
     <td class="ms"> 21.25&nbsp;ms</td>
     <td class="ms">216.69&nbsp;ms</td>
@@ -707,31 +946,226 @@ td { padding: 0 1em; }
     <td class="s">  21.49&nbsp;s</td>
   </tr>
   <tr>
-    <td><b>only&nbsp;changes (TODO: refds)</b></td>
-    <td class="us">175.38&nbsp;μs</td>
-    <td class="us">833.89&nbsp;μs</td>
-    <td class="ms">  2.35&nbsp;ms</td>
-    <td class="ms"> 10.72&nbsp;ms</td>
-    <td class="ms">639.44&nbsp;ms</td>
-    <td class="s">   1.61&nbsp;s</td>
+    <td><b>only&nbsp;changes</b></td>
+    <td class="us">  4.84&nbsp;μs</td>
+    <td class="us">740.98&nbsp;μs</td>
+    <td class="ms">  2.05&nbsp;ms</td>
+    <td class="ms">  9.68&nbsp;ms</td>
+    <td class="ms">569.47&nbsp;ms</td>
+    <td class="s">   1.48&nbsp;s</td>
   </tr>
   <tr>
     <td><b>pass index</b></td>
-    <td class="bad">todo</td>
-    <td class="bad">todo</td>
-    <td class="bad">todo</td>
-    <td class="bad">todo</td>
-    <td class="bad">todo</td>
-    <td class="bad">todo</td>
+    <td class="us">  5.12&nbsp;μs</td>
+    <td class="us">734.19&nbsp;μs</td>
+    <td class="ms">  2.06&nbsp;ms</td>
+    <td class="ms">  9.87&nbsp;ms</td>
+    <td class="ms">554.91&nbsp;ms</td>
+    <td class="s">   1.46&nbsp;s</td>
   </tr>
 </table>
 
-Nice! Some solid improvement.
+## The Evil Heap
+
+
+Let's look at the Flamegraph again.
+In the optimized version of the program, lots of events are classified in the `[unknown]` bucket, so we have no stack trace for them.
+What we *can* see is that the runtime is dominated by the allocation and freeing of memory:
+
+<div class="flamegraph-card card">
+<iframe class="flamegraph" src="files/kakuro-flamegraph-pass-index.svg"></iframe>
+</div>
+
+This is not surprising.
+Memory on the heap is managed in a complex way – the memory allocator has to look for free areas of memory to give out and has to free and join regions of memory when they are freed.
+Intrinsically, there are lots of ceremonies associated with using heap memory.
+
+Stack memory on the other hand is cheap to use.
+There's no allocator – you can just use memory in your function's stack frame without telling anyone.
+It's also tightly packed together, making it very cache-friendly.
+
+So, where do we use heap memory? And is there a way for us to reduce our usage of heap memory?
+
+The following code seems to be the culprit:
+
+```rust
+let is_sum_reachable = unused_digits
+    .into_iter()
+    .combinations(self.cells.len() - digits.len())
+    .map(|additional_digits| sum + additional_digits.into_iter().sum::<Value>())
+    .any(|possible_sum| possible_sum == self.sum);****
+```
+
+According to the documentation of `rust:combination` from the `itertools` crate, this function allocates new `Vec`s for each combination:
+
+> Return an iterator adaptor that iterates over the `k`-length combinations of the elements from an iterator. Iterator element type is `Vec<Self::Item>`. The iterator produces a new Vec per iteration, and clones the iterator elements.
+
+The solution?
+We can instead try to hand-roll an implementation that checks if the sum of the constraint is reachable.
+This is also an opportunity to re-use partial sums instead of re-adding all items for each combination of values.
+A quick disclaimer:
+The code for this is somewhat ugly, using macros to make it slightly more bearable:
+
+```rust
+macro_rules! check_additional {
+    ($nesting:expr, $digits_so_far:expr, $target_digits:expr, $sum_so_far:expr, $target_sum:expr,
+    $seen:expr, $block:block) => {
+        if $sum_so_far <= $target_sum {
+            if $digits_so_far == $target_digits {
+                if $sum_so_far == $target_sum {
+                    return true;
+                }
+            } else {
+                for a in ($nesting + 1)..=9 {
+                    if $seen[a - 1] {
+                        continue;
+                    }
+                    $digits_so_far += 1;
+                    $sum_so_far += a;
+                    $seen[a - 1] = true;
+                    $block;
+                    $digits_so_far -= 1;
+                    $sum_so_far -= a;
+                    $seen[a - 1] = false;
+                }
+            }
+        }
+    };
+}
+
+impl Constraint {
+    fn is_satisfied_by(&self, attempt: &Vec<Option<Value>>) -> bool {
+        let mut seen = [false; 9];
+        let mut sum = 0usize;
+
+        for digit in self.cells.iter().filter_map(|b| attempt[*b]) {
+            if seen[(digit - 1) as usize] {
+                return false; // A digit appears twice.
+            }
+            seen[(digit - 1) as usize] = true;
+            sum += digit as usize;
+        }
+
+        let mut num_digits = seen.iter().filter(|it| **it).count();
+        let target_digits  = self.cells.len();
+        let target_sum = self.sum as usize;
+
+        check_additional!(0, num_digits, target_digits, sum, target_sum, seen, {
+          check_additional!(1, num_digits, target_digits, sum, target_sum, seen, {
+            check_additional!(2, num_digits, target_digits, sum, target_sum, seen, {
+              check_additional!(3, num_digits, target_digits, sum, target_sum, seen, {
+                check_additional!(4, num_digits, target_digits, sum, target_sum, seen, {
+                  check_additional!(5, num_digits, target_digits, sum, target_sum, seen, {
+                    check_additional!(6, num_digits, target_digits, sum, target_sum, seen, {
+                      check_additional!(7, num_digits, target_digits, sum, target_sum, seen, {
+                        // Constraints are only checked if at least one cell is
+                        // filled out. 8 cells later, everything is filled out.
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+        false
+    }
+}
+```
+
+The uglification of code is worth it though.
+We get some solid performance improvements:
+
+<table>
+  <tr>
+    <th></th>
+    <th>four-cell</th>
+    <th>wikipedia</th>
+    <th>15&times;15</th>
+    <th>20&times;20</th>
+    <th>30&times;30</th>
+    <th>book</th>
+  </tr>
+  <tr>
+    <td><b>naive</b></td>
+    <td class="us">793.01&nbsp;μs</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>gradual</b></td>
+    <td class="us">863.55&nbsp;μs</td>
+    <td class="ms">831.44&nbsp;ms</td>
+    <td class="s"> 101.93&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+  </tr>
+  <tr>
+    <td><b>sum&nbsp;reachable</b></td>
+    <td class="us"> 43.12&nbsp;μs</td>
+    <td class="ms"> 31.95&nbsp;ms</td>
+    <td class="ms">113.88&nbsp;ms</td>
+    <td class="s">   1.24&nbsp;s</td>
+    <td class="s">  72.74&nbsp;s</td>
+    <td class="s"> 108.57&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>prioritize</b></td>
+    <td class="us"> 97.86&nbsp;μs</td>
+    <td class="ms">324.32&nbsp;ms</td>
+    <td class="ms">390.11&nbsp;ms</td>
+    <td class="s"> 310.38&nbsp;s</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="s"> 481.85&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>no&nbsp;set</b></td>
+    <td class="us">  8.29&nbsp;μs</td>
+    <td class="ms">  5.41&nbsp;ms</td>
+    <td class="ms"> 21.25&nbsp;ms</td>
+    <td class="ms">216.69&nbsp;ms</td>
+    <td class="s">  14.83&nbsp;s</td>
+    <td class="s">  21.49&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>only&nbsp;changes</b></td>
+    <td class="us">  4.84&nbsp;μs</td>
+    <td class="us">740.98&nbsp;μs</td>
+    <td class="ms">  2.05&nbsp;ms</td>
+    <td class="ms">  9.68&nbsp;ms</td>
+    <td class="ms">569.47&nbsp;ms</td>
+    <td class="s">   1.48&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>pass index</b></td>
+    <td class="us">  5.12&nbsp;μs</td>
+    <td class="us">734.19&nbsp;μs</td>
+    <td class="ms">  2.06&nbsp;ms</td>
+    <td class="ms">  9.87&nbsp;ms</td>
+    <td class="ms">554.91&nbsp;ms</td>
+    <td class="s">   1.46&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>no alloc</b></td>
+    <td class="ns">743.40&nbsp;ns</td>
+    <td class="us"> 84.23&nbsp;μs</td>
+    <td class="us">263.48&nbsp;μs</td>
+    <td class="ms">  1.12&nbsp;ms</td>
+    <td class="ms"> 76.78&nbsp;ms</td>
+    <td class="ms">343.88&nbsp;ms</td>
+  </tr>
+</table>
 
 ## Conclusion
 
-I *could* try to optimize Kakuros even further.
-To be honest though, I feel like I scratched this itch sufficiently.
+We can solve Kakuros automatically.
+The Kakuro from the book got solved in well under one second.
+I *could* try to optimize the solver even further.
+To be honest, though, I feel like I scratched this itch sufficiently.
 Spending some time on a small project with clear metrics is fun, but life goes on.
 
 You're welcome to mess with my code, which is [on GitHub](https://github.com/MarcelGarus/kakuro).
@@ -740,15 +1174,10 @@ If you come up with more optimizations or better strategies, feel free to contac
 ---
 
 **Edit:**
-There are some more solution attempts in the repo, but their performance is somewhat unreliable.
+There are some more solution attempts in [the repo](https://github.com/MarcelGarus/kakuro), but their performance is somewhat unreliable.
 The fastest one solves the Kakuro from the book in 89&nbsp;ms, but runs out of memory on the 30&times;30 Kakuro.
 
 ## Todo
 
-- inline todos
 - proof read
-- Title case
-- Grammarly
-- Code highlighting
-- tables with unit highlighting
 - fix read time for this article manually
