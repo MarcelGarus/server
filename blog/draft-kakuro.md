@@ -86,7 +86,7 @@ For example, here's the first Kakuro from the book, which took us two days to so
 <img src="files/kakuro-from-book.svg">
 </div>
 
-Speaking of spending way to much time on something: Getting experience in profiling and optimizing code was on my todo list for some time, so I took this opportunity to write a Kakuro solver in Rust!
+Speaking of spending way to much time on something: Getting experience in profiling and optimizing code was on my todo list for some time, so I took this opportunity to [write a Kakuro solver in Rust](https://github.com/MarcelGarus/kakuro)!
 
 ## Modelling Kakuros in code
 
@@ -167,29 +167,25 @@ To check if a given solution is valid, we need to check that all numbers are in 
 
 ```rust
 impl Input {
-    pub fn is_solution(&self, attempt: &Vec<Value>) -> bool {
-        if attempt.len() != self.num_cells {
-            return false;
-        }
-        if !attempt.iter().all(|number| (1..=9).contains(number)) {
-            return false;
-        }
-        for constraint in self.constraints.iter() {
-            let digits = constraint.cells.iter().map(|i| attempt[*i]).collect_vec();
-            let unique_digits = digits.iter().collect::<HashSet<_>>();
+    pub fn is_solution(&self, solution: &Solution) -> bool {
+        solution.len() == self.num_cells
+            && solution.iter().all(|number| (1..=9).contains(number))
+            && self
+                .constraints
+                .iter()
+                .all(|constraint| constraint.is_solution(solution))
+    }
+}
+impl Constraint {
+    pub fn is_solution(&self, solution: &Solution) -> bool {
+        let digits = self.cells.iter().map(|i| solution[*i]).collect_vec();
+        let unique_digits = digits.iter().collect::<HashSet<_>>();
 
-            if unique_digits.len() < digits.len() {
-                return false; // A digit appears twice.
-            } else if digits.len() < constraint.cells.len() {
-                continue; // Ignore partially filled out constraints.
-            } else {
-                let sum = digits.into_iter().reduce(|a, b| a + b).unwrap();
-                if sum != constraint.sum {
-                    return false;
-                }
-            }
+        if unique_digits.len() < digits.len() {
+            false // A digit appears twice.
+        } else {
+            digits.iter().sum::<Value>() == self.sum
         }
-        return true;
     }
 }
 ```
@@ -265,12 +261,8 @@ Instead, we *gradually* fill the cells one by one, and at each step we are caref
 Let's do something similar in code!
 
 Now, our candidate is no longer a `rust:Vec<Value>`.
-Instead, each value is optional, resembling a cell where we either blank or filled with a digit.
-This way, we can represent partially filled out Kakuros:
-
-```rust
-type Game = Vec<Option<Value>>;
-```
+Instead, each value is optional, resembling a cell where we either blank or filled with a digit: `rust:Vec<Option<Value>>`
+This way, we can represent partially filled out Kakuros.
 
 Because we changed how a Kakuro is represented, we also have to adjust how we check a candidate's validity.
 Before, we checked if all constraints are met.
@@ -281,24 +273,23 @@ Because we *know* that we only fill in numbers between 1 and 9, we can remove th
 
 ```rust
 impl Input {
-    fn is_possible_solution(&self, attempt: &Game) -> bool {
-        for constraint in self.constraints.iter() {
-            let cells = constraint.cells.iter().map(|i| attempt[*i]).collect_vec();
-            let digits = cells.into_iter().filter_map(|it| it).collect_vec();
-            let unique_digits = digits.iter().collect::<HashSet<_>>();
+    fn is_possible_solution(&self, attempt: &[Option<Value>]) -> bool {
+        self.constraints.iter().all(|constraint| constraint.is_possible_solution(attempt))
+    }
+}
+impl Constraint {
+    fn is_possible_solution(&self, attempt: &[Option<Value>]) -> bool {
+        let cells = self.cells.iter().map(|i| attempt[*i]).collect_vec();
+        let digits = cells.into_iter().filter_map(|it| it).collect_vec();
+        let unique_digits = digits.iter().collect::<HashSet<_>>();
 
-            if unique_digits.len() < digits.len() {
-                return false; // A digit appears twice.
-            } else if digits.len() < constraint.cells.len() {
-                continue; // Ignore partially filled out constraints.
-            } else {
-                let sum = digits.into_iter().reduce(|a, b| a + b).unwrap();
-                if sum != constraint.sum {
-                    return false;
-                }
-            }
+        if unique_digits.len() < digits.len() {
+            false // A digit appears twice.
+        } else if digits.len() < self.cells.len() {
+            true // Ignore partially filled out constraints.
+        } else {
+            digits.iter().sum::<Value>() != self.sum
         }
-        return true;
     }
 }
 ```
@@ -308,12 +299,12 @@ We can use recursion to do that:
 
 ```rust
 pub fn solve(input: &Input) -> Output {
-    let mut attempt: Game = vec![None; input.num_cells];
+    let mut attempt: Vec<Option<Value>> = vec![None; input.num_cells];
     let mut solutions = vec![];
     solve_rec(input, &mut attempt, &mut solutions);
     solutions
 }
-fn solve_rec(input: &Input, attempt: &mut Game, solutions: &mut Vec<Solution>) {
+fn solve_rec(input: &Input, attempt: &mut Vec<Option<Value>>, solutions: &mut Vec<Solution>) {
     if !input.is_possible_solution(attempt) {
         return;
     }
@@ -373,9 +364,9 @@ Let's modify the `rust:is_possible_solution` function so that it doesn't skip th
 Rather, ensure that there exists a constraint-fulfilling combination of digits for the other cells:
 
 ```rust
-fn is_possible_solution(&self, attempt: &Game) -> bool {
-    for constraint in self.constraints.iter() {
-        let cells = constraint.cells.iter().map(|i| attempt[*i]).collect_vec();
+impl Constraint {
+    fn is_possible_solution(&self, attempt: &[Option<Value>]) -> bool {
+        let cells = self.cells.iter().map(|i| attempt[*i]).collect_vec();
         let digits = cells.into_iter().filter_map(|it| it).collect_vec();
         let unique_digits = digits.clone().into_iter().collect::<HashSet<_>>();
 
@@ -383,7 +374,7 @@ fn is_possible_solution(&self, attempt: &Game) -> bool {
             return false; // A digit appears twice.
         }
         if digits.is_empty() {
-            continue; // No cells filled out yet; we assume the constraint is satisfiable.
+            return true; // No cells filled out yet; we assume the constraint is satisfiable.
         }
 
         let sum: Value = digits.iter().sum();
@@ -393,14 +384,11 @@ fn is_possible_solution(&self, attempt: &Game) -> bool {
             .collect();
         let is_sum_reachable = unused_digits
             .into_iter()
-            .combinations(constraint.cells.len() - digits.len())
+            .combinations(self.cells.len() - digits.len())
             .map(|additional_digits| sum + additional_digits.into_iter().sum::<Value>())
-            .any(|possible_sum| possible_sum == constraint.sum);
-        if !is_sum_reachable {
-            return false;
-        }
+            .any(|possible_sum| possible_sum == self.sum);
+        is_sum_reachable
     }
-    return true;
 }
 ```
 
@@ -528,6 +516,8 @@ if unique_digits.len() < digits.len() {
     return false; // A digit appears twice.
 }
 
+...
+
 let sum: Value = digits.iter().sum();
 let unused_digits: HashSet<Value> = HashSet::from_iter(1..=9)
     .difference(&unique_digits)
@@ -567,9 +557,85 @@ TODO: Performance Table
 
 ## Only check changes
 
-TODO: Describe stuff
+Retrospectively, this is an obvious one.
+Whenever we fill in a value, we don't need to validate the entire Kakudo – only the constraints that were affected by the cell.
 
-TODO: Performance Table
+At the beginning, we can save what constraints are affected for each cell.
+Then, we only need to check the affected constraints:
+
+```rust
+pub fn solve(input: &Input) -> Output {
+    let mut attempt = vec![None; input.num_cells];
+    let mut solutions = vec![];
+    let mut affected_constraints = vec![vec![]; input.num_cells];
+    for (i, constraint) in input.constraints.iter().enumerate() {
+        for cell in &constraint.cells {
+            affected_constraints[*cell].push(i);
+        }
+    }
+    solve_rec(input, &affected_constraints, &mut attempt, &mut solutions);
+    solutions
+}
+fn solve_rec(
+    input: &Input,
+    affected_constraints: &[Vec<usize>],
+    attempt: &mut Game,
+    solutions: &mut Vec<Solution>,
+) {
+    let first_empty_cell_index = attempt.iter().position(|it| it.is_none());
+    if let Some(index) = first_empty_cell_index {
+        'candidates: for i in 1..=9 {
+            attempt[index] = Some(i);
+            for constraint_index in &affected_constraints[index] {
+                let constraint = &input.constraints[*constraint_index];
+                if !constraint.is_satisfied_by(attempt) {
+                    continue 'candidates;
+                }
+            }
+            solve_rec(input, affected_constraints, attempt, solutions);
+        }
+        attempt[index] = None;
+    } else {
+        solutions.push(attempt.iter().map(|cell| cell.unwrap()).collect());
+    }
+}
+```
+
+## Track The Index Of The First Empty Cell
+
+In each recursion step, we search for the first empty cell:
+
+```rust
+let first_empty_cell_index = attempt.iter().position(|it| it.is_none());
+```
+
+Because we fill out all the cells in their order anyways, we can pass the index of the first empty cell to the recursion function.
+
+```rust
+fn solve_rec(
+    input: &Input,
+    affected_constraints: &[Vec<usize>],
+    first_empty: usize,
+    attempt: &mut Vec<Option<Value>>,
+    solutions: &mut Vec<Solution>,
+) {
+    if first_empty < attempt.len() {
+        'candidates: for i in 1..=9 {
+            attempt[first_empty] = Some(i);
+            for constraint_index in &affected_constraints[first_empty] {
+                let constraint = &input.constraints[*constraint_index];
+                if !constraint.is_satisfied_by(attempt) {
+                    continue 'candidates;
+                }
+            }
+            solve_rec(input, affected_constraints, first_empty + 1, attempt, solutions);
+        }
+        attempt[first_empty] = None;
+    } else {
+        solutions.push(attempt.iter().map(|cell| cell.unwrap()).collect());
+    }
+}
+```
 
 <style>
 table {
@@ -609,9 +675,9 @@ td { padding: 0 1em; }
     <td class="ms">  1.15&nbsp;ms</td>
     <td class="ms">831.44&nbsp;ms</td>
     <td class="s"> 101.93&nbsp;s</td>
-    <td class="bad">todo</td>
-    <td class="bad">todo</td>
-    <td class="bad">todo</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
+    <td class="bad">&gt;&nbsp;1&nbsp;h</td>
   </tr>
   <tr>
     <td><b>sum&nbsp;reachable</b></td>
@@ -629,11 +695,11 @@ td { padding: 0 1em; }
     <td class="ms">390.11&nbsp;ms</td>
     <td class="s"> 310.38&nbsp;s</td>
     <td class="bad">todo</td>
-    <td class="bad">todo</td>
+    <td class="s"> 481.85&nbsp;s</td>
   </tr>
   <tr>
     <td><b>no&nbsp;set</b></td>
-    <td class="us">354.99&nbsp;us</td>
+    <td class="us">354.99&nbsp;μs</td>
     <td class="ms">  5.41&nbsp;ms</td>
     <td class="ms"> 21.25&nbsp;ms</td>
     <td class="ms">216.69&nbsp;ms</td>
@@ -641,13 +707,22 @@ td { padding: 0 1em; }
     <td class="s">  21.49&nbsp;s</td>
   </tr>
   <tr>
-    <td><b>only&nbsp;changes</b></td>
-    <td class="us">175.38&nbsp;us</td>
-    <td class="us">833.89&nbsp;us</td>
+    <td><b>only&nbsp;changes (TODO: refds)</b></td>
+    <td class="us">175.38&nbsp;μs</td>
+    <td class="us">833.89&nbsp;μs</td>
     <td class="ms">  2.35&nbsp;ms</td>
     <td class="ms"> 10.72&nbsp;ms</td>
     <td class="ms">639.44&nbsp;ms</td>
     <td class="s">   1.61&nbsp;s</td>
+  </tr>
+  <tr>
+    <td><b>pass index</b></td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
+    <td class="bad">todo</td>
   </tr>
 </table>
 
@@ -676,8 +751,4 @@ The fastest one solves the Kakuro from the book in 89&nbsp;ms, but runs out of m
 - Grammarly
 - Code highlighting
 - tables with unit highlighting
-- units
-- times (15&times;15, etc.)
 - fix read time for this article manually
-- link to GitHub repo at beginning and end of article
-- scale down teaser image?
