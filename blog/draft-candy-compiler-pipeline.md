@@ -13,7 +13,9 @@ This is a necessary to enable good tooling using fuzzing – for found crashes, 
 From a compiler-building perspective, this also makes the Candy compiler quite unique.
 In this article, I'll show a general outline of the different compilation stages.
 
-![compiler pipeline mountain](files/mountain.png)
+![invert:compiler pipeline mountain](files/compiler-mountain.webp)
+
+--snip--
 
 ## Source Code
 
@@ -41,8 +43,7 @@ The CST can be converted back to original source code and is heavily used for to
 
 This is the CST for the code above:
 
-```candy
-123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789
+```rust
 ... // the `use`
 Newline("\n")
 ... // the destructuring into `add`
@@ -101,8 +102,8 @@ fn opening_parenthesis(input: &str) -> Option<(&str, Cst)> {
 ```
 
 They take an input and try to find a specific pattern at the beginning of the string.
-In this case, the function looks for an opening parenthesis `(`.
-If it doesn't find a parenthesis, it returns `None`.
+In this case, the function looks for an opening parenthesis `candy:(`.
+If it doesn't find a parenthesis, it returns `rust:None`.
 Otherwise, it returns a tuple of the unparsed, remaining part of the string as well as the parsed part.
 
 ```rust
@@ -112,11 +113,11 @@ opening_parenthesis("abc") -> None
 
 More complicated parsers are built from these simpler ones.
 These get pretty complicated pretty quickly.
-For example, you might think parsing a parenthesized expression such as `(4)` is easy – just parse an opening parenthesis, parse the expression, then parse a closing parenthesis.
+For example, you might think parsing a parenthesized expression such as `candy:(4)` is easy – just parse an opening parenthesis, parse the expression, then parse a closing parenthesis.
 
 But will it handle all these edge cases correctly?
 
-```
+```candy
 ( # comment
   3
   # another comment
@@ -179,7 +180,7 @@ fn parenthesized(input: &str, indentation: usize) -> Option<(&str, Rcst)> {
 
 Even unfinished code is parsed into a somewhat correct tree that contains error nodes when something is wrong:
 
-```
+```rust
 parenthesized(0, "(abc)") -> Some(("", Parenthesized {
   opening_parenthesis: OpeningParenthesis,
   inner: Identifier("abc"),
@@ -204,7 +205,7 @@ parenthesized(0, "(a") -> Some(("", Parenthesized {
 An interesting property about Candy in particular is that indentation is more important to the parser than any form of parentheses.
 This makes parsers *even more complicated* in some places, but it guarantees that invalid stuff in your code can only have local effects:
 
-```
+```candy
 foo a =
   fds))){
 
@@ -459,7 +460,7 @@ $272 = Inc
 $273 = [$272: $271]
 ```
 
-Also notable is that pattern destructuring gets converted into a bunch of `ifElse` calls, but I'll skip a more detailed explanation here.
+Also notable is that pattern destructuring gets converted into a bunch of `candy:ifElse` calls, but I'll skip a more detailed explanation here.
 
 ## Optimizing the MIR
 
@@ -469,13 +470,13 @@ These are the most important ones:
 
 ### Module Folding
 
-When there's a `use`, we compile the corresponding file and input its code right here.
+When there's a `candy:use`, we compile the corresponding file and input its code right here.
 The exports from the file are put in a struct.
 
 ### Constant Folding
 
 When the result of a call of a builtin function can be already determined at compile-time, we inline the result right away.
-For example, when using `int.is` to get the `is` function from the `int` module, we know the arguments to the generated `structGet` call – we know all the exports of the `int` module and we know that you look for the `is` key.
+For example, when using `candy:int.is` to get the `candy:is` function from the `candy:int` module, we know the arguments to the generated `candy:structGet` call – we know all the exports of the `candy:int` module and we know that you look for the `candy:is` key.
 So, rather than executing that lookup during runtime, we replace it with a direct reference to the function.
 
 ### Tree Shaking
@@ -486,7 +487,7 @@ For example, when you import the `Core` library, but only use a fraction of the 
 
 ### Constant Lifting
 
-If you have a function that creates lots of local variables (such as numbers, or `True`, or `False`), it's very likely that other functions use the same values.
+If you have a function that creates lots of local variables (such as numbers, or `candy:True`, or `candy:False`), it's very likely that other functions use the same values.
 In that case, we move the value defintions out of the functions so that they don't need to create new objects on the heap every time they are called.
 
 ### Common Subtree Elimination
@@ -587,8 +588,8 @@ For example, check out the following function:
 foo a = { b -> int.add a b }
 ```
 
-Here, `foo 4` returns a function that always adds `4` to its argument.
-Thus, the `a` needs to continue existing even after `foo` returns.
+Here, `candy:foo 4` returns a function that always adds `candy:4` to its argument.
+Thus, the `candy:a` needs to continue existing even after `candy:foo` returns.
 
 In the next compiler stage, those **captured variables** are explicitly tracked.
 That also enables un-nesting functions.
