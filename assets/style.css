@@ -19,8 +19,9 @@
     --nav-selection-bg-color: white;
     --nav-selection-fg-color: black;
 
-    --character-font: "Josefin Sans";
-    --code-font: "JetBrains Mono";
+    --body-font: "IBM Plex Serif";
+    --character-font: "IBM Plex Sans";
+    --code-font: "IBM Plex Mono";
 }
 
 @media (prefers-color-scheme: dark) {
@@ -42,6 +43,7 @@ body {
     font-family: sans-serif;
     background-color: var(--main-bg-color);
     color: var(--main-fg-color);
+    font-family: var(--body-font);
 }
 
 .secondary {
@@ -49,7 +51,6 @@ body {
 }
 
 a {
-    font-family: var(--character-font), sans-serif;
     color: var(--main-fg-color);
 }
 
@@ -230,13 +231,8 @@ main ::selection {
     color: var(--main-selection-fg-color);
 }
 
-main a {
-    color: var(--accent-color);
-}
-
 .topic {
     color: var(--main-fg-color);
-    font-family: sans-serif;
     text-decoration: none;
 }
 
