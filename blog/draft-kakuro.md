@@ -1,5 +1,6 @@
 topics = []
 description = "Have you ever wondered what would happen if Crosswords and Sudokus had a baby? I know I haven't, but on a vacation in Lisbon, a Sudoku book in our flat introduced me to the concept of Kakuros."
+read_minutes = 22
 
 --start--
 
@@ -48,11 +49,6 @@ To get an intuition about how to approach a Kakuro, here's a tiny one:
 
 The clue 2 indicates that the sum of the digits below has to be 2. Because there's only one cell, we can put a 2 in there.
 
-There are three ways of adding two digits to 4: You can add 1+3, 2+2, and 3+1. Because the same digit can't appear twice in the same word, that leaves 1 and 3 as well as 3 and 1 for the column. The 1 can't be at the top though: If it was, then the cell on the right would have to contain a 10 to reach the horizontal sum of 13, but only the digits 1 through 9 are allowed. Thus, the 1 goes to the bottom and the 3 to the top.
-
-Finally, we can calculate that the last digit needs to be an 8.
-And that's it:
-
 <style>
 .digit {
     font-family: var(--character-font), sans-serif;
@@ -60,6 +56,24 @@ And that's it:
     fill: black;
 }
 </style>
+<div class="kakuro card">
+<svg class="board" viewBox="50 50 400 300" xmlns="http://www.w3.org/2000/svg" style="max-height: 9em;">
+<text class="clue" x="140" y="90" text-anchor="middle">2</text>
+<text class="clue" x="240" y="90" text-anchor="middle">4</text>
+<text class="clue" x="95" y="150" text-anchor="end">13</text>
+<rect class="cell" x="100" y="100" height="100" width="100" />
+<text class="digit" x="150" y="170" text-anchor="middle">2</text>
+<rect class="cell" x="200" y="100" height="100" width="100" />
+<rect class="cell" x="300" y="100" height="100" width="100" />
+<rect class="cell" x="200" y="200" height="100" width="100" />
+</svg>
+</div>
+
+There are three ways of adding two digits to 4: You can add 1+3, 2+2, and 3+1. Because the same digit can't appear twice in the same word, that leaves 1 and 3 as well as 3 and 1 for the column. The 1 can't be at the top though: If it was, then the cell on the right would have to contain a 10 to reach the horizontal sum of 13, but only the digits 1 through 9 are allowed. Thus, the 1 goes to the bottom and the 3 to the top.
+
+Finally, we can calculate that the last digit needs to be an 8.
+And that's it:
+
 <div class="kakuro card">
 <svg class="board" viewBox="50 50 400 300" xmlns="http://www.w3.org/2000/svg" style="max-height: 9em;">
 <text class="clue" x="140" y="90" text-anchor="middle">2</text>
@@ -167,7 +181,7 @@ To check if a given solution is valid, we need to check that all numbers are in 
 
 ```rust
 impl Input {
-    pub fn is_solution(&self, solution: &Solution) -> bool {
+    pub fn is_solution(&self, solution: &Vec<Value>) -> bool {
         solution.len() == self.num_cells
             && solution.iter().all(|number| (1..=9).contains(number))
             && self
@@ -177,7 +191,7 @@ impl Input {
     }
 }
 impl Constraint {
-    pub fn is_solution(&self, solution: &Solution) -> bool {
+    pub fn is_solution(&self, solution: &Vec<Value>) -> bool {
         let digits = self.cells.iter().map(|i| solution[*i]).collect_vec();
         let unique_digits = digits.iter().copied().collect::<HashSet<_>>();
 
@@ -213,7 +227,7 @@ It just tries all combinations and checks if they are valid solutions.
 It starts by filling all cells with 1s, and then counts them up, treating them like a single number: For a four-cell Kakuro, it first tries 1111, then 1112, 1113, etc. until it reaches 9999.
 
 ```rust
-pub fn solve(input: &Input) -> Output {
+pub fn solve(input: &Input) -> Vec<Vec<Value>> {
     let mut attempt = vec![1; input.num_cells];
     let mut solutions = vec![];
 
@@ -243,10 +257,10 @@ pub fn solve(input: &Input) -> Output {
 ```
 
 Nice! These hardly thirty lines of code suffice for solving small Kakuros.
-The four-cell Kakuro I introduced to you above got solved nearly instantly.
+The four-cell Kakuro I introduced to you above got solved quickly.
 Sadly, for bigger Kakuros, the runtime increases exponentially with the number of cells – each additional cell means that nine times more combinations have to be constructed and validated.
 
-For instance, even after half an hour of running on my computer, the solver hasn't solved this Kakuro from the [Kakuro Wikipedia page,](https://en.wikipedia.org/wiki/Kakuro) which is titled "An easy Kakuro puzzle":
+For instance, even after running on my computer for an hour, the solver hasn't solved this Kakuro from the [Kakuro Wikipedia page](https://en.wikipedia.org/wiki/Kakuro), which is titled "An easy Kakuro puzzle":
 
 <div class="kakuro card">
 <img src="files/kakuro-from-wikipedia.svg">
@@ -261,7 +275,7 @@ Instead, we *gradually* fill the cells one by one, and at each step, we are care
 Let's do something similar in code!
 
 Now, our candidate is no longer a `rust:Vec<Value>`.
-Instead, each value is optional, resembling a cell where we either blank or filled with a digit: `rust:Vec<Option<Value>>`
+Instead, each value is optional, resembling a cell that's either blank or filled with a digit: `rust:Vec<Option<Value>>`
 This way, we can represent partially filled-out Kakuros.
 
 Because we changed how a Kakuro is represented, we also have to adjust how we check a candidate's validity.
@@ -288,7 +302,7 @@ impl Constraint {
         } else if digits.len() < self.cells.len() {
             true // Ignore partially filled-out constraints.
         } else {
-            digits.iter().sum::<Value>() != self.sum
+            digits.iter().sum::<Value>() == self.sum
         }
     }
 }
@@ -611,7 +625,7 @@ There's a tradeoff: All the time you spend on deciding which cell to fill out is
 Doing expensive calculations just to decide where to investigate further turned out to not be a great deal in practice.
 And that's okay.
 That's why we measure the performance in the first place.
-For now, I'll continue with the straightforward approach of filling cells out in the order they were given.
+For now, I'll continue with the straightforward approach of filling out cells in the order they were given.
 
 ## Checking Uniqueness More Efficiently
 
@@ -741,10 +755,10 @@ And fair enough, replacing hash sets with this makes the solver five times faste
 ## Only Check Changes
 
 Retrospectively, this is an obvious one.
-Whenever we fill in a value, we don't need to validate the entire Kakudo – only the constraints that were affected by the cell.
+Whenever we fill in a value, we don't need to validate the entire Kakuro – only the constraints that contain the cell.
 
-In the beginning, we can save what constraints are affected for each cell.
-Then, we only need to check the affected constraints:
+In the beginning, we can save what constraints are contain each cell.
+Then, when filling out a cell, we only need to check the affected constraints:
 
 ```rust
 pub fn solve(input: &Input) -> Output {
@@ -967,7 +981,6 @@ This has an insignificant effect on the runtime though:
 
 ## The Evil Heap
 
-
 Let's look at the Flamegraph again.
 In the optimized version of the program, lots of events are classified in the `[unknown]` bucket, so we have no stack trace for them.
 What we *can* see is that the runtime is dominated by the allocation and freeing of memory:
@@ -993,12 +1006,12 @@ let is_sum_reachable = unused_digits
     .into_iter()
     .combinations(self.cells.len() - digits.len())
     .map(|additional_digits| sum + additional_digits.into_iter().sum::<Value>())
-    .any(|possible_sum| possible_sum == self.sum);****
+    .any(|possible_sum| possible_sum == self.sum);
 ```
 
 According to the documentation of `rust:combination` from the `itertools` crate, this function allocates new `Vec`s for each combination:
 
-> Return an iterator adaptor that iterates over the `k`-length combinations of the elements from an iterator. Iterator element type is `Vec<Self::Item>`. The iterator produces a new Vec per iteration, and clones the iterator elements.
+> Return an iterator adaptor that iterates over the `k`-length combinations of the elements from an iterator. Iterator element type is `rust:Vec<Self::Item>`. The iterator produces a new Vec per iteration, and clones the iterator elements.
 
 The solution?
 We can instead try to hand-roll an implementation that checks if the sum of the constraint is reachable.
@@ -1176,8 +1189,3 @@ If you come up with more optimizations or better strategies, feel free to contac
 **Edit:**
 There are some more solution attempts in [the repo](https://github.com/MarcelGarus/kakuro), but their performance is somewhat unreliable.
 The fastest one solves the Kakuro from the book in 89&nbsp;ms, but runs out of memory on the 30&times;30 Kakuro.
-
-## Todo
-
-- proof read
-- fix read time for this article manually
