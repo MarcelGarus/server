@@ -1,7 +1,4 @@
-use crate::{
-    blog::{canonicalize_topic, Article},
-    utils::*,
-};
+use crate::blog::{canonicalize_topic, Article};
 use http::StatusCode;
 use itertools::Itertools;
 use tokio::fs;

@@ -191,6 +191,7 @@ struct Config {
     topics: Vec<String>,
     next: Option<String>,
     description: Option<String>,
+    read_minutes: Option<usize>,
 }
 
 impl Article {
@@ -211,22 +212,24 @@ impl Article {
         options.extension.strikethrough = true;
         let root = parse_document(&arena, &markdown.replace("--snip--", ""), &options);
 
-        // To estimate the read time, I timed how long it took to read the
-        // articles and related that to their Markdown file size. That's not an
-        // exact metric by any point (for example, links with long URLs would
-        // increase the size without impacting the reading duration), but it's
-        // definitely a metric that's not totally garbage.
-        //
-        // article             | read time | file size
-        // --------------------+-----------+----------
-        // chest-intro         |  1:05 min |    1400 B
-        // chest-chunky        |  6:07 min |    6190 B
-        // no-dark-mode-toggle |  2:58 min |    3700 B
-        // --------------------+-----------+----------
-        // sum                 | 10:10 min |   12290 B
-        // Average reading speed: 20.1 bytes per second
-        let seconds_per_byte = Duration::from_secs(10 * 60 + 10) / 12290;
-        let read_duration = seconds_per_byte * (markdown.len() as u32);
+        let read_duration = config.read_minutes.map(|minutes| Duration::from_secs(60 * minutes as u64)).unwrap_or_else(|| {
+            // To estimate the read time, I timed how long it took to read the
+            // articles and related that to their Markdown file size. That's not
+            // an exact metric by any point (for example, links with long URLs
+            // would increase the size without impacting the reading duration),
+            // but it's definitely a metric that's not totally garbage.
+            //
+            // article             | read time | file size
+            // --------------------+-----------+----------
+            // chest-intro         |  1:05 min |    1400 B
+            // chest-chunky        |  6:07 min |    6190 B
+            // no-dark-mode-toggle |  2:58 min |    3700 B
+            // --------------------+-----------+----------
+            // sum                 | 10:10 min |   12290 B
+            // Average reading speed: 20.1 bytes per second
+            let seconds_per_byte = Duration::from_secs(10 * 60 + 10) / 12290;
+            seconds_per_byte * (markdown.len() as u32)
+        });
 
         let teaser = parse_document(
             &arena,
