@@ -149,12 +149,26 @@ aside {
     /* background-color: var(--yellow); */
 }
 
+aside .me {
+    position: relative;
+    width: 12rem;
+    height: 12rem;
+}
 aside .image-of-me {
+    width: 12rem;
+    height: 12rem;
     background-color: var(--yellow);
     border-radius: 50%;
     margin: 0;
     padding: 0;
     overflow: hidden;
+}
+
+aside .speech-bubble {
+    position: absolute;
+    bottom: 0;
+    width: 12rem;
+    height: 2.087rem; /* 12rem / 1673 * 291 */
 }
 
 aside ul {
