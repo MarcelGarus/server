@@ -251,7 +251,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 async fn index(blog: web::Data<Blog>) -> impl Responder {
     HttpResponse::Ok()
         .cached()
-        .html(templates::blog_page(blog.list().await).await)
+        .html(templates::blog_page(&blog.topics().await, blog.list().await).await)
 }
 
 /// For brevity, most URLs consist of a single key.
@@ -274,7 +274,7 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
     let blog = req.app_data::<web::Data<Blog>>().unwrap();
     if let Some(article) = blog.get(&key).await {
         return HttpResponse::Ok().cached().html(
-            templates::article_page(&article, &blog.get_suggestion_for(&article).await).await,
+            templates::article_page(&blog.topics().await, &article, &blog.get_suggestion_for(&article).await).await,
         );
     }
 
@@ -285,7 +285,7 @@ async fn url_with_key(req: HttpRequest, path: web::Path<(String,)>) -> impl Resp
 async fn timeline(blog: web::Data<Blog>) -> impl Responder {
     HttpResponse::Ok()
         .cached()
-        .html(templates::timeline_page(None, &blog.list().await).await)
+        .html(templates::timeline_page(&blog.topics().await, None, &blog.list().await).await)
 }
 
 #[get("/articles/{topic}")]
@@ -295,6 +295,7 @@ async fn filtered_timeline(path: web::Path<(String,)>, blog: web::Data<Blog>) ->
         .topics()
         .await
         .into_iter()
+        .map(|(topic, _)| topic)
         .filter(|it| canonicalize_topic(it) == topic)
         .next()
         .unwrap_or("".to_string());
@@ -308,7 +309,7 @@ async fn filtered_timeline(path: web::Path<(String,)>, blog: web::Data<Blog>) ->
 
     HttpResponse::Ok()
         .cached()
-        .html(templates::timeline_page(Some(&topic), &articles).await)
+        .html(templates::timeline_page(&blog.topics().await, Some(&topic), &articles).await)
 }
 
 #[get("/files/{filename}")]
@@ -447,7 +448,7 @@ fn error_500_handler(
 async fn error_page(status: StatusCode, title: &str, description: &str) -> HttpResponse {
     HttpResponse::Ok()
         .status(status)
-        .html(templates::error_page(status, title, description).await)
+        .html(templates::error_page(&[], status, title, description).await)
 }
 
 trait HttpResponseBuilderExt {

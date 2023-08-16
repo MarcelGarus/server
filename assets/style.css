@@ -1,6 +1,7 @@
 @import url("/fonts.css");
 
-/* colors */
+/* generic stuff */
+
 :root {
     --pink: #f97191;
     --yellow: #ffb152;
@@ -19,9 +20,9 @@
     --nav-selection-bg-color: white;
     --nav-selection-fg-color: black;
 
-    --body-font: "IBM Plex Serif";
-    --character-font: "IBM Plex Sans";
-    --code-font: "IBM Plex Mono";
+    --sans: "IBM Plex Sans";
+    --serif: "IBM Plex Serif";
+    --mono: "IBM Plex Mono";
 }
 
 @media (prefers-color-scheme: dark) {
@@ -34,38 +35,29 @@
     }
 }
 
-/* general styles */
-html,
-body {
-    margin: 0;
-    padding: 0;
-
-    font-family: sans-serif;
-    background-color: var(--main-bg-color);
-    color: var(--main-fg-color);
-    font-family: var(--body-font);
-}
-
-.secondary {
-    opacity: 0.5;
-}
-
 a {
     color: var(--main-fg-color);
 }
 
-h1 {
-    margin: 1rem 0 0 0;
-
-    font-family: var(--character-font), sans-serif;
-    font-size: 3rem;
-    line-height: 1;
+.secondary {
+    /* stuff like the date and topics */
+    font-family: var(--sans), sans-serif;
+    opacity: 0.5;
 }
+
+.topic {
+    color: var(--main-fg-color);
+    text-decoration: none;
+}
+.topic:hover {
+    text-decoration: underline;
+}
+
+/* stuff for print mode */
 
 .only-screen {
     display: none;
 }
-
 @media screen {
     .only-screen {
         display: inline-block;
@@ -75,180 +67,286 @@ h1 {
 .only-print {
     display: none;
 }
-
 @media print {
     .only-print {
         display: inline-block;
     }
 }
 
-/* styles for the header */
-aside {
-    position: relative;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 100%;
-    min-width: 10rem;
-    margin-bottom: 1rem;
-    padding-top: 3rem;
+/* general layout */
 
-    text-align: center;
-}
-
-aside .content {
-    margin: auto !important;
-    margin-right: 0;
-    max-width: 25rem;
-    text-align: center;
-}
-
-aside div {
-    position: relative;
-    padding: 1rem;
-    border-radius: 1rem;
-    z-index: 1;
-    text-align: left;
-    color: var(--nav-fg-color);
-    display: inline-block;
-    color: black;
-}
-
-aside div ::selection {
-    background: white;
-}
-
-aside .my-name {
-    background-color: var(--nav-bg-color);
-    transform: rotate(-5deg);
-    z-index: 1;
-    margin-bottom: -1.4rem;
-    inline-size: min-content;
-}
-
-aside h1 a {
-    color: var(--nav-fg-color);
-    text-decoration: none !important;
-}
-
-aside .my-name ::selection {
-    background: var(--nav-fg-color);
-    color: var(--nav-bg-color);
-}
-
-aside .my-image {
-    background-color: var(--yellow);
-    width: 7rem;
-    height: 7rem;
-    border-radius: 3.5rem;
-    z-index: 3;
-    translate: 0 0.4rem;
+html,
+body {
+    margin: 0;
     padding: 0;
-    margin-left: -0.5rem;
-    margin-bottom: -0.7rem;
-    overflow: hidden;
+
+    background-color: var(--main-bg-color);
+    color: var(--main-fg-color);
+    font-family: var(--serif);
 }
 
-aside .description {
-    background-color: var(--green);
-    padding: 1rem;
-    border-radius: 1rem;
-    transform: rotate(1deg);
-    z-index: 2;
-    margin-top: 0.5rem;
-    margin-bottom: -0.3rem;
+.column {
+    position: relative;
+    width: 100%;
+    max-width: 64rem;
+    margin: auto;
 }
-
-aside .more-about-me {
-    background-color: var(--yellow);
-    padding: 0.5rem;
-    z-index: 3;
-    translate: 0 0;
-    transform: rotate(1deg);
-}
-
-aside .all-articles {
-    background: var(--purple);
-    padding: 0.5rem;
-    margin-left: 0.4rem;
-    z-index: 4;
-    transform: rotate(-3deg);
-}
-
-aside a {
-    color: black;
-}
-
-aside h1 {
-    margin: 0;
-}
-
-@media (max-width: 400px) {
-    aside {
-        padding-top: 1rem;
-    }
-
-    aside h1 {
-        font-size: 2rem;
-    }
-
-    aside .my-image {
-        width: 6rem;
-        height: 6rem;
-    }
-}
-
-aside p {
-    margin: 0;
-}
-
-/* styles for the main part */
-/* Instead of having a fixed amount of margin on the left and right of the
- * article content, the contents have those margins themselves. This way, we
- * add exceptions. For example, on small displays, code blocks and images
- * stretch from edge to edge. */
 main {
     width: 100%;
-    /* the amount of padding to the screen border */
+    max-width: 50rem;
+    margin-top: 2rem;
+    /* Instead of having a fixed amount of margin on the left and right of the
+     * content, the content parts manage those margins themselves. This way, we
+     * can add exceptions. For example, on small displays, code blocks and
+     * images stretch from edge to edge. */
     --padding: 16px;
 }
-
 @media (max-width: 400px) {
     main {
         --padding: 8px;
     }
 }
-
-main .content {
-    width: 100%;
-    max-width: 50rem;
-    margin: auto;
-    padding-bottom: 2rem;
+aside {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 12rem;
 }
 
+/* index header */
+
+header {
+    font-family: var(--sans), sans-serif;
+}
+header * {
+    --padding: 0rem;
+}
+header h1 {
+    margin-bottom: 2rem !important;
+}
+
+header ul {
+    padding-left: 2rem;
+}
+header li {
+    margin-bottom: 1rem;
+}
+
+header .image-of-me {
+    width: 10rem;
+    height: 10rem;
+    border-radius: 5rem;
+    background-color: var(--yellow);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* the aside part */
+
+aside {
+    font-family: 'IBM Plex Sans';
+    /* background-color: var(--yellow); */
+}
+
+aside .image-of-me {
+    background-color: var(--yellow);
+    border-radius: 50%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+aside ul {
+    padding-left: 1rem;
+}
+aside li {
+    margin: 0.2rem 0;
+}
+aside li .count {
+    opacity: 0.5;
+    background: #ddd;
+    padding: 0 0.2em;
+    font-size: 12px;
+    border-radius: 0.2em;
+}
+
+footer {
+    font-size: 0.8rem;
+    margin: 0 var(--padding);
+}
+
+/* main content */
+
+main>* {
+    margin: 0 var(--padding);
+}
+main {
+    line-height: 1.7;
+    font-size: 1rem;
+}
 main ::selection {
     background: var(--main-selection-bg-color);
     color: var(--main-selection-fg-color);
 }
 
-.topic {
-    color: var(--main-fg-color);
+main h1 {
+    font-family: var(--sans), sans-serif;
+    font-size: 3rem;
+    line-height: 1;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+}
+@media (max-width: 750px) {
+    main h1 {
+        font-size: 2rem;
+    }
+}
+main h1 a {
     text-decoration: none;
 }
-
-.topic:hover {
+main h1 a:hover {
     text-decoration: underline;
 }
 
-.read-more-container {
-    padding: 1rem 0;
-    margin-top: 1rem;
+main h2,
+main h3,
+main h4,
+main h5,
+main h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    line-height: 1;
 }
 
-.read-more-button {
-    border: 2px solid;
-    padding: 1rem;
-    border-radius: 42cm;
+main h2,
+main h3,
+main h4,
+main h5,
+main h6,
+main strong {
+    font-family: var(--sans);
+}
+
+main p {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+main ul,
+main ol {
+    margin: 1rem var(--padding);
+    padding-left: 4rem;
+}
+main ul>*,
+main ol>* {
+    --padding: 0rem;
+}
+@media (max-width: 600px) {
+    ul,
+    ol {
+        padding-left: 2rem;
+    }
+}
+
+blockquote {
+    border-left: 4px solid var(--accent-color);
+    padding-left: 1rem;
+}
+@media (max-width: 400px) {
+    blockquote {
+        padding-left: 0.5rem;
+    }
+}
+
+main pre {
+    margin: 0;
+    padding: 1rem var(--padding);
+}
+main code {
+    font-family: var(--mono);
+}
+@media (max-width: 50rem) {
+    main pre[class*="language-"] {
+        border-radius: 0;
+    }
+}
+
+hr {
+    width: 50%;
+    height: 4px;
+    margin: 3rem auto;
+    border: none;
+    border-radius: 2px;
+    background: var(--green);
+}
+@media print {
+    hr {
+        background: none;
+        border-radius: 0;
+        border-top: 1px solid var(--green);
+    }
+}
+
+img {
+    max-width: 100%;
+    max-height: 30rem;
+    border-radius: 1rem;
+}
+@media (prefers-color-scheme: dark) {
+    .invertable-image {
+        -webkit-filter: invert(100%);
+        filter: invert(100%);
+    }
+}
+
+video {
+    max-width: 100%;
+    max-height: 30rem;
+    border-radius: 1rem;
+}
+
+audio {
+    margin-top: 1rem;
+    border-radius: 1rem;
+}
+
+@media screen {
+    .footnote-key {
+        background: var(--yellow);
+        padding: 0.2rem;
+        border-radius: 0.2rem;
+        color: black;
+        text-decoration: none;
+        font-family: var(--sans);
+    }
+}
+@media print {
+    .footnote-key {
+        padding: 0;
+        font-family: sans-serif;
+    }
+    .footnote-key::before {
+        content: '[';
+    }
+    .footnote-key::after {
+        content: ']';
+    }
+}
+.footnote-def {
+    display: flex;
+    margin-bottom: 1rem;
+}
+.footnote-def-key {
+    min-width: 4rem;
+}
+.footnote-def-value>p {
+    margin: 0;
+}
+@media (max-width: 600px) {
+    .footnote-def-key {
+        min-width: 2rem;
+    }
 }
 
 .card {
@@ -258,33 +356,33 @@ main ::selection {
     color: black;
     border-radius: 1rem;
 }
-
 @media (max-width: 50rem) {
     .card {
         border-radius: 0;
     }
 }
-
 .card ::selection {
     background: black;
     color: white;
 }
-
 .after-article-card {
     margin: 2rem 0 3rem 0;
     background: var(--yellow);
 }
-
 .after-article-card .topic {
     color: black;
     text-decoration: underline;
-    font-family: var(--character-font), sans-serif;
+    font-family: var(--sans), sans-serif;
 }
 
-/* style for the footer */
-footer {
-    font-size: 0.8rem;
-    margin: 0 var(--padding);
+.read-more-container {
+    padding: 1rem 0;
+    margin-top: 1rem;
+}
+.read-more-button {
+    border: 2px solid;
+    padding: 1rem;
+    border-radius: 42cm;
 }
 
 /* the timeline */
@@ -317,194 +415,4 @@ footer {
 
 .timeline-title-text:hover {
     text-decoration: underline;
-}
-
-/* the article content */
-article {
-    line-height: 1.7;
-    font-size: 1rem;
-}
-
-article .infos {
-    font-size: 0.8rem;
-}
-
-article>* {
-    margin: 0 var(--padding);
-}
-
-article>center {
-    /* images are wrapped in center */
-    margin: 0;
-}
-
-p {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-
-ul,
-ol {
-    margin: 1rem var(--padding);
-    padding-left: 4rem;
-}
-
-ul>*,
-ol>* {
-    --padding: 0rem;
-}
-
-@media (max-width: 600px) {
-
-    ul,
-    ol {
-        padding-left: 2rem;
-    }
-}
-
-article h1 a {
-    color: var(--main-fg-color);
-    text-decoration: none;
-}
-
-article h1 a:hover {
-    text-decoration: underline;
-}
-
-@media (max-width: 750px) {
-    article h1 {
-        font-size: 2rem;
-    }
-}
-
-h2,
-h3,
-h4,
-h5,
-h6 {
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    line-height: 1;
-}
-
-h2,
-h3,
-h4,
-h5,
-h6,
-strong {
-    font-family: var(--character-font);
-}
-
-hr {
-    width: 50%;
-    height: 4px;
-    margin: 3rem auto;
-    border: none;
-    border-radius: 2px;
-    background: var(--green);
-}
-
-@media print {
-    hr {
-        background: none;
-        border-radius: 0;
-        border-top: 1px solid var(--green);
-    }
-}
-
-article pre {
-    margin: 0;
-    padding: 1rem var(--padding);
-}
-
-code {
-    font-family: var(--code-font);
-}
-
-@media (max-width: 50rem) {
-    article pre[class*="language-"] {
-        border-radius: 0;
-    }
-}
-
-blockquote {
-    border-left: 4px solid var(--accent-color);
-    padding-left: 1rem;
-}
-
-@media (max-width: 400px) {
-
-    blockquote {
-        padding-left: 0.5rem;
-    }
-}
-
-img {
-    max-width: 100%;
-    max-height: 30rem;
-    border-radius: 1rem;
-}
-
-@media (prefers-color-scheme: dark) {
-    .invertable-image {
-        -webkit-filter: invert(100%);
-        filter: invert(100%);
-    }
-}
-
-video {
-    max-width: 100%;
-    max-height: 30rem;
-    border-radius: 1rem;
-}
-
-audio {
-    margin-top: 1rem;
-    border-radius: 1rem;
-}
-
-@media screen {
-    .footnote-key {
-        background: var(--yellow);
-        padding: 0.2rem;
-        border-radius: 0.2rem;
-        color: black;
-        text-decoration: none;
-        font-family: var(--character-font);
-    }
-}
-
-@media print {
-    .footnote-key {
-        padding: 0;
-        font-family: sans-serif;
-    }
-
-    .footnote-key::before {
-        content: '[';
-    }
-
-    .footnote-key::after {
-        content: ']';
-    }
-}
-
-.footnote-def {
-    display: flex;
-    margin-bottom: 1rem;
-}
-
-.footnote-def-key {
-    min-width: 4rem;
-}
-
-.footnote-def-value>p {
-    margin: 0;
-}
-
-@media (max-width: 600px) {
-    .footnote-def-key {
-        min-width: 2rem;
-    }
 }

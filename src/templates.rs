@@ -3,12 +3,13 @@ use http::StatusCode;
 use itertools::Itertools;
 use tokio::fs;
 
-async fn page(title: &str, metadata: &str, content: &str) -> String {
+async fn page(title: &str, metadata: &str, all_topics: &[(String, usize)], content: &str) -> String {
     fs::read_to_string("assets/page.html")
         .await
         .unwrap()
         .replace("{{title}}", title)
         .replace("{{metadata}}", metadata)
+        .replace("{{all-topics}}", &all_topics.iter().map(|(t, count)| format!("<li>{} <span class=\"count\">{}</span></li>", topic(t), count)).join("\n"))
         .replace("{{content}}", content)
 }
 
@@ -77,10 +78,16 @@ async fn article_teaser(article: &Article) -> String {
         .fill_in_article(&article)
 }
 
-pub async fn blog_page(articles: Vec<Article>) -> String {
-    let mut teasers = vec![];
+async fn me() -> String {
+    fs::read_to_string("assets/me.html")
+        .await
+        .unwrap()
+}
+
+pub async fn blog_page(all_topics: &[(String, usize)], articles: Vec<Article>) -> String {
+    let mut content = vec![me().await];
     for article in articles {
-        teasers.push(article_teaser(&article).await);
+        content.push(article_teaser(&article).await);
     }
     page(
         "Blog",
@@ -91,12 +98,13 @@ pub async fn blog_page(articles: Vec<Article>) -> String {
             "Marcel Garus is a student at the Hasso Plattner Institute in Potsdam and an open source developer mainly using Rust and Flutter.",
             Some(("https://marcelgarus.dev/me.png".into(), "A portrait of me.".into())),
         ),
-        &teasers.join("\n"),
+        all_topics,
+        &content.join("\n"),
     )
     .await
 }
 
-pub async fn article_page(article: &Article, suggestion: &Article) -> String {
+pub async fn article_page(all_topics: &[(String, usize)], article: &Article, suggestion: &Article) -> String {
     page(
         &article.title,
         &metadata(
@@ -106,6 +114,7 @@ pub async fn article_page(article: &Article, suggestion: &Article) -> String {
             &article.description,
             None, // TODO: Add first image.
         ),
+        all_topics,
         &fs::read_to_string("assets/article-full.html")
             .await
             .unwrap()
@@ -124,7 +133,7 @@ pub async fn article_page(article: &Article, suggestion: &Article) -> String {
     .await
 }
 
-async fn timeline(intro: &str, articles: &[Article], outro: &str) -> String {
+async fn timeline(title: &str, articles: &[Article], outro: &str) -> String {
     let mut timeline_entries = vec![];
     for article in articles {
         timeline_entries.push(
@@ -141,24 +150,23 @@ async fn timeline(intro: &str, articles: &[Article], outro: &str) -> String {
     fs::read_to_string("assets/timeline.html")
         .await
         .unwrap()
-        .replace("{{intro}}", intro)
+        .replace("{{title}}", title)
         .replace("{{timeline}}", &timeline_entries.join("\n"))
         .replace("{{outro}}", outro)
 }
 
-pub async fn timeline_page(topic: Option<&str>, articles: &[Article]) -> String {
+pub async fn timeline_page(all_topics: &[(String, usize)], topic: Option<&str>, articles: &[Article]) -> String {
     let timeline = if articles.is_empty() {
-        let topic = topic.unwrap();
         timeline(
-            &format!("I didn't write about {} yet. If you think that's something I should look into, feel free to <a href=\"/about-me\">contact me</a>", topic),
+            &format!("I didn't write anything about that."),
             &[],
-            &format!("Otherwise, you might want to look at <a href=\"/articles\">all articles.</a>"),
+            &format!("You might want to look at <a href=\"/articles\">all articles.</a>"),
         ).await
     } else {
         timeline(
             &match topic {
-            Some(topic) => format!("These are my articles about {}:", topic),
-            None => "These are all of my articles:".to_string(),
+            Some(topic) => format!("Articles about {}", topic),
+            None => "All articles".to_string(),
         },
             articles,
             "Didn't find what you were looking for? Checkout <a href=\"/articles\">all articles.</a>"
@@ -173,12 +181,13 @@ pub async fn timeline_page(topic: Option<&str>, articles: &[Article]) -> String 
             "A list of articles written by Marcel Garus.",
             None,
         ),
+        all_topics,
         &timeline,
     )
     .await
 }
 
-pub async fn error_page(status_code: StatusCode, title: &str, description: &str) -> String {
+pub async fn error_page(all_topics: &[(String, usize)], status_code: StatusCode, title: &str, description: &str) -> String {
     page(
         &format!("{} – {}", status_code, &title),
         &metadata(
@@ -188,6 +197,7 @@ pub async fn error_page(status_code: StatusCode, title: &str, description: &str)
             &description,
             None,
         ),
+        all_topics,
         &fs::read_to_string("assets/error.html")
             .await
             .unwrap()

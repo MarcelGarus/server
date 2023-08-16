@@ -1,19 +1,17 @@
-<article>
-    <h1 id="title">{{title}}</h1>
-    <div class="infos secondary">
-        <span class="only-print">by Marcel Garus ·</span>
-        <span>{{info}}</span>
-        <span class="only-print"> · available at mgar.us/{{key}}</span>
-    </div>
-    {{body}}
-    <script>
-        const desiredScrollPosition = JSON.parse(sessionStorage.getItem('scrollTo'));
-        sessionStorage.removeItem('scrollTo');
-        if (typeof desiredScrollPosition === 'number') {
-            window.scrollTo(window.scrollX, desiredScrollPosition);
-        }
-    </script>
-</article>
+<h1 id="title">{{title}}</h1>
+<div class="infos secondary">
+    <span class="only-print">by Marcel Garus ·</span>
+    <span>{{info}}</span>
+    <span class="only-print"> · available at mgar.us/{{key}}</span>
+</div>
+{{body}}
+<script>
+    const desiredScrollPosition = JSON.parse(sessionStorage.getItem('scrollTo'));
+    sessionStorage.removeItem('scrollTo');
+    if (typeof desiredScrollPosition === 'number') {
+        window.scrollTo(window.scrollX, desiredScrollPosition);
+    }
+</script>
 
 <div class="card after-article-card only-screen">
     <script>
