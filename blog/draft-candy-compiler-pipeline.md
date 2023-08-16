@@ -1,4 +1,4 @@
-topics = [ "programming language design" ]
+topics = [ "programming language design", "code" ]
 description = "How the Candy compiler transforms source code into byte code."
 
 --start--

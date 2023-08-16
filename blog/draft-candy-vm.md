@@ -1,4 +1,4 @@
-topics = [ "programming language design" ]
+topics = [ "programming language design", "code" ]
 description = "How Candy uses structured concurrency."
 
 # A Quick Overview 
