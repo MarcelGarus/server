@@ -55,21 +55,14 @@ a {
 
 /* stuff for print mode */
 
-.only-screen {
-    display: none;
-}
 @media screen {
-    .only-screen {
-        display: inline-block;
+    .only-print {
+        display: none;
     }
 }
-
-.only-print {
-    display: none;
-}
 @media print {
-    .only-print {
-        display: inline-block;
+    .only-screen {
+        display: none;
     }
 }
 
@@ -94,23 +87,38 @@ body {
 main {
     width: 100%;
     max-width: 50rem;
-    margin-top: 2rem;
+    padding-top: 6rem;
     /* Instead of having a fixed amount of margin on the left and right of the
      * content, the content parts manage those margins themselves. This way, we
      * can add exceptions. For example, on small displays, code blocks and
      * images stretch from edge to edge. */
     --padding: 16px;
 }
-@media (max-width: 400px) {
-    main {
-        --padding: 8px;
-    }
-}
 aside {
     position: absolute;
     top: 0;
     right: 0;
     width: 12rem;
+    padding-top: 6rem;
+}
+@media (max-width: 66rem) {
+    main {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    aside {
+        position: relative;
+        display: block;
+        width: 100%;
+        max-width: 50rem;
+        margin: auto;
+    }
+}
+
+@media (max-width: 400px) {
+    main {
+        --padding: 8px;
+    }
 }
 
 /* index header */
@@ -212,6 +220,9 @@ main h1 {
     margin-bottom: 0.5rem;
 }
 @media (max-width: 750px) {
+    main {
+        padding-top: 1em;
+    }
     main h1 {
         font-size: 2rem;
     }
