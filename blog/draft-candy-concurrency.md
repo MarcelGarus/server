@@ -5,6 +5,8 @@ description = "How Candy uses structured concurrency."
 
 # Concurrency In Candy
 
+depends on candy-slim-runtime
+
 > As of 2023-08-10, concurrency in Candy works differently. See TODO for the reasoning behind that.
 
 Many programming languages have the option to spawn a new thread.
