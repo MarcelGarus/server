@@ -187,7 +187,6 @@ aside li {
 }
 aside li .count {
     opacity: 0.5;
-    background: #ddd;
     padding: 0 0.2em;
     font-size: 12px;
     border-radius: 0.2em;
