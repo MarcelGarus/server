@@ -352,7 +352,6 @@ Each function gets an additional parameter, the `HirId` of the code that's respo
 
 With that in place, `needs` can now be converted to normal function calls.
 
-
 ```
 # functions have an extra parameter for who's responsible for fulfilling needs
 $0 = { $1 (+ responsible $2)
@@ -366,7 +365,7 @@ $5 = call $0 $3 ($4 responsible)
 ```
 
 That also means that the compiler defines a `needs` function at the beginning of the MIR.
-Here's the code for our `inc` function:
+Here's the MIR code for our example:
 
 ```
 # anonymous:$generated::needs
@@ -468,69 +467,37 @@ Of course, code like this is horribly inefficient.
 That's why we also apply several optimizations on the MIR.
 These are the most important ones:
 
-### Module Folding
+- **Module Folding**:
+  When there's a `candy:use`, we compile the corresponding file and input its code right here.
+  The exports from the file are put in a struct.
 
-When there's a `candy:use`, we compile the corresponding file and input its code right here.
-The exports from the file are put in a struct.
+- **Constant Folding**:
+  When the result of a call of a builtin function can be already determined at compile-time, we inline the result right away.
+  For example, when using `candy:int.is` to get the `candy:is` function from the `candy:int` module, we know the arguments to the generated `candy:structGet` call – we know all the exports of the `candy:int` module and we know that you look for the `candy:is` key.
+  So, rather than executing that lookup during runtime, we replace it with a direct reference to the function.
 
-### Constant Folding
+- **Tree Shaking**:
+  If the result of a calculation is not used, it can be removed.
+  This happens quite frequently.
+  For example, when you import the `Core` library, but only use a fraction of the functions, we only keep those around.
 
-When the result of a call of a builtin function can be already determined at compile-time, we inline the result right away.
-For example, when using `candy:int.is` to get the `candy:is` function from the `candy:int` module, we know the arguments to the generated `candy:structGet` call – we know all the exports of the `candy:int` module and we know that you look for the `candy:is` key.
-So, rather than executing that lookup during runtime, we replace it with a direct reference to the function.
+- **Constant Lifting**:
+  If you have a function that creates lots of local variables (such as numbers, or `candy:True`, or `candy:False`), it's very likely that other functions use the same values.
+  In that case, we move the value defintions out of the functions so that they don't need to create new objects on the heap every time they are called.
 
-### Tree Shaking
+- **Common Subtree Elimination**:
+  When constants are lifted into an outer scope, it's likely that the same constants may appear multiple times.
+  We only keep one of them around.
 
-If the result of a calculation is not used, it can be removed.
-This happens quite frequently.
-For example, when you import the `Core` library, but only use a fraction of the functions, we only keep those around.
-
-### Constant Lifting
-
-If you have a function that creates lots of local variables (such as numbers, or `candy:True`, or `candy:False`), it's very likely that other functions use the same values.
-In that case, we move the value defintions out of the functions so that they don't need to create new objects on the heap every time they are called.
-
-### Common Subtree Elimination
-
-When constants are lifted into an outer scope, it's likely that the same constants may appear multiple times.
-We only keep one of them around.
-
-### Inlining
-
-Calls to other functions may be replaced with the function's code.
-We do that if the called function is very small.
-
-In the future, we probably need some better heuristics here; when done correctly, inlining is has the potential to enable the application of other optimizations.
-
-### Applying it
+- **Inlining**:
+  Calls to other functions may be replaced with the function's code.
+  We do that if the called function is very small.
+  In the future, we probably need some better heuristics here; when done correctly, inlining is has the potential to enable the application of other optimizations.
 
 This is the MIR with optimizations applied (note there's still lots of optimization potential):
 
 ```
-$1 = Builtins::equals:6
-$2 = Builtins::intAdd:18
-$3 = Builtins::intAdd:5
-$4 = Builtins::typeIs:19
-$5 = Builtins::typeIs:25
-$6 = Builtins::typeOf:5
-$7 = Examples:playground:inc:11
-$8 = Examples:playground:inc:15
-$9 = anonymous:$generated::needs
-$10 = builtinEquals
-$11 = builtinIfElse
-$12 = builtinIntAdd
-$13 = builtinTypeOf
-$14 = False
-$15 = Inc
-$16 = Int
-$17 = Nothing
-$18 = Text
-$19 = True
-$20 = 1
-$21 = "The `condition` must be either `True` or `False`."
-$22 = "The `reason` must be a text."
-$23 = "`a | typeIs Int` was not satisfied"
-$24 = "`int.is a` was not satisfied"
+...
 # anonymous:$generated::needs:isConditionTrue:then
 $25 = { (responsible $26) ->
   $27 = $19
@@ -597,162 +564,97 @@ That also enables un-nesting functions.
 Technically, functions also capture all used other functions.
 To make that easier, the next IR also tracks which values are constants – they don't need to be explicitly captured.
 
-This is the complete LIR for our file:
+Candy uses reference counting for garbage collection.
+The operations for increasing and decreasing the reference cout of objects also also explicit in the LIR as `dup` and `drop`.
+
+This is the LIR for our file:
 
 ```
 # Constants
 %0 = Builtins::equals:6
 ...
-%9 = builtinEquals
-...
 %13 = False
 ...
-%19 = 1
-%20 = "The `condition` must be either `True` or `False`."
-%21 = "The `reason` must be a text."
-%22 = "`a | typeIs Int` was not satisfied"
-%23 = "`int.is a` was not satisfied"
-%24 = { body_0 }
-%25 = { body_1 }
-%26 = { body_6 }
 %27 = { body_7 }
 %28 = [%14: %27]
 
 # Bodies
-body_0 (responsible $0) =
-  # Captured IDs: none
-  $1 = %18
-body_1 (responsible $0) =
-  # Captured IDs: none
-  $1 = %16
-body_2 (responsible $1) =
-  # Captured IDs: $0
-  $2 = %9
-  $3 = dup $0
-  $4 = %13
-  $5 = %8
-  $6 = call $2 with $0 $4 ($5 is responsible)
-  $7 = drop $0
-  $8 = $6
-body_3 (responsible $1) =
-  # Captured IDs: $0
-  $2 = %20
-  $3 = dup $0
-  $4 = panicking because $2 ($0 is at fault)
-  $5 = drop $0
-  $6 = $4
-body_4 (responsible $1) =
-  # Captured IDs: $0
-  $2 = %21
-  $3 = dup $0
-  $4 = panicking because $2 ($0 is at fault)
-  $5 = drop $0
-  $6 = $4
-body_5 (responsible $2) =
-  # Captured IDs: $0, $1
-  $3 = dup $0
-  $4 = dup $1
-  $5 = panicking because $0 ($1 is at fault)
-  $6 = drop $1
-  $7 = drop $0
-  $8 = $5
-body_6 $0 $1 $2 (+ responsible $3) =
-  # Captured IDs: none
-  $4 = %9
-  $5 = dup $0
-  $6 = %18
-  $7 = %8
-  $8 = call $4 with $0 $6 ($7 is responsible)
-  $9 = { body_2 capturing $0 }
-  $10 = %10
-  $11 = dup $8
-  $12 = %24
-  $13 = dup $9
-  $14 = call $10 with $8 $12 $9 ($7 is responsible)
-  $15 = { body_3 capturing $3 }
-  $16 = dup $14
-  $17 = %25
-  $18 = dup $15
-  $19 = call $10 with $14 $17 $15 ($7 is responsible)
-  $20 = %12
-  $21 = dup $1
-  $22 = call $20 with $1 ($3 is responsible)
-  $23 = dup $22
-  $24 = %17
-  $25 = call $4 with $22 $24 ($3 is responsible)
-  $26 = { body_4 capturing $3 }
-  $27 = dup $25
-  $28 = dup $26
-  $29 = call $10 with $25 $17 $26 ($7 is responsible)
-  $30 = { body_5 capturing $1, $2 }
-  $31 = dup $0
-  $32 = dup $30
-  $33 = call $10 with $0 $17 $30 ($7 is responsible)
-  $34 = drop $30
-  $35 = drop $29
-  $36 = drop $26
-  $37 = drop $25
-  $38 = drop $22
-  $39 = drop $19
-  $40 = drop $15
-  $41 = drop $14
-  $42 = drop $9
-  $43 = drop $8
-  $44 = drop $2
-  $45 = drop $1
-  $46 = drop $0
-  $47 = $33
+...
 body_7 $0 (+ responsible $1) =
   # Captured IDs: none
-  $2 = %12
-  $3 = dup $0
+  $2 = dup $0 by 2
+  $3 = %12
   $4 = %5
-  $5 = call $2 with $0 ($4 is responsible)
+  $5 = call $3 with $0 ($4 is responsible)
   $6 = %9
-  $7 = dup $5
-  $8 = %15
-  $9 = %0
-  $10 = call $6 with $5 $8 ($9 is responsible)
-  $11 = %26
-  $12 = dup $10
-  $13 = %23
-  $14 = %6
-  $15 = call $11 with $10 $13 $1 ($14 is responsible)
-  $16 = dup $0
-  $17 = %3
-  $18 = call $2 with $0 ($17 is responsible)
-  $19 = dup $18
-  $20 = %4
-  $21 = call $6 with $18 $8 ($20 is responsible)
-  $22 = dup $21
-  $23 = %22
-  $24 = %7
-  $25 = %2
-  $26 = call $11 with $21 $23 $24 ($25 is responsible)
-  $27 = %11
-  $28 = dup $0
-  $29 = %19
-  $30 = %1
-  $31 = call $27 with $0 $29 ($30 is responsible)
-  $32 = drop $26
-  $33 = drop $21
-  $34 = drop $18
-  $35 = drop $15
-  $36 = drop $10
-  $37 = drop $5
-  $38 = drop $0
-  $39 = $31
-body_8 (responsible $0) =
-  # Captured IDs: none
-  $1 = %28
+  $7 = %15
+  $8 = %0
+  $9 = call $6 with $5 $7 ($8 is responsible)
+  $10 = %26
+  $11 = %23
+  $12 = %6
+  $13 = call $10 with $9 $11 $1 ($12 is responsible)
+  $14 = %3
+  $15 = call $3 with $0 ($14 is responsible)
+  $16 = %4
+  $17 = call $6 with $15 $7 ($16 is responsible)
+  $18 = %22
+  $19 = %7
+  $20 = %2
+  $21 = call $10 with $17 $18 $19 ($20 is responsible)
+  $22 = %11
+  $23 = %19
+  $24 = %1
+  $25 = call $22 with $0 $23 ($24 is responsible)
+  $26 = $25
+  $27 = drop $15
+  $28 = drop $26
+...
 ```
-
-Candy uses reference counting for garbage collection.
-The operations for increasing and decreasing the reference cout of objects also also explicit in the LIR as `dup` and `drop`.
-
-TODO: Update once we have optimizations
 
 ## Byte Code
 
-TODO: Write
+Finally, the LIR is translated into Byte Code for the Candy VM.
 
+Constant objects are actually created in memory.
+
+Instead of functions with code, there only exists a single `Vec` of instructions.
+The VM maintains an instruction pointer, an index into that vector.
+
+Because the VM is stack-based, there are lots of operations for pushing objects to and popping elements from the stack:
+
+```
+# Constant heap
+0x55ed48b44300: "Error"
+...
+0x55ed4686efc0: "Main"
+...
+0x55ed48ed9120: "`int.is a` was not satisfied"
+...
+
+# Instructions
+...
+# Examples:playground:inc
+ 73: pushConstant inline builtinTypeOf
+ 74: pushFromStack 2
+ 75: pushConstant 0x55ed48be8e00 Builtins::typeOf:5
+ 76: call with 1 argument
+ 77: pushConstant inline builtinEquals
+ 78: pushFromStack 1
+ 79: pushConstant inline Int
+ ...
+ 97: pushConstant 0x55ed473716d0 { 3 arguments (capturing nothing) → ip-26 }
+ 98: pushFromStack 1
+ 99: pushConstant 0x55ed4686b1a0 "`a | typeIs Int` was not satisfied"
+100: pushConstant 0x55ed46a39880 Examples:playground:inc:15
+101: pushConstant 0x55ed468a8f80 Builtins::intAdd:5
+102: call with 3 arguments
+103: pushConstant inline builtinIntAdd
+104: pushFromStack 8
+105: pushConstant inline 1
+106: pushConstant 0x55ed468ac1b0 Builtins::intAdd:18
+107: tailCall with 8 locals and 2 arguments
+...
+```
+
+You made it!
