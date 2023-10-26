@@ -322,7 +322,8 @@ async fn blog_file(req: HttpRequest, path: web::Path<(String,)>) -> impl Respond
     {
         match fs::read(&format!("blog/files/{}", filename)).await {
             Ok(content) => {
-                return HttpResponse::Ok().cached().body(content);
+                let mime = mime_guess::from_path(filename).first().map(|mime| mime.to_string()).expect("Couldn't guess mime type.");
+                return HttpResponse::Ok().cached().content_type(mime).body(content);
             }
             Err(_) => {}
         }
