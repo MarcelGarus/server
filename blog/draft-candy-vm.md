@@ -16,5 +16,3 @@ In particular,
 - concurrency via handles
 
 --snip--
-
-
