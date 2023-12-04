@@ -78,8 +78,10 @@ impl Blog {
 
         let mut topics = HashMap::<String, usize>::new();
         for article in articles.values() {
-            for topic in &article.topics {
-                *topics.entry(topic.clone()).or_insert(0) += 1;
+            if article.published.is_some() {
+                for topic in &article.topics {
+                    *topics.entry(topic.clone()).or_insert(0) += 1;
+                }
             }
         }
         let mut topics = topics.into_iter().collect_vec();
