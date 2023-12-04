@@ -5,8 +5,6 @@ description = "How Candy uses structured concurrency."
 
 # Why Candy Doesn't Have Built-In Concurrency Anymore
 
-depends on candy-concurrency
-
 Until recently, we supported primitives for structured concurrency in our programming language Candy.
 You can find the details about the design and implementation [in the last article](candy-concurrency), but the short version is that there were built-in functions for operations such as starting multiple parallel execution threads.
 
