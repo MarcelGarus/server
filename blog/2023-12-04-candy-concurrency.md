@@ -1,13 +1,11 @@
-topics = [ "programming language design", "code" ]
+topics = [ "Candy", "programming language design", "code" ]
 description = "How Candy uses structured concurrency."
 
 --start--
 
 # Concurrency In Candy
 
-depends on candy-slim-runtime
-
-> As of 2023-08-10, concurrency in Candy works differently. See TODO for the reasoning behind that.
+> As of 2023-08-10, concurrency in Candy works differently. See [this article](candy-slim-runtime) for the reasoning behind that.
 
 Many programming languages have the option to spawn a new thread.
 A downside of this is that the control-flow becomes non-local:
@@ -97,4 +95,4 @@ The runtime will randomly choose between fiber 2 and 4 and run either of them.
 Actually, this concurrency approach is a thing of the past.
 As of PR X, we removed concurrency from the Candy runtime.
 It's no longer a builtin concept, but may be implemented in the underlying platform where Candy is embedded.
-For more information about the reasoning behind that change, see [this article](TODO).
+For more information about the reasoning behind that change, see [this article](candy-slim-runtime).
