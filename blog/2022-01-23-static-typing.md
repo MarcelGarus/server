@@ -1,4 +1,4 @@
-topics = [ "programming language design", "code" ]
+topics = [ "programming language design", "code", "Candy" ]
 
 --start--
 

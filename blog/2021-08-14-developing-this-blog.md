@@ -1,4 +1,4 @@
-topics = [ "this blog", "code" ]
+topics = [ "this blog", "code", "Rust" ]
 
 --start--
 
