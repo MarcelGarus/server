@@ -1,4 +1,4 @@
-topics = [ "university stuff", "code", "music" ]
+topics = [ "music", "university stuff", "code" ]
 
 --start--
 

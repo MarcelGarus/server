@@ -1,4 +1,4 @@
-topics = [ "code", "Candy", "Rust" ]
+topics = [ "Candy", "Rust", "code" ]
 description = "How the Candy compiler transforms source code into byte code."
 
 --start--
