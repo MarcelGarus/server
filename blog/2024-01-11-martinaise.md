@@ -3,7 +3,7 @@ description = "Creating a new statically typed language."
 
 --start--
 
-# Martinaise: A simple, imperative language
+# Martinaise: A Simple, Imperative Language
 
 You might know that I already created some programming languages ([Mehl](/mehl), [Candy](/candy), [Dungbeetle](https://github.com/MarcelGarus/dungbeetle)).
 So, why yet another language?
