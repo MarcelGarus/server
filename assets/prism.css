@@ -1,9 +1,9 @@
 /* PrismJS 1.24.1
-https: //prismjs.com/download.html#themes=prism&languages=clike+bash+c+dart+json+json5+python+rust
+https://prismjs.com/download.html#themes=prism&languages=clike+bash+c+dart+json+json5+python+rust+zig
 */
 /**
  * This is a custom theme matched to the blog.
- * Languages: C-like, Bash + Shell, C, Dart, JSON + Web App Manifest, JSON5, Python, Rust
+ * Languages: C-like, Bash + Shell, C, Dart, JSON + Web App Manifest, JSON5, Python, Rust, Zig
  */
 
 code[class*="language-"],
