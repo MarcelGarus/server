@@ -66,6 +66,8 @@ lazy_static! {
             Asset::file("fuzzing-slides.pdf", "application/pdf"),
             Asset::file("jogging-in-the-cold.mp3", "audio/mpeg"),
             Asset::file("jupyter-energy-slides.pdf", "application/pdf"),
+            Asset::file("burn.m4a", "audio/mp4"),
+            Asset::file("mia-and-sebastians-theme.m4a", "audio/mp4"),
             Asset::file("paralyzer.m4a", "audio/mp4"),
         ]
         .into_iter()
