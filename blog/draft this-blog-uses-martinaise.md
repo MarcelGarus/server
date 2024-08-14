@@ -1,7 +1,7 @@
 topics: this blog, Martinaise, code
 
 # This Blog Uses Martinaise
-## Why "My article doesn't compile" is now a valid statement
+## And why "My article doesn't compile" is now a valid statement
 
 I wrote about this blog's tech stack in [a previous article](developing-this-blog).
 Basically, I use the Rust actix framework and I handle SSL certificates, compression schemes, and cache lifetimes manually.
@@ -18,7 +18,7 @@ To me, that looks an awful lot like I have to write a compiler.
 ## A better Markdown
 
 Implementing a Markdown parser opened up some nice opportunities:
-Until now, I used the Rust library `comrak` for parsing Markdown, so I had to use some weird hacks to encode additional information in the Markdown syntax.
+Until now, I used the Rust library `text:comrak` for parsing Markdown, so I had to use some weird hacks to encode additional information in the official CommonMark Markdown syntax.
 
 - *Are images invertible?*
   Most of the images in this blog are simple digital black-and-white drawings.
@@ -36,7 +36,7 @@ Until now, I used the Rust library `comrak` for parsing Markdown, so I had to us
   A `rust:Vec<Value>` represents the solutions to the Kakuro.
   ```
 - *Where's the end of the preview?*
-  I'd use `--snip--` to mark the end of an article preview that's shown on the index site and strip out that directive before letting the Markdown parser do its work.
+  I'd use `markdown:--snip--` to mark the end of an article preview that's shown on the index site and strip out that directive before letting the Markdown parser do its work.
 
 The new site generator in Martinaise parses these ad-hoc extensions directly instead of when inspecting the parsed Markdown after-the-fact.
 Some of them even got more beautiful:
@@ -53,25 +53,28 @@ The end of the preview is after this sentence at the triple dots.
 This is not shown in the preview.
 ```
 
-My version of Markdown is also stricter.
-This is partly to catch errors (such as an emphasis that isn't closed) and partly to make my life as a developer easier.
+My version of Markdown is also stricter, making some articles more robust.
+For example, one article had the code `text:inc a := ...` in a paragraph.
+My pipeline interpreted `text:inc a ` as the programming language and `text:= ...` as the code.
+Of course, the client-side JS-library didn't complain.
+But now, code without a language or with an unknown language results in a compile error:
 
-TODO
-`inc a := ...`
-
+```text
 Parsing 2023-09-29 candy-compiler-pipeline.md
 When parsing markdown:
- 221 | That makes the next stages easier to implement.
- 222 | 
- 223 | ```
- 224 | assignment: struct
-       ^
-       Code block without language.
+ 241 | 
+ 242 | As you see, some syntax peculiarieties are also desugured.
+ 243 | In the CST, the `inc a := ...` definition was parsed as an assignment with a call on the left side.
+                                     ^
+                                     Unknown language inc a .
+```
 
+My motto for articles:
+If it compiles, it ~works~ reads.
 
 ## A new parsing approach
 
-When developing the compiler for [Candy](https://github.com/candy-lang/candy), an indentation-based language, we settled on a [hand-written recursive descent parser](candy-compiler-pipeline) where the individual `parse` functions took an indentation as a parameter.
+When developing the compiler for [Candy](https://github.com/candy-lang/candy), an indentation-based language, we settled on a [hand-written recursive descent parser](candy-compiler-pipeline) where the individual `rust:parse` functions took an indentation as a parameter.
 The functions were not supposed to parse any line that doesn't start with the given indentation.
 For example, the function for parsing a parenthesized expression has the following signature:
 
@@ -95,9 +98,9 @@ And you can nest those structures arbitrarily:
 
 If you parse a newline in such a nested structure, you need to ensure that the next line starts with `markdown:>   >` or you stop parsing.
 So, I opted for nested parsers.
-Instead of an `rust:input: &str` or a parser `martinaise:struct` that is passed around, there's a parser `martinaise:enum`:
+Instead of an `rust:input: &str` or a parser `mar:struct` that is passed around, there's a parser `mar:enum`:
 
-```martinaise
+```mar
 enum Parser {
   root: &RootParser,
   indent: &IndentParser,
@@ -108,17 +111,17 @@ struct IndentParser { parent: Parser, indent: Int, is_at_start: Bool }
 struct QuoteParser { parent: Parser, is_at_start: Bool }
 ```
 
-Only the `martinaise:RootParser` stores the input, all other parsers ask their parent parser for content.
+Only the `mar:RootParser` stores the input, all other parsers ask their parent parser for content.
 This allows parsers to decide which characters to omit and which to forward to their children.
 
-For example, the `martinaise:QuoteParser` can ensure that there's a `markdown:> ` after each newline.
+For example, the `mar:QuoteParser` can ensure that there's a `markdown:> ` after each newline.
 It consumes these characters when the inner parser asks for more input.
 If a line doesn't start with `markdown:> `, it just tells the inner parser that the input ended.
 This way, parsers are self-contained.
 
 Using a parser is as simple as wrapping the existing parser:
 
-```martinaise
+```mar
 fun parse_quote(parser: Parser): Result[Maybe[Markdown], Str] {
   parser.consume("> ") or return ok[Maybe[Markdown], Str](none[Markdown]())
   var quoted = Parser.quote(QuoteParser {
@@ -130,15 +133,16 @@ fun parse_quote(parser: Parser): Result[Maybe[Markdown], Str] {
 
 ## Server-side syntax highlighting
 
-Another tidbit that bothered me was syntax highlighting.
-Until now, I used `prism.js`
+Another aspect that bothered me was syntax highlighting.
+Until now, I used `text:prism.js`.
+It's fine, but client-side highlighting feels hacky – why make compute-restrained client devices take all the heavy lifting instead of highlighting the syntax once on the server?
 
-TODO
+Cue me, implementing crude syntax highlighters for Bash, C, Candy, Dart, HTML, JSON, Lisp, Markdown, Martinaise, Mehl, Python, Rust, and Zig.
+Long live the yak shave!
 
-## 
+## Wow!
 
-add this blog to that list
-
-
-I've already written some code in my programming language Martinaise – mostly the compiler itself.
-Now, I can add this blog to that list.
+I have developed quite a few programming languages already, but Martinaise is the first language that I used to write an actual, big project in.
+There's the self-hosted compiler of course, but now I can add a blog to that list.
+All the code is [on GitHub](https://github.com/MarcelGarus/server).
+Good night!
