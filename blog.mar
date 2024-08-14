@@ -76,7 +76,15 @@ fun parse_article(filename: Str, content: Str): Article {
 
   var content = content.parse_markdown() or(err) {
     found_inconsistency(state, "When parsing markdown:\n{err}")
-    Markdown.multiple(empty_slice[Markdown]())
+    Markdown.multiple(vec(
+      Markdown.heading(MarkdownHeading {
+        content = MarkdownInline.text("TODO: Fix markdown").put_on_heap(), level = 1,
+      }),
+      Markdown.heading(MarkdownHeading {
+        content = MarkdownInline.text("It doesn't parse").put_on_heap(), level = 2,
+      }),
+      Markdown.code(MarkdownCode { language = "text", code = err.format()})
+    ).to_slice())
   }
 
   var extracted_titles = extract_title_and_subtitle(state, content)
@@ -112,7 +120,7 @@ fun extract_title_and_subtitle(
       'multiple blocks."
     )
     return tuple(
-      MarkdownInline.text("TODO: Add title"),
+      MarkdownInline.text("TODO: Markdown doesn't consist of multiple blocks"),
       MarkdownInline.text("TODO: Add subtitle"),
       markdown,
     )
