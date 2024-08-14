@@ -4,6 +4,6 @@ marcelgarus.dev, localhost:2015 {
 	encode gzip
 	file_server
 }
-*.marcelgarus.dev, marcelgarus.de, *.marcelgarus.de, mgar.us, *.mgar.us {
+www.marcelgarus.dev, marcelgarus.de, www.marcelgarus.de, mgar.us, www.mgar.us {
 	redir https://marcelgarus.dev{uri}
 }
