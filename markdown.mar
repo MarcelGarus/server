@@ -216,6 +216,7 @@ fun parse_code_block(parser: MarkdownParser): Result[Maybe[MarkdownCode], Str] {
   parser.consume("```") or return ok[Maybe[MarkdownCode], Str](none[MarkdownCode]())
   var language = parser.consume_until_newline()
   if language.is_empty() then return error[Maybe[MarkdownCode], Str]("Code block without language.")
+  language.is_supported_language() or return error[Maybe[MarkdownCode], Str]("Unknown language {language}.")
   var code = parser.consume_until("```")
   ok[Maybe[MarkdownCode], Str](some(MarkdownCode { language, code }))
 }
@@ -297,6 +298,7 @@ fun parse_inline_rec(
         or return error[MarkdownInline, Str]("Inline code without language.")
       var language = code.substr(0..colon_pos)
       var code     = code.substr({colon_pos + 1}..code.len)
+      language.is_supported_language() or return error[MarkdownInline, Str]("Unknown language {language}.")
       parts.&.push(MarkdownInline.code(MarkdownCode { language, code }))
     }
     else if parser.consume("[") then {
