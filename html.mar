@@ -252,8 +252,6 @@ struct Page {
   preview_title: Str,
   preview_description: Str,
   preview_image: Maybe[PreviewImage],
-  | Topics that are used in the footer.
-  all_topics: Slice[Str],
   | Actual page content as HTML.
   content: Str,
 }
@@ -306,7 +304,6 @@ fun index_page(blog: Blog): Str {
       src = "https://marcelgarus.dev/me.png",
       alt = "A portrait of me.",
     }),
-    all_topics = blog.topics,
     content = template("templates/me.html", map[Str, Str](
       "topics" -> {
         var topics = vec[Str]()
@@ -327,7 +324,6 @@ fun article_page(blog: Blog, article: Article, random: &Random): Str {
     preview_title = simple_title,
     preview_description = article.subtitle.unformatted(),
     preview_image = none[PreviewImage](), | TODO: find first image in article?
-    all_topics = blog.topics,
     content = template("templates/article-full.html", article.fills() + map(
       "suggestion" -> article_teaser(blog.get(blog.suggestion_for(article, random))),
     )),
@@ -342,7 +338,6 @@ fun timeline_page(blog: Blog): Str {
     preview_title = "Articles",
     preview_description = "A list of all articles",
     preview_image = none[PreviewImage](),
-    all_topics = blog.topics,
     content = timeline(
       blog,
       {
@@ -364,7 +359,6 @@ fun timeline_page(blog: Blog, topic: Str): Str {
     preview_title = "Articles",
     preview_description = "A list of articles about {topic}",
     preview_image = none[PreviewImage](),
-    all_topics = blog.topics,
     content = timeline(
       blog,
       {
@@ -407,19 +401,6 @@ fun timeline(blog: Blog, articles: Slice[Article], title: Str, outro: Str): Str 
   ))
 }
 
-fun error_page(all_topics: Map[Str, Int], status_code: Int, title: Str, description: Str): Str {
-  page(
-    "{status_code} – {title}",
-    metadata("website", "", title, description, none[Tuple2[Str, Str]]()),
-    all_topics,
-    template("templates/error.html", map(
-      "title" -> title,
-      "status" -> "{status_code}",
-      "description" -> description,
-    ))
-  )
-}
-
 fun rss_page(blog: Blog): Str {
   var xml = string_builder().&
   for article in blog.articles do {
@@ -427,4 +408,16 @@ fun rss_page(blog: Blog): Str {
     xml."{template("templates/rss-article.xml", article.fills())}"
   }
   template("templates/rss-feed.xml", map("content" -> xml.to_str()))
+}
+
+fun error_404_page(): Str {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev/404",
+    tab_title = "404",
+    preview_title = "404",
+    preview_description = "Page not found",
+    preview_image = none[PreviewImage](),
+    content = template("templates/404.html", map[Str, Str]()),
+  }.to_html()
 }

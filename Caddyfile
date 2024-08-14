@@ -3,4 +3,8 @@
 	try_files {path}.html {path}.xml
 	encode gzip
 	file_server
+	handle_errors 404 {
+		rewrite * /404.html
+		file_server
+	}
 }

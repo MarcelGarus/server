@@ -32,6 +32,9 @@ fun main(): Never {
   println("Creating RSS feed")
   output("rss.xml", rss_page(blog))
 
+  println("Creating error page")
+  output("404.html", error_404_page())
+
   println("Copying blog assets")
   copy_dir("blog/files", "out/files")
 
