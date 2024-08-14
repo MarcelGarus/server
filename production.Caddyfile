@@ -1,5 +1,5 @@
 marcelgarus.dev, localhost:2015 {
-	root * out
+	root * /root/server/out
 	try_files {path}.html {path}.xml
 	encode gzip
 	file_server
