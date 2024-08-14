@@ -1,0 +1,354 @@
+import make.mar
+
+enum Markdown {
+  multiple: Slice[Markdown],
+  heading: MarkdownHeading,
+  paragraph: &MarkdownInline,
+  list: MarkdownList,
+  html: Str,
+  teaser_break,
+  thematic_break,
+  image: MarkdownImage,
+  code: MarkdownCode,
+  quote: &Markdown,
+  footnote_definition: MarkdownFootnoteDefinition,
+}
+struct MarkdownHeading { content: &MarkdownInline, level: Int }
+struct MarkdownList { type: MarkdownListType, items: Slice[Markdown] }
+enum MarkdownListType { bullet, ordered }
+struct MarkdownImage { alt: &MarkdownInline, url: Str, is_invertible: Bool }
+struct MarkdownCode { language: Str, code: Str }
+
+enum MarkdownInline {
+  multiple: Slice[MarkdownInline],
+  text: Str,
+  soft_break,
+  emphasis: &MarkdownInline,
+  strong: &MarkdownInline,
+  strikethrough: &MarkdownInline,
+  link: MarkdownLink,
+  code: MarkdownCode,
+  footnote_reference: Str,
+}
+struct MarkdownLink { label: &MarkdownInline, url: Str }
+struct MarkdownFootnoteDefinition { key: Str, definition: &Markdown }
+
+fun parse_markdown(doc: Str): Result[Markdown, MarkdownError] {
+  var root = MarkdownRootParser { input = doc, cursor = 0 }
+  switch MarkdownParser.root(root.&).parse()
+  case ok(markdown) ok[Markdown, MarkdownError](markdown)
+  case error(error) error[Markdown, MarkdownError](MarkdownError {
+    doc, cursor = root.cursor, error
+  })
+}
+struct MarkdownError { doc: Str, cursor: Int, error: Str }
+
+fun write[W](writer: W, error: MarkdownError) {
+  var lines = vec[Str]()
+  var current_line = string_builder().&
+  var offset_in_line = 0
+  for i in 0..error.doc.len do {
+    if i == error.cursor then offset_in_line = current_line.len()
+    if error.doc.get(i) == newline then {
+      lines.&.push(current_line.to_str())
+      current_line = string_builder().&
+      if i >= error.cursor then break
+    } else current_line.write(error.doc.get(i))
+  }
+  | Now, lines contains all lines up to the line that contains the error.
+  | offset_in_line is the offset into the last complete line.
+  var num_lines_to_display = min(lines.len, 4)
+  for line_number in {lines.len - num_lines_to_display}..lines.len do {
+    writer.write_line_number(line_number)
+    writer." | {lines.get(line_number)}\n"
+  }
+  for i in 0..{7 + offset_in_line} do writer." "
+  writer."^\n"
+  for i in 0..{7 + offset_in_line} do writer." "
+  writer.write(error.error)
+}
+fun write_line_number[W](writer: W, n: Int) {
+  if n >= 1000 then writer.write(n)
+  else if n >= 100 then writer.write(" {n}")
+  else if n >= 10 then writer.write("  {n}")
+  else writer.write("   {n}")
+}
+
+enum MarkdownParser {
+  root: &MarkdownRootParser,
+  indent: &MarkdownIndentParser,
+  quote: &MarkdownQuoteParser,
+}
+struct MarkdownRootParser { input: Str, cursor: Int }
+struct MarkdownIndentParser { parent: MarkdownParser, indent: Int, is_at_start: Bool }
+struct MarkdownQuoteParser { parent: MarkdownParser, is_at_start: Bool }
+
+fun copy(parser: MarkdownParser): MarkdownParser {
+  switch parser
+  case root(parser)
+    MarkdownParser.root(MarkdownRootParser {
+      input = parser.input, cursor = parser.cursor
+    }.put_on_heap())
+  case indent(parser)
+    MarkdownParser.indent(MarkdownIndentParser {
+      parent = parser.parent.copy(), indent = parser.indent, is_at_start = parser.is_at_start
+    }.put_on_heap())
+  case quote(parser)
+    MarkdownParser.quote(MarkdownQuoteParser {
+      parent = parser.parent.copy(), is_at_start = parser.is_at_start
+    }.put_on_heap())
+}
+fun next(parser: MarkdownParser): Maybe[Char] {
+  switch parser
+  case root(parser) {
+    var char = loop {
+      var char = parser.input.get_maybe(parser.cursor) or return none[Char]()
+      parser.cursor = parser.cursor + 1
+      if char.byte != 13.lower_byte() then break(char)
+    }
+    some(char)
+  }
+  case indent(parser) {
+    if parser.is_at_start then {
+      var chars = parser.parent.peek(parser.indent)
+      if chars.len < parser.indent then return none[Char]()
+      for c in chars do c == space or return none[Char]()
+      parser.parent.advance_by(parser.indent)
+      parser.is_at_start = false
+    }
+    var char = parser.parent.next() or return none[Char]()
+    parser.is_at_start = char == newline
+    some(char)
+  }
+  case quote(parser) {
+    if parser.is_at_start then {
+      parser.parent.consume("> ") or return none[Char]()
+      parser.is_at_start = false
+    }
+    var char = parser.parent.next() or return none[Char]()
+    parser.is_at_start = char == newline
+    some(char)
+  }
+}
+fun consume(parser: MarkdownParser, n: Int): Str {
+  var b = string_builder().&
+  for i in 0..n do b."{parser.next() or break}"
+  b.to_str()
+}
+fun peek(parser: MarkdownParser, n: Int): Str { parser.copy().consume(n) }
+fun advance_by(parser: MarkdownParser, n: Int) {
+  for i in 0..n do parser.next() or panic("parser doesn't even yield {n} items")
+}
+
+fun consume(parser: MarkdownParser, prefix: Str): Bool {
+  var peeked = parser.peek(prefix.len)
+  peeked == prefix or return false
+  parser.advance_by(prefix.len)
+  true
+}
+fun consume_until(parser: MarkdownParser, end: Str): Str {
+  var b = string_builder().&
+  loop {
+    if parser.peek(end.len) == end then { parser.advance_by(end.len) break }
+    b."{parser.next() or break}"
+  }
+  b.to_str()
+}
+fun consume_until_newline(parser: MarkdownParser): Str {
+  parser.consume_until("\n")
+}
+
+fun parse_heading(parser: MarkdownParser): Result[Maybe[MarkdownHeading], Str] {
+  var level = 0
+  loop if parser.consume("#") then level = level + 1 else break
+  if level == 0 then
+    return ok[Maybe[MarkdownHeading], Str](none[MarkdownHeading]())
+  parser.consume(" ")
+    or return error[Maybe[MarkdownHeading], Str]("Expected space.")
+  var str = parser.consume_until_newline()
+  parser.consume("\n")
+  ok[Maybe[MarkdownHeading], Str](some(MarkdownHeading {
+    content = MarkdownInline.text(str).put_on_heap(),
+    level
+  }))
+}
+
+fun parse_teaser_break(parser: MarkdownParser): Bool { parser.consume("...") }
+fun parse_thematic_break(parser: MarkdownParser): Bool { parser.consume("---") }
+
+fun parse_list(parser: MarkdownParser): Result[Maybe[MarkdownList], Str] {
+  var type = {
+    if parser.consume("- ") then MarkdownListType.bullet
+    else if parser.consume("1.  ") then MarkdownListType.ordered
+    else return ok[Maybe[MarkdownList], Str](none[MarkdownList]())
+  }
+  var items = vec[Markdown]()
+  loop {
+    items.&.push(MarkdownParser.indent(MarkdownIndentParser {
+      parent = parser, indent = switch type case bullet 2 case ordered 4, is_at_start = false
+    }.put_on_heap()).parse()?)
+    parser.consume(
+      switch type case bullet "- " case ordered "{items.len + 1}. ".pad_right(4)
+    ) or break
+  }
+  ok[Maybe[MarkdownList], Str](some(MarkdownList {
+    type, items = items.to_slice()
+  }))
+}
+
+fun parse_html(parser: MarkdownParser): Maybe[Str] {
+  parser.peek(1) == "<" or return none[Str]()
+  some(parser.consume_until("\n\n"))
+}
+
+fun parse_image(parser: MarkdownParser): Result[Maybe[MarkdownImage], Str] {
+  parser.consume("!") or return ok[Maybe[MarkdownImage], Str](none[MarkdownImage]())
+  var is_invertible = parser.consume("invertible")
+  parser.consume("[") or return error[Maybe[MarkdownImage], Str]("Expected image alt text")
+  var alt = parser.parse_inline()?
+  parser.consume("]") or return error[Maybe[MarkdownImage], Str]("Expected image alt text end")
+  parser.consume("(") or return error[Maybe[MarkdownImage], Str]("Expected image URL")
+  var url = parser.consume_until(")")
+  ok[Maybe[MarkdownImage], Str](some(MarkdownImage { alt = alt.put_on_heap(), url, is_invertible }))
+}
+
+fun parse_code_block(parser: MarkdownParser): Result[Maybe[MarkdownCode], Str] {
+  parser.consume("```") or return ok[Maybe[MarkdownCode], Str](none[MarkdownCode]())
+  var language = parser.consume_until_newline()
+  if language.is_empty() then return error[Maybe[MarkdownCode], Str]("Code block without language.")
+  var code = parser.consume_until("```")
+  ok[Maybe[MarkdownCode], Str](some(MarkdownCode { language, code }))
+}
+
+fun parse_quote(parser: MarkdownParser): Result[Maybe[Markdown], Str] {
+  parser.consume("> ") or return ok[Maybe[Markdown], Str](none[Markdown]())
+  var quoted = MarkdownParser.quote(MarkdownQuoteParser {
+    parent = parser, is_at_start = false
+  }.put_on_heap()).parse()?
+  ok[Maybe[Markdown], Str](some(quoted))
+}
+
+fun parse_footnote_definition(parser: MarkdownParser): Result[Maybe[MarkdownFootnoteDefinition], Str] {
+  parser.consume("[^") or return ok[Maybe[MarkdownFootnoteDefinition], Str](none[MarkdownFootnoteDefinition]())
+  var key = parser.consume_until("]")
+  parser.consume(":") or return error[Maybe[MarkdownFootnoteDefinition], Str]("Expected colon and definition.")
+  loop parser.consume(" ") or break
+  var definition = MarkdownParser.indent(MarkdownIndentParser {
+    parent = parser, indent = 2, is_at_start = false
+  }.put_on_heap()).parse()?.put_on_heap()
+  ok[Maybe[MarkdownFootnoteDefinition], Str](some(MarkdownFootnoteDefinition { key, definition }))
+}
+
+fun parse_inline(parser: MarkdownParser): Result[MarkdownInline, Str] {
+  var inline = parser.parse_inline_rec(false, false, false)?
+  if inline is multiple(multiple) then if multiple.is_empty() then
+    return error[MarkdownInline, Str]("Invalid part in inline markdown.")
+  ok[MarkdownInline, Str](inline)
+}
+fun parse_inline_rec(
+  parser: MarkdownParser,
+  is_in_strong: Bool,
+  is_in_emphasis: Bool,
+  is_in_strikethrough: Bool,
+): Result[MarkdownInline, Str] {
+  var parts = vec[MarkdownInline]()
+  var text = string_builder().&
+  loop {
+    if parser.peek(1) == "" then break | End of input
+    else if parser.peek(2) == "\n\n" then break | End of paragraph
+    else if parser.consume("\\") then {
+      text."{parser.consume(1)}"
+    }
+    else if parser.consume("\n") then {
+      parts.&.flush_text(text)
+      parts.&.push(MarkdownInline.soft_break)
+    }
+    else if parser.peek(1) == "*" then {
+      if is_in_strong then break
+      parser.advance_by(1)
+      parts.&.flush_text(text)
+      var inner = parser.parse_inline_rec(true, is_in_emphasis, is_in_strikethrough)?
+      if inner is multiple(items) then if items.is_empty() then
+        return error[MarkdownInline, Str]("Don't use ** for making stuff bold. A single * is enough.")
+      parts.&.push(MarkdownInline.strong(inner.put_on_heap()))
+      parser.consume("*") or return error[MarkdownInline, Str]("Expected end of strong.")
+      {}
+    }
+    else if parser.peek(1) == "_" then {
+      if is_in_emphasis then break
+      parser.advance_by(1)
+      parts.&.flush_text(text)
+      parts.&.push(MarkdownInline.emphasis(parser.parse_inline_rec(is_in_strong, true, is_in_strikethrough)?.put_on_heap()))
+      parser.consume("_") or return error[MarkdownInline, Str]("Expected end of emphasis.")
+      {}
+    }
+    else if parser.peek(1) == "~" then {
+      if is_in_strikethrough then break
+      parser.advance_by(1)
+      parts.&.flush_text(text)
+      parts.&.push(MarkdownInline.strikethrough(parser.parse_inline_rec(is_in_strong, is_in_emphasis, true)?.put_on_heap()))
+      parser.consume("~") or return error[MarkdownInline, Str]("Expected end of strikethrough.")
+      {}
+    }
+    else if parser.consume("`") then {
+      parts.&.flush_text(text)
+      var code = parser.consume_until("`")
+      var colon_pos = code.chars().iter().&.find(#:)
+        or return error[MarkdownInline, Str]("Inline code without language.")
+      var language = code.substr(0..colon_pos)
+      var code     = code.substr({colon_pos + 1}..code.len)
+      parts.&.push(MarkdownInline.code(MarkdownCode { language, code }))
+    }
+    else if parser.consume("[") then {
+      parts.&.flush_text(text)
+      if parser.consume("^") then {
+        var footnote_key = parser.consume_until("]")
+        parts.&.push(MarkdownInline.footnote_reference(footnote_key))
+      } else {
+        var label = parser.parse_inline_rec(is_in_strong, is_in_emphasis, is_in_strikethrough)?.put_on_heap()
+        parser.consume("]") or return error[MarkdownInline, Str]("Expected closing bracket of link label.")
+        parser.consume("(") or return error[MarkdownInline, Str]("Expected opening parenthesis for URL.")
+        var url = parser.consume_until(")")
+        parts.&.push(MarkdownInline.link(MarkdownLink { label, url }))
+      }
+    }
+    else if parser.peek(1) == "]" then break
+    else text."{parser.consume(1)}"
+  }
+  parts.&.flush_text(text)
+  ok[MarkdownInline, Str](
+    if parts.len == 1
+    then parts.get(0)
+    else MarkdownInline.multiple(parts.to_slice())
+  )
+}
+fun flush_text(vec: &Vec[MarkdownInline], text: &StringBuilder) {
+  if text.bytes.is_empty() then return {}
+  vec.push(MarkdownInline.text(text.to_str()))
+  text.* = string_builder()
+}
+
+fun parse(parser: MarkdownParser): Result[Markdown, Str] {
+  var blocks = vec[Markdown]()
+  loop {
+    loop parser.consume("\n") or break
+    if parser.peek(1) == "" then break | End of input
+    blocks.&.push(
+      if parser.parse_heading()? is some(heading) then Markdown.heading(heading)
+      else if parser.parse_teaser_break() then Markdown.teaser_break
+      else if parser.parse_thematic_break() then Markdown.thematic_break
+      else if parser.parse_list()? is some(list) then Markdown.list(list)
+      else if parser.parse_html() is some(html) then Markdown.html(html)
+      else if parser.parse_image()? is some(image) then Markdown.image(image)
+      else if parser.parse_code_block()? is some(code) then Markdown.code(code)
+      else if parser.parse_quote()? is some(quote) then Markdown.quote(quote.put_on_heap())
+      else if parser.parse_footnote_definition()? is some(def) then Markdown.footnote_definition(def)
+      else Markdown.paragraph(parser.parse_inline()?.put_on_heap())
+    )
+  }
+  ok[Markdown, Str](
+    if blocks.len == 1
+    then blocks.get(0)
+    else Markdown.multiple(blocks.to_slice())
+  )
+}

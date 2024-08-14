@@ -1,0 +1,74 @@
+import ../martinaise/stdlib.mar
+import blog.mar
+import html.mar
+import markdown.mar
+import syntax-highlighting.mar
+
+| Parses blogs from blog/ and outputs articles in the out/ folder.
+| Copies assets from assets/ into the out/ folder.
+| Generates some other files in the out/ folder.
+fun main(): Never {
+  var blog = load_blog()
+
+  var random = random_number_generator()
+  
+  for article in blog.articles do {
+    | if article.state is draft then continue
+    print("Creating {article.id}")
+    var simple_title = article.title.unformatted()
+    println(": {simple_title}")
+    output("{article.id}.html", article_page(blog, blog.get(article.id), random.&))
+  }
+
+  println("Creating index")
+  output("index.html", index_page(blog))
+
+  for topic in blog.topics do {
+    println("Creating timeline for {topic}")
+    output("articles-about-{topic.urlify()}.html", timeline_page(blog, topic))
+  }
+  output("articles.html", timeline_page(blog))
+
+  println("Creating RSS feed")
+  output("rss.xml", rss_page(blog))
+
+  println("Copying blog assets")
+  copy_dir("blog/files", "out/files")
+
+  println("Copying web assets")
+  copy_dir("assets", "out")
+
+  exit(0)
+}
+
+fun load_blog(): Blog {
+  var articles = vec[Article]()
+  var files = read_dir("blog") or panic("Couldn't read blog articles.")
+  files.&.sort()
+  for file in files do {
+    file.kind is file or continue
+    var content = read_file("blog/{file.name}")
+      or panic("Couldn't read article {file.name}")
+    println("Parsing {file.name}")
+    articles.&.push(parse_article(file.name, content.to_str()))
+  }
+  blog(articles.to_slice())
+}
+fun <=>(a: DirEntry, b: DirEntry): Ordering {
+  a.name <=> b.name
+}
+
+fun copy_dir(from: Str, to: Str) {
+  for file in read_dir(from) or panic("Couldn't read {from}.") do {
+    file.kind is file or continue
+    var file = file.name
+    var bytes = read_file("{from}/{file}")
+      or panic("Couldn't read {from}/{file}")
+    write_file("{to}/{file}", bytes) or panic("Couldn't write to {to}/{file}")
+  }
+}
+
+fun output(path: Str, content: Str) {
+  write_file("out/{path}", content.bytes())
+    or panic("Couldn't write out/{path}")
+}

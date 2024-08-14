@@ -1,0 +1,372 @@
+import make.mar
+
+struct Token { str: Str, kind: TokenKind }
+enum TokenKind {
+  default,
+  comment,     | comments
+  declaration, | declaration keywords such as struct, enum, fun, fn
+  control,     | control keywords such as if, switch, match, comptime
+  type,        | types such as Foo, Bar
+  name,        | names such as foo, bar
+  literal,     | literal values such as strings or integers
+}
+fun ==(a: TokenKind, b: TokenKind): Bool {
+  enum_to_byte(a) != enum_to_byte(b)
+}
+fun enum_to_byte[T](instance: T): Byte {
+  enum_to_byte_impl(instance.&, size_of[T]())
+}
+fun enum_to_byte_impl[T](instance: &T, size: Int): Byte asm {
+  moveib a 8 add a sp load a a  | instance
+  moveib b 16 add b sp load b b | size
+  add a b moveib c 1 sub a c loadb c a | {instance + size - 1}.*
+  load a sp | return address
+  store a c ret
+}
+
+fun tokenize(language: Str, code: Str): Slice[Token] {
+  if language == "text" then return tokenize_text(code)
+  if language == "bash" then return tokenize_bash(code)
+  if language == "c" then return tokenize_c(code)
+  if language == "candy" then return tokenize_candy(code)
+  if language == "dart" then return tokenize_dart(code)
+  if language == "html" then return tokenize_html(code)
+  if language == "json" then return tokenize_json(code)
+  if language == "lisp" then return tokenize_lisp(code)
+  if language == "markdown" then return tokenize_markdown(code)
+  if language == "mar" then return tokenize_martinaise(code)
+  if language == "mehl" then return tokenize_mehl(code)
+  if language == "path" then return tokenize_path(code)
+  if language == "python" then return tokenize_python(code)
+  if language == "rust" then return tokenize_rust(code)
+  if language == "zig" then return tokenize_zig(code)
+
+  panic("I don't know how to tokenize {language}. Code:\n{code}")
+}
+
+fun tokenize_text(text: Str): Slice[Token] {
+  filled_slice[Token](1, Token { str = text, kind = TokenKind.default })
+}
+
+| Crudely tokenizes a programming languages. Uses comment_start as an indicator
+| for a line comment and identifier_chars to group adjacent chars into
+| identifiers.
+fun tokenize_programming_language(
+  input: Str, comment_start: Str, identifier_chars: Str
+): Slice[Str] {
+  var out = vec[Str]()
+  var cursor = 0
+  loop {
+    if cursor >= input.len then break
+    var rest = input.without_first(cursor)
+
+    if rest.starts_with(comment_start) then {
+      var end = cursor
+      loop {
+        if {input.get_maybe(end) or break} == newline then break
+        end = end + 1
+      }
+      out.&.push(input.substr(cursor..end))
+      cursor = end
+      continue
+    }
+
+    if identifier_chars.iter().&.contains(rest.get(0)) then {
+      var end = cursor
+      loop {
+        if not(identifier_chars.iter().&.contains(input.get_maybe(end) or break)) then break
+        end = end + 1
+      }
+      out.&.push(input.substr(cursor..end))
+      cursor = end
+      continue
+    }
+
+    out.&.push(rest.substr(0..1))
+    cursor = cursor + 1
+  }
+  out.to_slice()
+}
+
+fun tokenize_bash(text: Str): Slice[Token] {
+  var out = vec[Token]()
+  for line in text.lines() do {
+    if line.chars().iter().&.contains(#$) then {
+      var parts = line.split("$")
+      var prompt = parts.without_last().join("$")
+      var command = parts.last()
+      out.&.push(Token { str = prompt, kind = TokenKind.declaration })
+      out.&.push(Token { str = "$", kind = TokenKind.declaration })
+      out.&.push(Token { str = command, kind = TokenKind.control })
+    } else {
+      out.&.push(Token { str = line, kind = TokenKind.default })
+    }
+    out.&.push(Token { str = "\n", kind = TokenKind.default })
+  }
+  out.to_slice()
+}
+
+fun tokenize_c(code: Str): Slice[Token] {
+  var declaration_keywords = vec("struct", "union", "enum")
+  var control_keywords = vec("if", "else", "switch", "case", "default",
+    "while", "for", "break", "continue", "return")
+  var types = vec("int", "float", "double", "long", "perf_event_attr")
+
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "//", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("//") then TokenKind.comment
+        else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
+        else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if types.iter().&.contains(token) then TokenKind.type
+        else if token.chars().get(0).is_lower() then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_candy(code: Str): Slice[Token] {
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("#") then TokenKind.comment
+        else if token == "needs" then TokenKind.control
+        else if token.chars().get(0).is_lower() then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_dart(code: Str): Slice[Token] {
+  var declaration_keywords = vec("final", "var", "class", "mixin", "extends")
+  var control_keywords = vec("if", "else", "switch", "case", "default",
+    "loop", "for", "in", "do", "while", "break", "continue", "return")
+
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "//", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("//") then TokenKind.comment
+        else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
+        else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if token.chars().get(0).is_upper() then TokenKind.type
+        else if token.chars().get(0).is_lower() then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_html(code: Str): Slice[Token] {
+  var out = vec[Token]()
+  var in_tag = false
+  for char in code do {
+    if char == #< then in_tag = true
+    out.&.push(Token {
+      str = char.format(),
+      kind = if in_tag then TokenKind.control else TokenKind.default,
+    })
+    if char == #> then in_tag = false
+  }
+  out.to_slice()
+}
+
+fun tokenize_json(json: Str): Slice[Token] {
+  var out = vec[Token]()
+  var cursor = 0
+  loop {
+    if cursor >= json.len then break
+
+    if json.get(cursor) == #" then {
+      var end = cursor + 1
+      loop {
+        if {json.get_maybe(end) or break} == #" then break
+        end = end + 1
+      }
+      out.&.push(Token {
+        str = json.substr(cursor..{end + 1}), kind = TokenKind.literal
+      })
+      cursor = end + 1
+      continue
+    }
+
+    out.&.push(Token {
+      str = json.get(cursor).format(),
+      kind = if digit_chars.contains(json.get(cursor))
+        then TokenKind.literal
+        else TokenKind.default
+    })
+    cursor = cursor + 1
+  }
+  out.to_slice()
+}
+
+fun tokenize_lisp(text: Str): Slice[Token] {
+  var out = vec[Token]()
+  for char in text do
+    out.&.push(Token {
+      str = char.format(),
+      kind = if char == #( or char == #) then TokenKind.default else TokenKind.name,
+    })
+  out.to_slice()
+}
+
+fun tokenize_markdown(text: Str): Slice[Token] {
+  var out = vec[Token]()
+  for token in text.tokenize_programming_language("#", "") do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("#") then TokenKind.comment
+        else if token == ">" or token == "-" then TokenKind.declaration
+        else if token == "*" or token == "_" then TokenKind.control
+        else if token == "[" or token == "]" or token == "(" or token == ")" or token == "!" then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_martinaise(code: Str): Slice[Token] {
+  var declaration_keywords = vec("fun", "var", "struct", "enum", "opaque")
+  var control_keywords = vec("if", "then", "else", "switch", "case", "default",
+    "orelse", "and", "or", "loop", "for", "in", "do", "break", "continue",
+    "return")
+  var operator_chars = "%!~@^\\/`.&*+$-<>="
+
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "|", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("|") then TokenKind.comment
+        else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
+        else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if token.chars().get(0).is_upper() then TokenKind.type
+        else if token.chars().get(0).is_lower() then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_mehl(code: Str): Slice[Token] {
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:=>.")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("#") then TokenKind.comment
+        else if token == "=>" then TokenKind.declaration
+        else if token == "." then TokenKind.control
+        else if token.starts_with(":") then TokenKind.literal
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else if token.chars().get(0).is_lower() then TokenKind.name
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_path(path: Str): Slice[Token] {
+  filled_slice[Token](1, Token { str = path, kind = TokenKind.default })
+}
+
+fun tokenize_python(code: Str): Slice[Token] {
+  var declaration_keywords = vec("from", "import", "as", "class")
+
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("#") then TokenKind.comment
+        else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
+        else if token.chars().get(0).is_letter() then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_rust(code: Str): Slice[Token] {
+  var declaration_keywords = vec("fn", "let", "mut", "const", "struct", "enum",
+    "pub", "impl", "trait", "self")
+  var control_keywords = vec("if", "else", "match", "loop", "while", "for",
+    "in", "break", "continue", "return")
+  var types = vec("bool", "usize", "u8", "u16")
+  var literals = vec("true", "false", "Some", "None")
+
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "//", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("//") then TokenKind.comment
+        else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
+        else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if types.iter().&.contains(token) then TokenKind.type
+        else if literals.iter().&.contains(token) then TokenKind.literal
+        else if token.chars().get(0).is_upper() then TokenKind.type
+        else if token.chars().get(0).is_lower() then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_zig(code: Str): Slice[Token] {
+  var declaration_keywords = vec("pub", "fn", "comptime", "const", "var",
+    "struct", "enum", "union", "unreachable")
+  var control_keywords = vec("if", "else", "inline", "while", "for", "break",
+    "continue", "return", "switch", "try", "orelse", "catch")
+  var types = vec("void", "type", "anytype", "bool", "usize", "u64")
+  var literals = vec("true", "false")
+
+  var out = vec[Token]()
+  for token in code.tokenize_programming_language(
+    "//", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("//") then TokenKind.comment
+        else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
+        else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if types.iter().&.contains(token) then TokenKind.type
+        else if literals.iter().&.contains(token) then TokenKind.literal
+        else if token.chars().get(0).is_upper() then TokenKind.type
+        else if token.chars().get(0).is_lower() then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}

@@ -1,0 +1,9 @@
+marcelgarus.dev, localhost:2015 {
+	root * out
+	try_files {path}.html {path}.xml
+	encode gzip
+	file_server
+}
+*.marcelgarus.dev, marcelgarus.de, *.marcelgarus.de, mgar.us, *.mgar.us {
+	redir https://marcelgarus.dev{uri}
+}

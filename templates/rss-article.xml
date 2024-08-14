@@ -1,0 +1,5 @@
+<item>
+    <title>{{title}}</title>
+    <link>https://marcelgarus.dev/{{id}}</link>
+    <pubDate>{{info}}</pubDate>
+</item>

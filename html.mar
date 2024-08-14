@@ -1,0 +1,430 @@
+import make.mar
+
+fun +[K, V](a: Map[K, V], b: Map[K, V]): Map[K, V] {
+  var map = map[K, V]()
+  for entry in a do map.&.put(entry.key, entry.value)
+  for entry in b do map.&.put(entry.key, entry.value)
+  map
+}
+
+fun write[W](writer: W, date: Date) {
+  writer."{date.year}-{date.month}-{date.day}"
+}
+fun <=>(a: Article, b: Article): Ordering {
+  var a_date = a.state.published or
+    return if b.state is published then Ordering.less else Ordering.equal
+  var b_date = b.state.published or return Ordering.greater
+  {a_date <=> b_date}.flip()
+}
+fun <=>(a: Date, b: Date): Ordering {
+  var year_ord = a.year <=> b.year
+  year_ord is equal or return year_ord
+  var month_ord = a.month <=> b.month
+  month_ord is equal or return month_ord
+  a.day <=> b.day
+}
+
+fun html_encode(str: Str): Str {
+  var b = string_builder().&
+  for char in str.chars() do
+    if char == space then b."&nbsp;"
+    else if char == #< then b."&lt;"
+    else if char == #> then b."&gt;"
+    else if char == #& then b."&amp;"
+    else b."{char}"
+  b.to_str()
+}
+fun urlify(topic: Str): Str {
+  var b = string_builder().&
+  for char in topic.chars() do
+    if char == space then b."-"
+    else if lowercase_chars.contains(char) then b."{char}"
+    else if uppercase_chars.contains(char) then b.write_byte(char.byte - #A.byte + #a.byte)
+    else panic("Found non-URL-ifiable char: {char}")
+  b.to_str()
+}
+
+fun syntax_highlight(code: MarkdownCode): Str {
+  var b = string_builder().&
+  for token in tokenize(code.language, code.code) do
+    b."<span class=\"token-{token.kind.debug()}\">{token.str.html_encode()}</span>"
+  b.to_str()
+}
+
+fun to_html(markdown: Markdown): Str {
+  var footnote_defs = vec[Str]()
+  markdown.collect_footnote_defs(footnote_defs.&)
+  var b = string_builder().&
+  b.write_html(markdown, footnote_defs.to_slice())
+  b.to_str()
+}
+fun to_html(markdown: MarkdownInline): Str {
+  var b = string_builder().&
+  b.write_html(markdown, empty_slice[Str]())
+  b.to_str()
+}
+fun collect_footnote_defs(markdown: Markdown, defs: &Vec[Str]) {
+  switch markdown
+  case footnote_definition(def) defs.push(def.key)
+  case multiple(multiple)
+    for item in multiple do item.collect_footnote_defs(defs)
+  case list(list) for item in list.items do item.collect_footnote_defs(defs)
+  case quote(quote) quote.collect_footnote_defs(defs)
+  default {}
+}
+fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[Str]) {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do writer.write_html(item, footnote_defs)
+  case heading(heading) {
+    writer."<h{heading.level}>"
+    writer.write_html(heading.content.*, footnote_defs)
+    writer."</h{heading.level}>"
+  }
+  case paragraph(paragraph) {
+    writer."<p>"
+    writer.write_html(paragraph.*, footnote_defs)
+    writer."</p>"
+  }
+  case list(list) {
+    var tag = switch list.type case ordered "ol" case bullet "ul"
+    writer."<{tag}>"
+    for item in list.items do {
+      writer."<li>"
+      writer.write_html(item, footnote_defs)
+      writer."</li>"
+    }
+    writer."</{tag}>"
+  }
+  case html(html) writer."{html}"
+  case teaser_break {}
+  case thematic_break writer."<hr />"
+  case image(image) {
+    writer."<center>
+      '<img 
+        'src=\"{image.url}\" 
+        'alt=\""
+    writer.write_html(image.alt.*, footnote_defs)
+    writer."\" 
+        'class=\"{if image.is_invertible then "invertible-image" else ""}\" />
+      '</center>"
+  }
+  case code(code) writer."<pre><code>{code.syntax_highlight()}</code></pre>"
+  case quote(quote) {
+    writer."<blockquote>"
+    writer.write_html(quote.*, footnote_defs)
+    writer."</blockquote>"
+  }
+  case footnote_definition(def) {
+    var index = {footnote_defs.iter().&.find(def.key)
+      or panic("Footnote def {def.key} doesn't exist.")} + 1
+    writer."
+      '<div id=\"footnote-{def.key}\" class=\"footnote-def\">
+      '  <div class=\"footnote-def-key\">
+      '    <span class=\"footnote-key\">{index}</span>
+      '  </div>
+      '  <div class=\"footnote-def-value\">"
+    writer.write_html(def.definition.*, footnote_defs)
+    writer."
+      '  </div>
+      '</div>"
+  }
+}
+fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[Str]) {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do writer.write_html(item, footnote_defs)
+  case text(text) writer."{text}"
+  case soft_break writer." "
+  case emphasis(child) {
+    writer."<em>"
+    writer.write_html(child.*, footnote_defs)
+    writer."</em>"
+  }
+  case strong(child) {
+    writer."<strong>"
+    writer.write_html(child.*, footnote_defs)
+    writer."</strong>"
+  }
+  case strikethrough(child) {
+    writer."<s>"
+    writer.write_html(child.*, footnote_defs)
+    writer."</s>"
+  }
+  case link(link) {
+    writer."<a href=\"{link.url}\">"
+    writer.write_html(link.label.*, footnote_defs)
+    writer."</a>"
+  }
+  case code(code) writer."<code>{code.syntax_highlight()}</code>"
+  case footnote_reference(key) {
+    var index = {footnote_defs.iter().&.find(key)
+      or panic("Footnote def {key} doesn't exist.")} + 1
+    writer."<a href=\"#footnote-{key}\" class=\"footnote-key\">{index}</a>"
+  }
+}
+
+fun unformatted(markdown: MarkdownInline): Str {
+  var b = string_builder().&
+  b.write_unformatted(markdown)
+  b.to_str()
+}
+fun write_unformatted[W](writer: W, markdown: MarkdownInline) {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do writer.write_unformatted(item)
+  case text(text) writer."{text}"
+  case soft_break writer." "
+  case emphasis(child) writer.write_unformatted(child.*)
+  case strong(child) writer.write_unformatted(child.*)
+  case strikethrough(child) writer.write_unformatted(child.*)
+  case link(link) writer.write_unformatted(link.label.*)
+  case code(code) writer."{code.code}"
+  case footnote_reference {}
+}
+
+fun template(path: Str, fills: Map[Str, Str]): Str {
+  var content = {read_file(path) or panic("Couldn't read template {path}")}.to_str()
+  for entry in fills do
+    content = content.replace("\{\{{entry.key}\}\}", entry.value)
+  content
+}
+
+fun fills(article: Article): Map[Str, Str] {
+  var info =
+    switch article.state
+      case draft "draft"
+      case timeless ""
+      case published(date) date.format()
+
+  map(
+    "id" -> article.id,
+    "title" -> article.title.to_html(),
+    "subtitle" -> article.subtitle.to_html(),
+    "info" -> info,
+    "teaser" -> article.teaser.to_html(),
+    "body" -> article.content.to_html(),
+  )
+}
+
+fun suggestion_for(blog: Blog, current: Article, random: &Random): Str {
+  | Suggest an article with the same topic as the current one.
+  var articles_with_the_same_topic = vec[Str]()
+  for article in blog.articles do {
+    if article.id == current.id then continue
+    var has_same_topic = false
+    for topic in current.topics do
+      if article.topics.iter().&.contains(topic) then {
+        has_same_topic = true
+        break
+      }
+    if not(has_same_topic) then continue
+    articles_with_the_same_topic.&.push(article.id)
+  }
+  if articles_with_the_same_topic.is_not_empty() then
+    return random.choose(articles_with_the_same_topic.to_slice())
+
+  | If no articles are about the same topic, just choose a totally random one.
+  var other_articles = vec[Str]()
+  for article in blog.articles do
+    if article.id != current.id then
+      other_articles.&.push(article.id)
+  random.choose(other_articles.to_slice())
+}
+
+fun find_title(markdown: Markdown): Maybe[MarkdownInline] {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do
+      if item.find_title() is some(title) then return some(title)
+  case heading(heading)
+    if heading.level == 1 then return some(heading.content.*)
+  default {}
+  none[MarkdownInline]()
+}
+
+struct Page {
+  site_type: Str,
+  canonical_url: Str,
+  tab_title: Str,
+  | Preview stuff that is shown when sending a link to the website in
+  | messengers such as Signal, WhatsApp, or Telegram.
+  preview_title: Str,
+  preview_description: Str,
+  preview_image: Maybe[PreviewImage],
+  | Topics that are used in the footer.
+  all_topics: Slice[Str],
+  | Actual page content as HTML.
+  content: Str,
+}
+struct PreviewImage { src: Str, alt: Str }
+fun to_html(page: Page): Str {
+  template("templates/page.html", map(
+    "title" -> page.tab_title,
+    "metadata" -> {
+      var b = string_builder().&
+      b."<meta name=\"title\" content=\"{page.preview_title}\" />\n
+        '<meta name=\"description\" content=\"{page.preview_description}\" />\n
+        '<link rel=\"canonical\" href=\"{page.canonical_url}\" />\n
+        '<meta property=\"og:title\" content=\"{page.preview_title}\" />\n
+        '<meta property=\"og:description\" content=\"{page.preview_description}\" />\n
+        '<meta property=\"og:url\" content=\"{page.canonical_url}\" />\n
+        '<meta property=\"og:site\" content=\"Marcel Garus\" />\n
+        '<meta property=\"og:site_name\" content=\"Marcel Garus\" />\n
+        '<meta property=\"og:locale\" content=\"en_US\" />\n
+        '<meta property=\"og:type\" content=\"{page.site_type}\" />\n
+        '<meta property=\"twitter:title\" content=\"{page.preview_title}\" />\n
+        '<meta property=\"twitter:description\" content=\"{page.preview_description}\" />\n
+        '<meta property=\"twitter:site\" content=\"@MarcelGarus\" />\n
+        '<meta property=\"twitter:url\" content=\"{page.canonical_url}\" />"
+      if page.preview_image is some(img) then {
+        b."<link rel=\"image_src\" href=\"{img.src}\" />\n
+          '<meta property=\"og:image\" content=\"{img.src}\" />\n
+          '<meta property=\"og:image:alt\" content=\"{img.alt}\" />\n
+          '<meta property=\"twitter:image\" content=\"{img.src}\" />\n
+          '<meta property=\"twitter:image:alt\" content=\"{img.alt}\" />"
+      }
+      b.to_str()
+    },
+    "content" -> page.content,
+  ))
+}
+
+fun article_teaser(article: Article): Str {
+  template("templates/article-teaser.html", article.fills())
+}
+
+fun index_page(blog: Blog): Str {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev",
+    tab_title = "Blog",
+    preview_title = "Blog",
+    preview_description = "Marcel Garus is a student at the Hasso Plattner Institute 
+      'in Potsdam and an open source developer mainly using Zig and Rust.",
+    preview_image = some(PreviewImage {
+      src = "https://marcelgarus.dev/me.png",
+      alt = "A portrait of me.",
+    }),
+    all_topics = blog.topics,
+    content = template("templates/me.html", map[Str, Str](
+      "topics" -> {
+        var topics = vec[Str]()
+        for topic in blog.topics do
+          topics.&.push("<a href=\"articles-about-{topic.urlify()}\">{topic}</a>")
+        comma_separated(topics).format()
+      }
+    )),
+  }.to_html()
+}
+
+fun article_page(blog: Blog, article: Article, random: &Random): Str {
+  var simple_title = article.title.unformatted()
+  Page {
+    site_type = "article",
+    canonical_url = "https://marcelgarus.dev/{article.id}",
+    tab_title = simple_title,
+    preview_title = simple_title,
+    preview_description = article.subtitle.unformatted(),
+    preview_image = none[PreviewImage](), | TODO: find first image in article?
+    all_topics = blog.topics,
+    content = template("templates/article-full.html", article.fills() + map(
+      "suggestion" -> article_teaser(blog.get(blog.suggestion_for(article, random))),
+    )),
+  }.to_html()
+}
+
+fun timeline_page(blog: Blog): Str {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev/articles",
+    tab_title = "Articles",
+    preview_title = "Articles",
+    preview_description = "A list of all articles",
+    preview_image = none[PreviewImage](),
+    all_topics = blog.topics,
+    content = timeline(
+      blog,
+      {
+        var articles = vec[Article]()
+        for article in blog.articles do
+          if article.state is published then articles.&.push(article)
+        articles.to_slice()
+      },
+      "All articles",
+      ""
+    ),
+  }.to_html()
+}
+fun timeline_page(blog: Blog, topic: Str): Str {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev/articles-about-{topic.urlify()}",
+    tab_title = "Articles",
+    preview_title = "Articles",
+    preview_description = "A list of articles about {topic}",
+    preview_image = none[PreviewImage](),
+    all_topics = blog.topics,
+    content = timeline(
+      blog,
+      {
+        var articles = vec[Article]()
+        for article in blog.articles do
+          if article.state is published then
+            if article.topics.iter().&.contains(topic) then
+              articles.&.push(article)
+        articles.to_slice()
+      },
+      "Articles about {topic}",
+      "Didn't find what you were looking for? 
+        'Check out <a href=\"/articles\">all articles.</a>"
+    ),
+  }.to_html()
+}
+fun timeline(blog: Blog, articles: Slice[Article], title: Str, outro: Str): Str {
+  articles.&.sort()
+  template("templates/timeline.html", map(
+    "title" -> title,
+    "intro" -> {
+      var topics = vec[Str]()
+      for topic in blog.topics do
+        topics.&.push("<a href=\"articles-about-{topic.urlify()}\">{topic}</a>")
+      "I wrote about {comma_separated(topics)}."
+    },
+    "timeline" -> {
+      var entries = vec[Str]()
+      for article in articles do
+        entries.&.push(template("templates/timeline-article.html", map(
+          "id" -> article.id,
+          "published" -> article.state.published.unwrap().format(),
+          "title" -> article.title.to_html(),
+          "subtitle" -> article.subtitle.to_html(),
+          "topics" -> comma_separated(article.topics).format(),
+        )))
+      entries.to_slice()
+    }.join("\n"),
+    "outro" -> outro,
+  ))
+}
+
+fun error_page(all_topics: Map[Str, Int], status_code: Int, title: Str, description: Str): Str {
+  page(
+    "{status_code} – {title}",
+    metadata("website", "", title, description, none[Tuple2[Str, Str]]()),
+    all_topics,
+    template("templates/error.html", map(
+      "title" -> title,
+      "status" -> "{status_code}",
+      "description" -> description,
+    ))
+  )
+}
+
+fun rss_page(blog: Blog): Str {
+  var xml = string_builder().&
+  for article in blog.articles do {
+    article.state is published or continue
+    xml."{template("templates/rss-article.xml", article.fills())}"
+  }
+  template("templates/rss-feed.xml", map("content" -> xml.to_str()))
+}

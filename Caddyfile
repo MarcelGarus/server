@@ -1,0 +1,6 @@
+:2015 {
+	root * out
+	try_files {path}.html {path}.xml
+	encode gzip
+	file_server
+}
