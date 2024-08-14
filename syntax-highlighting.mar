@@ -24,6 +24,25 @@ fun enum_to_byte_impl[T](instance: &T, size: Int): Byte asm {
   store a c ret
 }
 
+fun is_supported_language(lang: Str): Bool {
+  lang == "text" or
+    lang == "bash" or
+    lang == "c" or
+    lang == "candy" or
+    lang == "dart" or
+    lang == "html" or
+    lang == "json" or
+    lang == "lisp" or
+    lang == "markdown" or
+    lang == "mar" or
+    lang == "mehl" or
+    lang == "path" or
+    lang == "python" or
+    lang == "rust" or
+    lang == "zig"
+
+}
+
 fun tokenize(language: Str, code: Str): Slice[Token] {
   if language == "text" then return tokenize_text(code)
   if language == "bash" then return tokenize_bash(code)
