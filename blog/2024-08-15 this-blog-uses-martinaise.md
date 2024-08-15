@@ -10,18 +10,18 @@ So, a re-work was due.
 
 Coincidentally, I just developed [Martinaise](martinaise), my own programming language.
 The natural thing to do was to program a static site generator in my newly-born language.
-There's this quote "If all you have is a hammer, everything looks like a nail."
+They say that "If all you have is a hammer, everything looks like a nail."
 In my experience, it also holds that "If you know how to write a compiler, everything looks like a compilation problem."
-For my blog I wanted Markdown articles to go in, and HTML sites to fall out.
+For my blog, I wanted Markdown articles to go in, and HTML sites to fall out.
 To me, that looks an awful lot like I have to write a compiler.
 
 ## A better Markdown
 
 Implementing a Markdown parser opened up some nice opportunities:
-Until now, I used the Rust library `text:comrak` for parsing Markdown, so I had to use some weird hacks to encode additional information in the official CommonMark Markdown syntax.
+Until now, I used the Rust crate `text:comrak` for parsing Markdown, so I had to use weird hacks to encode additional information in the [CommonMark](https://commonmark.org) Markdown syntax.
 
 - *Are images invertible?*
-  Most of the images in this blog are simple digital black-and-white drawings.
+  Most of the images in this blog are black-and-white drawings.
   If you view this website in dark mode, those images will be inverted.
   To mark images as invertible, I'd use `text:invert:` at the beginning of the alt text:
   

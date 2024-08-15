@@ -337,7 +337,7 @@ fun tokenize_rust(code: Str): Slice[Token] {
     "pub", "impl", "trait", "self")
   var control_keywords = vec("if", "else", "match", "loop", "while", "for",
     "in", "break", "continue", "return")
-  var types = vec("bool", "usize", "u8", "u16")
+  var types = vec("bool", "usize", "u8", "u16", "str")
   var literals = vec("true", "false", "Some", "None")
 
   var out = vec[Token]()
