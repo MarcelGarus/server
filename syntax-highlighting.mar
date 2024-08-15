@@ -51,10 +51,7 @@ fun merge_some_tokens(tokens: Slice[Token]): Slice[Token] {
     if out.is_empty() then { out.&.push(token)  continue } | first token
 
     if out.last().kind == token.kind or token.str.trim().is_empty()
-    then {
-      println("token = {token.str.debug()}, last kind = {out.last().kind.debug()}, current = {token.kind.debug()}, only whitespace = {token.str.trim().is_empty()}")
-      out.&.last_ref().str = "{out.last().str}{token.str}"
-    }
+    then out.&.last_ref().str = "{out.last().str}{token.str}"
     else out.&.push(token)
   }
   out.to_slice()
