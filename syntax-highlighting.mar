@@ -11,7 +11,7 @@ enum TokenKind {
   literal,     | literal values such as strings or integers
 }
 fun ==(a: TokenKind, b: TokenKind): Bool {
-  enum_to_byte(a) != enum_to_byte(b)
+  enum_to_byte(a) == enum_to_byte(b)
 }
 fun enum_to_byte[T](instance: T): Byte {
   enum_to_byte_impl(instance.&, size_of[T]())
@@ -40,10 +40,26 @@ fun is_supported_language(lang: Str): Bool {
     lang == "python" or
     lang == "rust" or
     lang == "zig"
-
 }
 
 fun tokenize(language: Str, code: Str): Slice[Token] {
+  tokenize_unmerged(language, code).merge_some_tokens()
+}
+fun merge_some_tokens(tokens: Slice[Token]): Slice[Token] {
+  var out = vec[Token]()
+  for token in tokens do {
+    if out.is_empty() then { out.&.push(token)  continue } | first token
+
+    if out.last().kind == token.kind or token.str.trim().is_empty()
+    then {
+      println("token = {token.str.debug()}, last kind = {out.last().kind.debug()}, current = {token.kind.debug()}, only whitespace = {token.str.trim().is_empty()}")
+      out.&.last_ref().str = "{out.last().str}{token.str}"
+    }
+    else out.&.push(token)
+  }
+  out.to_slice()
+}
+fun tokenize_unmerged(language: Str, code: Str): Slice[Token] {
   if language == "text" then return tokenize_text(code)
   if language == "bash" then return tokenize_bash(code)
   if language == "c" then return tokenize_c(code)
