@@ -27,10 +27,10 @@ fun <=>(a: Date, b: Date): Ordering {
 fun html_encode(str: Str): Str {
   var b = string_builder().&
   for char in str.chars() do
-    if char == space then b."&nbsp;"
-    else if char == #< then b."&lt;"
+    if char == #< then b."&lt;"
     else if char == #> then b."&gt;"
     else if char == #& then b."&amp;"
+    else if char == #" then b."&quot;"
     else b."{char}"
   b.to_str()
 }
@@ -47,7 +47,7 @@ fun urlify(topic: Str): Str {
 fun syntax_highlight(code: MarkdownCode): Str {
   var b = string_builder().&
   for token in tokenize(code.language, code.code) do
-    b."<span class=\"token-{token.kind.debug()}\">{token.str.html_encode()}</span>"
+    b."<span class=\"token-{token.kind.debug()}\">{token.str.html_encode().replace(" ", "&nbsp;")}</span>"
   b.to_str()
 }
 
@@ -134,7 +134,7 @@ fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[Str]
   switch markdown
   case multiple(multiple)
     for item in multiple do writer.write_html(item, footnote_defs)
-  case text(text) writer."{text}"
+  case text(text) writer."{text.html_encode()}"
   case soft_break writer." "
   case emphasis(child) {
     writer."<em>"
