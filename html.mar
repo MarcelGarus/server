@@ -258,20 +258,20 @@ struct Page {
 struct PreviewImage { src: Str, alt: Str }
 fun to_html(page: Page): Str {
   template("templates/page.html", map(
-    "title" -> page.tab_title,
+    "title" -> page.tab_title.html_encode(),
     "metadata" -> {
       var b = string_builder().&
-      b."<meta name=\"title\" content=\"{page.preview_title}\" />\n
+      b."<meta name=\"title\" content=\"{page.preview_title.html_encode()}\" />\n
         '<meta name=\"description\" content=\"{page.preview_description}\" />\n
         '<link rel=\"canonical\" href=\"{page.canonical_url}\" />\n
-        '<meta property=\"og:title\" content=\"{page.preview_title}\" />\n
+        '<meta property=\"og:title\" content=\"{page.preview_title.html_encode()}\" />\n
         '<meta property=\"og:description\" content=\"{page.preview_description}\" />\n
         '<meta property=\"og:url\" content=\"{page.canonical_url}\" />\n
         '<meta property=\"og:site\" content=\"Marcel Garus\" />\n
         '<meta property=\"og:site_name\" content=\"Marcel Garus\" />\n
         '<meta property=\"og:locale\" content=\"en_US\" />\n
         '<meta property=\"og:type\" content=\"{page.site_type}\" />\n
-        '<meta property=\"twitter:title\" content=\"{page.preview_title}\" />\n
+        '<meta property=\"twitter:title\" content=\"{page.preview_title.html_encode()}\" />\n
         '<meta property=\"twitter:description\" content=\"{page.preview_description}\" />\n
         '<meta property=\"twitter:site\" content=\"@MarcelGarus\" />\n
         '<meta property=\"twitter:url\" content=\"{page.canonical_url}\" />"
