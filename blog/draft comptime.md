@@ -1,7 +1,7 @@
-topics: Zig, programming language design, Martinaise, code
+topics: Zig, programming language design, Martinaise, code, Soil, assembly
 
 # Zig's two languages
-## A case study of using Zig's comptime in Soil
+## A case study of using Zig's comptime
 
 When writing about [my first impressions of the programming language Zig](zig), the `zig:comptime` feature intruiged me.
 Now that I've written [a sizable project](https://github.com/MarcelGarus/soil) in Zig, I've seen how `zig:comptime` enables new code designs that aren't possible in other systems programming languages like Rust or C++ (as far as I know).
