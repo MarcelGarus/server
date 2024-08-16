@@ -39,6 +39,7 @@ fun is_supported_language(lang: Str): Bool {
     lang == "path" or
     lang == "python" or
     lang == "rust" or
+    lang == "soil" or
     lang == "zig"
 }
 
@@ -71,6 +72,7 @@ fun tokenize_unmerged(language: Str, code: Str): Slice[Token] {
   if language == "path" then return tokenize_path(code)
   if language == "python" then return tokenize_python(code)
   if language == "rust" then return tokenize_rust(code)
+  if language == "soil" then return tokenize_soil(code)
   if language == "zig" then return tokenize_zig(code)
 
   panic("I don't know how to tokenize {language}. Code:\n{code}")
@@ -81,8 +83,8 @@ fun tokenize_text(text: Str): Slice[Token] {
 }
 
 | Crudely tokenizes a programming languages. Uses comment_start as an indicator
-| for a line comment and identifier_chars to group adjacent chars into
-| identifiers.
+| for a line comment, double quotes for strings, and identifier_chars to group
+| adjacent chars into identifiers.
 fun tokenize_programming_language(
   input: Str, comment_start: Str, identifier_chars: Str
 ): Slice[Str] {
@@ -97,6 +99,20 @@ fun tokenize_programming_language(
       loop {
         if {input.get_maybe(end) or break} == newline then break
         end = end + 1
+      }
+      out.&.push(input.substr(cursor..end))
+      cursor = end
+      continue
+    }
+
+    if rest.get(0) == #" then {
+      var end = cursor
+      loop {
+        end = end + 1
+        if {input.get_maybe(end) or break} == #" then {
+          end = end + 1
+          break
+        }
       }
       out.&.push(input.substr(cursor..end))
       cursor = end
@@ -155,6 +171,7 @@ fun tokenize_c(code: Str): Slice[Token] {
         else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
         else if control_keywords.iter().&.contains(token) then TokenKind.control
         else if types.iter().&.contains(token) then TokenKind.type
+        else if token.chars().get(0) == #" then TokenKind.literal
         else if token.chars().get(0).is_lower() then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
         else TokenKind.default
@@ -173,6 +190,7 @@ fun tokenize_candy(code: Str): Slice[Token] {
       kind =
         if token.starts_with("#") then TokenKind.comment
         else if token == "needs" then TokenKind.control
+        else if token.chars().get(0) == #" then TokenKind.literal
         else if token.chars().get(0).is_lower() then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
         else TokenKind.default
@@ -196,6 +214,7 @@ fun tokenize_dart(code: Str): Slice[Token] {
         if token.starts_with("//") then TokenKind.comment
         else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
         else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if token.chars().get(0) == #" then TokenKind.literal
         else if token.chars().get(0).is_upper() then TokenKind.type
         else if token.chars().get(0).is_lower() then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
@@ -292,6 +311,7 @@ fun tokenize_martinaise(code: Str): Slice[Token] {
         if token.starts_with("|") then TokenKind.comment
         else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
         else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if token.chars().get(0) == #" then TokenKind.literal
         else if token.chars().get(0).is_upper() then TokenKind.type
         else if token.chars().get(0).is_lower() then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
@@ -313,6 +333,7 @@ fun tokenize_mehl(code: Str): Slice[Token] {
         else if token == "=>" then TokenKind.declaration
         else if token == "." then TokenKind.control
         else if token.starts_with(":") then TokenKind.literal
+        else if token.chars().get(0) == #" then TokenKind.literal
         else if token.chars().get(0).is_digit() then TokenKind.literal
         else if token.chars().get(0).is_lower() then TokenKind.name
         else TokenKind.default
@@ -365,9 +386,41 @@ fun tokenize_rust(code: Str): Slice[Token] {
         else if control_keywords.iter().&.contains(token) then TokenKind.control
         else if types.iter().&.contains(token) then TokenKind.type
         else if literals.iter().&.contains(token) then TokenKind.literal
+        else if token.chars().get(0) == #" then TokenKind.literal
         else if token.chars().get(0).is_upper() then TokenKind.type
         else if token.chars().get(0).is_lower() then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
+}
+
+fun tokenize_soil(soil: Str): Slice[Token] {
+  var instructions = vec("nop", "panic", "trystart", "tryend")
+    + vec("move", "movei", "moveib", "load", "loadb", "store", "storeb", "push",
+      "pop", "jump")
+    + vec("cjump", "call", "ret", "syscall")
+    + vec("cmp", "isequal", "isless", "isgreater", "islessequal",
+      "isgreaterequal", "isnotequal", "fcmp", "fisequal", "fisless",
+      "fisgreater", "fislessequal", "fisgreaterequal", "fisnotequal",
+      "inttofloat", "floattoint")
+    + vec("add", "sub", "mul", "div", "rem", "fadd", "fsub", "fmul", "fdiv",
+      "and", "or", "xor", "not")
+  var registers = vec("sp", "st", "a", "b", "c", "d", "e", "f")
+
+  var out = vec[Token]()
+  for token in soil.tokenize_programming_language(
+    "|", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("|") then TokenKind.comment
+        else if instructions.iter().&.contains(token) then TokenKind.control
+        else if registers.iter().&.contains(token) then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else if token.chars().get(0).is_letter() then TokenKind.name
         else TokenKind.default
     })
   }
@@ -379,7 +432,7 @@ fun tokenize_zig(code: Str): Slice[Token] {
     "struct", "enum", "union", "unreachable")
   var control_keywords = vec("if", "else", "inline", "while", "for", "break",
     "continue", "return", "switch", "try", "orelse", "catch")
-  var types = vec("void", "type", "anytype", "bool", "usize", "u64")
+  var types = vec("void", "type", "anytype", "bool", "usize", "u8", "u64", "i64")
   var literals = vec("true", "false")
 
   var out = vec[Token]()
@@ -394,6 +447,7 @@ fun tokenize_zig(code: Str): Slice[Token] {
         else if control_keywords.iter().&.contains(token) then TokenKind.control
         else if types.iter().&.contains(token) then TokenKind.type
         else if literals.iter().&.contains(token) then TokenKind.literal
+        else if token.chars().get(0) == #" then TokenKind.literal
         else if token.chars().get(0).is_upper() then TokenKind.type
         else if token.chars().get(0).is_lower() then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
