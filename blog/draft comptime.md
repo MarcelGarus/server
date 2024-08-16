@@ -1,45 +1,52 @@
 topics: Zig, programming language design, Martinaise, code
 
 # Zig's two languages
-## How Soil uses comptime
+## A case study of using Zig's comptime in Soil
 
-In my [article about my first impressions of the programming language Zig](zig), I wrote about how the `zig:comptime` feature can simpilify code.
-Now that I've written a compiler in Zig, I've learned how to use `zig:comptime` to make amazing things that aren't even possible in other systems programming languages like Rust or C (as far as I know).
-This article contains highlights of that.
+When writing about [my first impressions of the programming language Zig](zig), the `zig:comptime` feature intruiged me.
+Now that I've written [a sizable project](https://github.com/MarcelGarus/soil) in Zig, I've seen how `zig:comptime` enables new code designs that aren't possible in other systems programming languages like Rust or C++ (as far as I know).
+Assuming you're somewhat proficient in Rust or C++, I'll try to highlight how Zig's take on compile time execution is different.
 
 ## A quick recap: What is comptime?
 
 Comptime just stands for compile time.
-Turns out, Zig is actually two languages:
+Executing code at compile time is nothing new – compilers do this all the time to optimize your code.
+For example, when using clang with the `bash:-O3` option to compile C++ code, clang replaces `c:2 + 2` with `c:4`.
+Of course, not all code can run at compile time – reading files, doing network calls, or generally doing anything that requires calling dynamically linked functions or performing syscalls _has_ to happen at runtime.
 
-- *The Zig compile time language* uses a tree-walking interpreter, similar to how some scripting languages work.
-  It's not statically typed (for example, variables of the type `zig:anytype` can contain anything and you can inspect their types).
-  However, you can't do everything at compile time – certain operations such allocating memory, reading files, or doing network calls only work during runtime.
-  In particular, syscalls or calls of externally linked functions can only happen at runtime.
+This means, you essentially end up with two languages:
+The main language (Rust or C++) and the subset of the language that can be executed at compile time.
+Recently, Rust and C++ have added `rust:const fn`, a feature that allows you to explicitly mark a piece of code as only being allowed to use the compile time subset of the language.
+
+!invertible[A diagram of Rust's two langugaes](files/two-languages-rust.webp)
+
+Zig is different.
+The part of the language that can run at compile time is _not a subset_ of the part that can run at runtime – it's just an overlapping set.
+
+!invertible[A Venn diagram of the Zig language features.](files/two-languages-zig.webp)
+
+Turns out, Zig actually consists of two languages, the *runtime language* and the *compile time language*:
+
 - *The Zig runtime language* is what you usually think of as Zig.
-  This language compiles to machine code and executes efficiently.
-  It's statically typed, so you can't have variables of the type `zig:type` or `zig:anytype`.
-  But you can do I/O.
-
-For most code it doesn't matter whether it runs at compile time or runtime: The compiler can optimize `zig:2 + 2` to `zig:4`, or not, depending on its mood.
-But there are some parts of the language that _have_ to run at compile time, and some that _have_ to run at runtime.
-This is different from how `rust:const fn`s work in C++ or Rust.
-In Zig, the part of the langauge that can run at compile time is not a _subset_ of the language – it's an overlapping, but different language.
-
-![TODO: Image]()
+  This language is statically typed, compiles to machine code, and executes efficiently.
+  You can do all the I/O you want.
+- *The Zig compile time language* only runs during compilation.
+  It uses a tree-walking interpreter, similar to how some scripting languages work.
+  The interesting thing: You can opt in to dynamic typing!
+  If you declare a variable of the type `zig:anytype`, it can store anything, similar to `dart:Object` in Java.
+  You can also inspect the types of values, store `zig:type`s directly, and get information about them.
 
 Using the `zig:comptime` keyword, you can influence what runs at compile time and what doesn't.
-For example, in this case, it forces a Fibonacci number calculation during compile time:
+In this small example, it forces a Fibonacci number calculation to happen during compile time:
 
 ```zig
 var result = comptime fibonacci(10);
 ```
 
-At compile time, you can even do things you can't do at runtime.
-Here, we store a type and call the builtin function `zig:@typeInfo`:
+Here is code that stores a `zig:type` in a variable and uses the builtin `zig:@typeInfo` function – thing's you can only do at compile time:
 
 ```zig
-const MyIntType = u8;
+const MyIntType: type = u8;
 const foo: MyIntType = 3;
 const info = @typeInfo(T);
 ```
@@ -52,11 +59,8 @@ const foo: u8 = 3;
 const info: std.builtin.Type = .{ .Int = .{ .signedness = .unsigned, .bits = 8 } };
 ```
 
-That's right – `zig:@typeInfo` is a builtin function that takes a `zig:comptime T: type` and gives you information about it.
-The `zig:std.builtin.Type` it returns is just a normal struct, so you can inspect it during runtime.
-
-When writing Zig, it feels like you have the flexibility of a scripting language with reflection at compile time, while still retaining the efficiency of a systems programming language at runtime.
-You can use this to design really flexible APIs with complex checks at compile time.
+When writing Zig, it feels like you have the flexibility of a scripting language at compile time, while still retaining the efficiency of a systems programming language at runtime.
+You can use this to design really flexible APIs with complex compile time checks.
 Take the `zig:std.mem.readInt` function:
 
 ```zig
@@ -70,8 +74,9 @@ fn readInt(
 }
 ```
 
-The compiler ensures that the size of the `zig:buffer` exactly matches the size of the requested integer.
-It takes the bit length of the passed integer type, divides it by 8, and requires that as the buffer size.
+This is a generic function, meaning it takes a `zig:type` as a parameter.
+Depending on what type it is given, it expects a `zig:buffer` of a different size.
+The compiler ensures that the size of the `zig:buffer` exactly matches the size of the requested integer:
 
 ```zig
 const foo = readInt(u16, bytes[0..2]); // works, u16 takes 2 bytes
@@ -81,24 +86,24 @@ const bar = readInt(i64, bytes[0..2]); // error: i64 needs 8 bytes
 
 ## Soil
 
-Back to my project.
-My programming language Martinaise compiles to a byte code called Soil.
-Soil is pretty low-level – it has registers `soil:a` to `soil:f` and instructions that operate on them.
-To get you into the right mindset, here's an example of Soil instructions (they are quite low level):
+Let's use `zig:comptime`!
+My programming language [Martinaise](/martinaise) compiles to a byte code called [Soil](https://github.com/MarcelGarus/soil).
+Soil is pretty low-level – it has a handful of registers and instructions that operate on them.
+To get you into the right mindset, here are some Soil instructions:
 
 ```soil
 moveib a 21      | a = 21
 moveib b 2       | b = 2
 mul a b          | a = a * b = 42
-syscall 0        | exits the process with error code 42
+syscall 0        | exits with 42 (uses the a register as the error code)
 ```
 
-When writing an interpreter for Soil in Zig, by far the biggest effort went into implementing Soil syscalls.
-Code can use these syscalls to hook into functionality that the VM provides – such as exiting in the snippet above.
+Soil syscalls allow the byte code to hook into functionality that the VM provides – such as exiting in the snippet above.
 However, not all targets support all syscalls.
-For example, the server where this blog is hosted doesn't have a display system and therefore doesn't support syscalls related to UI rendering.
+For example, the server where this blog is hosted, [runs Soil](/this-blog-uses-martinaise).
+It doesn't have a display system and therefore doesn't support syscalls related to UI rendering.
 
-I ended up writing a small, reusable Zig library that implements everything of Soil except syscalls – those have to be provided.
+I ended up writing a small, reusable Zig library that implements everything of Soil _except_ syscalls – those have to be provided.
 You use the library like this:
 
 ```zig
@@ -136,8 +141,8 @@ What's going on here?
 
 You create a struct with all the syscall functions.
 Those have to follow a few criteria.
-For example, they have to use the C calling convention, accept a `zig:Vm` as the first argument as well as `zig:i64`s (one for each register you need to read).
-You pass this struct to the `zig:soil.run` function, which then runs the binary, calling appropriate an function whenever a syscall instruction is executed.
+For example, they have to use the C calling convention, accept a `zig:*soil.Vm` as the first parameter as well as `zig:i64`s (one for each register they want to read).
+You pass this `zig:Syscalls` struct to the `zig:soil.run` function, which then runs the binary, calling the appropriate function whenever a syscall instruction is executed.
 If you don't implement a syscall, the `zig:not_implemented` function is called instead.
 
 ## How does it work?
@@ -145,10 +150,11 @@ If you don't implement a syscall, the `zig:not_implemented` function is called i
 The `zig:run` function behaves differently based on your CPU architecture.
 On x86\_64, it compiles the byte code to x86\_64 machine code.
 Otherwise, it uses a slower interpreter.
+This conditional compilation can be done using a regular `zig:switch` – Zig guarantees to evaluate it at compile time if the switched-over value is compile-time-known.
 
 ```zig
 pub fn run(binary: []const u8, alloc: Alloc, Syscalls: type) !void {
-    comptime @import("syscall.zig").check_struct(Syscalls);
+    comptime check_struct(Syscalls);
 
     const file = try parse_file(binary, alloc);
 
@@ -167,10 +173,17 @@ pub fn run(binary: []const u8, alloc: Alloc, Syscalls: type) !void {
 }
 ```
 
-The call `zig:comptime @import("syscall.zig").check_struct(Syscalls);` checks that the `zig:Syscalls` struct has the right structure – it should contain a `zig:not_implemented` function and all functions with names of syscalls should have the right signature.
-The `zig:comptime` keyword ensures this happens all at compile time.
+The call to `zig:check_struct` checks that the `zig:Syscalls` struct contains a `zig:not_implemented` function and that all functions with names of syscalls have the right signature.
+The `zig:comptime` keyword ensures this check happens at compile time.
+That means, you can use builtin functions that let you reflect over the structure of types:
 
-The checking code itself is pretty straightforward and uses `zig:@typeInfo` a lot to reflect about the structure of the type and the functions.
+- `zig:@TypeOf(anytype)` returns the `zig:type` of the given value. This `zig:type` can then be used where a type annotation is expected.
+- `zig:@typeInfo(type)` returns a `zig:std.builtin.Type`, which is an enum with information about the type.
+- `zig:@field(anytype, []const u8)` behaves like a field access (such as `zig:foo.bar`), but you can pass a compile-time known string as the field name.
+- `zig:@hasDecl(type, []const u8)` checks if a type has a declaration with the given name.
+- `zig:@compileError([]const u8)` aborts the compilation with the given error.
+
+Using these functions, the checks are pretty straightforward:
 
 ```zig
 pub fn check_struct(Syscalls: type) void {
@@ -199,7 +212,7 @@ pub fn check_struct(Syscalls: type) void {
 pub fn check_syscall_signature(Syscalls: type, name: []const u8) void {
     const signature = switch (@typeInfo(@TypeOf(@field(Syscalls, name)))) {
         .Fn => |f| f,
-        else => return,
+        else => @compileError(name ++ " should be a function."),
     };
 
     if (signature.is_generic)
@@ -209,7 +222,7 @@ pub fn check_syscall_signature(Syscalls: type, name: []const u8) void {
 }
 ```
 
-Because of these checks, if you compile the code with an invalid struct, you get an error.
+Because of these checks, if you try to compile the code with an ill-formed struct, you get an error.
 For example, if one of your syscall functions takes a parameter of an unexpected type, the compiler will yell at you:
 
 ```text
@@ -231,7 +244,7 @@ referenced by:
 
 Note that the stack trace consists of two parts:
 The upper part is the ~runtime~ compile-runtime stack trace of the comptime evaluation.
-The lower part contains information about why the comptime expression was compiled in the first place (how it's reached from `zig:main`).
+The lower part tells why the comptime expression was compiled in the first place (how it's reached from `zig:main`).
 
 ## The Interpreter
 
@@ -251,7 +264,7 @@ It takes the syscall number (a `zig:u8`) and then switches over it.
 Instead of handling cases manually, it uses an `zig:inline else` to make the compiler duplicate the `zig:else` branch 256 times.
 Inside the `zig:else` branch, it calls `zig:run_syscall` with a compile-time-known `zig:n`.
 
-That function then gets the correct function for handling the syscall, reflects on its signature, and calls it:
+That function then retrieves the syscall handlers, reflects on its signature, and calls it:
 
 ```zig
 inline fn run_syscall(vm: *Vm, Syscalls: type, comptime n: u8) void {
@@ -276,7 +289,7 @@ inline fn run_syscall(vm: *Vm, Syscalls: type, comptime n: u8) void {
 }
 ```
 
-The `zig:Syscall.by_number` function is perhaps the most unhinged function I've ever written:
+The `zig:Syscall.by_number` function is perhaps the weirdest function I've ever written:
 
 ```zig
 pub fn by_number(Syscalls: type, comptime n: u8) TypeOfSyscall(Syscalls, n) {
@@ -299,19 +312,21 @@ If someone ever finds a more elegant way to write this code, please contact me.
 ## The Compiler
 
 On x86\_64, the byte code is compiled to machine code.
-I wrote a machine code builder, where you can call methods for emitting instructions.
-Internally, it will append the correct bytes to a buffer.
-
-In the resulting machine code, the Soil registers are directly mapped to x86\_64 registers.
-The `soil:a` register lives in `soil:r10`, the `soil:b` register in `soil:r11`, etc.
+Soil registers are directly mapped to x86\_64 registers – the `soil:a` register lives in `soil:r10`, the `soil:b` register in `soil:r11`, etc.
 This way, most Soil byte code instructions map to a single x86\_64 machine instruction.
+
+I wrote a machine code builder, where you can call methods for emitting instructions.
+Here's example code of how to emit instructions that save 42 in the `soil:r10` register:
+
+```zig
+try machine_code.emit_mov_soil_word(.a, 21);  // mov r10, 21
+try machine_code.emit_mov_soil_word(.b, 2);   // mov r11, 2
+try machine_code.emit_imul_soil_soil(.a, .b); // imul r10, r11
+```
 
 Compiling a `soil:syscall` instruction starts the same way as it did in the interpreter:
 With an inlined switch.
 Like in the interpreter, inside the inlined `zig:else` case, we get the corresponding syscall function.
-
-Now the cool part:
-Because we ensured before that the syscall functions all follow the C calling convention, the compiler can just instructions that shuffle the Soil registers into the correct registers according to the C calling convention.
 
 ```zig
 @setEvalBranchQuota(2000000);
@@ -319,51 +334,63 @@ switch (number) {
     inline else => |n| {
         const fun = Syscall.by_number(syscalls, n);
 
-        // Save all the Soil register contents on the stack.
-        try machine_code.emit_push_soil(.a);
-        try machine_code.emit_push_soil(.b);
-        try machine_code.emit_push_soil(.c);
         ...
-
-        // Align the stack to 16 bytes.
-        ...
-
-        // Move args into the correct registers for the C ABI.
-        // Soil        C ABI
-        // Vm (rbx) -> arg 1 (rdi)
-        // a (r10)  -> arg 2 (rsi)
-        // b (r11)  -> arg 3 (rdx)
-        // c (r12)  -> arg 4 (rcx)
-        // d (r13)  -> arg 5 (r8)
-        // e (r14)  -> arg 6 (r9)
-        const signature = @typeInfo(@TypeOf(fun)).Fn;
-        const num_args = signature.params.len;
-        if (num_args >= 1) try machine_code.emit_mov_rdi_rbx();
-        if (num_args >= 2) try machine_code.emit_mov_rsi_r10();
-        if (num_args >= 3) try machine_code.emit_mov_rdx_r11();
-        if (num_args >= 4) try machine_code.emit_mov_rcx_r12();
-        if (num_args >= 5) try machine_code.emit_mov_soil_soil(.sp, .d);
-        if (num_args >= 5) try machine_code.emit_mov_soil_soil(.st, .e);
-
-        // Call the syscall implementation.
-        try machine_code.emit_call_comptime(@intFromPtr(&fun));
-
-        // Unalign the stack.
-        ...
-
-        // Restore Soil register contents.
-        ...
-        try machine_code.emit_pop_soil(.c);
-        try machine_code.emit_pop_soil(.b);
-        try machine_code.emit_pop_soil(.a);
-
-        // Move the return value into the correct registers.
-        switch (signature.return_type.?) {
-            void => {},
-            i64 => try machine_code.emit_mov_soil_rax(.a),
-            else => unreachable,
-        }
     },
+}
+```
+
+Now the cool part:
+The `zig:check_struct` code already ensured that the syscall functions all use the C calling convention.
+This means we can call them from assembly as long as the stack is aligned to 16 bytes, and the arguments are in the correct registers (`soil:rdi`, `soil:rsi`, `soil:rdx`, etc.)
+
+So for each syscall handler that you write in Zig, the compiler can emit machine code that correctly calls that function!
+
+```zig
+const fun = Syscall.by_number(syscalls, n);
+
+// Save all the Soil register contents on the stack.
+try machine_code.emit_push_soil(.a);
+try machine_code.emit_push_soil(.b);
+try machine_code.emit_push_soil(.c);
+...
+
+// Align the stack to 16 bytes.
+...
+
+// Move args into the correct registers for the C ABI.
+// Soil        C ABI
+// Vm (rbx) -> arg 1 (rdi)
+// a (r10)  -> arg 2 (rsi)
+// b (r11)  -> arg 3 (rdx)
+// c (r12)  -> arg 4 (rcx)
+// d (r13)  -> arg 5 (r8)
+// e (r14)  -> arg 6 (r9)
+const signature = @typeInfo(@TypeOf(fun)).Fn;
+const num_args = signature.params.len;
+if (num_args >= 1) try machine_code.emit_mov_rdi_rbx();
+if (num_args >= 2) try machine_code.emit_mov_rsi_r10();
+if (num_args >= 3) try machine_code.emit_mov_rdx_r11();
+if (num_args >= 4) try machine_code.emit_mov_rcx_r12();
+if (num_args >= 5) try machine_code.emit_mov_soil_soil(.sp, .d);
+if (num_args >= 5) try machine_code.emit_mov_soil_soil(.st, .e);
+
+// Call the syscall implementation.
+try machine_code.emit_call_comptime(@intFromPtr(&fun));
+
+// Unalign the stack.
+...
+
+// Restore Soil register contents.
+...
+try machine_code.emit_pop_soil(.c);
+try machine_code.emit_pop_soil(.b);
+try machine_code.emit_pop_soil(.a);
+
+// Move the return value into the correct registers.
+switch (signature.return_type.?) {
+    void => {},
+    i64 => try machine_code.emit_mov_soil_rax(.a),
+    else => unreachable,
 }
 ```
 
@@ -372,22 +399,21 @@ switch (number) {
 Zig's `zig:comptime` is such an interesting language decision.
 Dynamic ducktyping, reflection, and first-level types at compile time remove the need for macros and generic types.
 Zig is a language that lets you just "do what you want" at compile time without the language getting in your way.
+I would have never thought that a systems programming language could feel so dynamic.
 
-Functions can impose arbitrary turing-complete limitations on the types of parameters.
-Those compile time checks can result in a stark contrast between Zig function signatures and those of other system programming languages.
+Zig's dynamicness means function signatures sometimes look pretty different from those of other statically typed languages.
 If you see a Rust function signature, you immediately know what types are expected.
 Even for generic functions, traits tell you how the types need to behave.
 In Zig, a function signature may not immediately tell you all you need.
 In our case, the `zig:run` function just expects a `zig:Syscalls: type` – that doesn't tell you anything!
-Only when you try compile the code, you get an error.
+Only when you try to compile the code, you get an error.
 
-Of course, just because you _can_ do anything at compile time doesn't mean you should.
-The more dynamic your type checks get, the more you should document requirements in comments.
+Of course, just because you _can_ do arbitrary turing-complete checks at compile time doesn't mean you should.
 I feel obliged to say that the vast majority of functions in Zig have readable signatures with simple types.
 This blog post focuses on how Zig differs from other languages, so insane function signatures are disproportionately represented.
 
-The `zig:comptime` feature aligns very well with Zig's general vibe.
+I think the `zig:comptime` feature aligns very well with Zig's general vibe.
 It allows the language itself to be simple and uniform.
-If you can, play arounnd with it!
-Zig will give you a new perspective on statically-typed programming just because of how different and unique it feels compared to the mainstream languages.
+If you're open to trying new things, I encourage you to play around with Zig!
+The combination of high-level dynamic scripting and low-level systems programming makes Zig just _feel_ different from all the mainstream languages.
 Happy coding!
