@@ -1,19 +1,19 @@
-topics: programming language design, code
-description = "TODO"
+topics: Martinaise, programming language design, code
 
 # In Defense of Leaky Abstractions
+## They cna be a good thing
 
-In programming, a leaky abstraction refers to an abstraction that leaks details that it is supposed to abstract away.
-In practice, [all non-trivial abstractions, to some degree, are leaky](https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/).
-For example, the network protocol TCP attempts to abstract unreliable networks by retransmitting messages, but this behavior can leak by wildly varying performance.
+In programming, a leaky abstraction refers to an abstraction that leaks implementation details that it is supposed to abstract away.
+[Joel Spolsky' Law of Leaky Abstractions](https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/) theorizes the following:
 
-Leaky abstractions are usually negatively connotated, but I argue that intentionally adding more leakage than strictly necessary *can* be a good thing.
+> All non-trivial abstractions, to some degree, are leaky.
 
-![a cross-section of a boat with an engine room](files/boat.webp)
+For example, the network protocol TCP attempts to abstract unreliable networks by retransmitting messages.
+This doesn't work all the time.
+If the network is unreliable, TCP operations can have wildly varying performance or may never complete.
 
---snip--
-
-Here are two examples where abstractions have intentional holes:
+Instead of trying to fix leaky abstractions, a technique I've recently come to like is to embrace the leaks and build guardrails around them.
+In fact, I believe there are cases where intentionally adding more leakage than strictly necessary can be a good thing.
 
 ## Rust's unsafe
 
@@ -21,13 +21,19 @@ While Rust is generally a memory-safe language, sometimes you need to sidestep t
 Rust has an `rust:unsafe` keyword for that.
 
 ```rust
-// TODO: real world example
 fn foo() {
     unsafe {
         
     }
 }
 ```
+
+![a cross-section of a boat with an engine room](files/boat.webp)
+
+
+...
+
+Here are two examples where abstractions have intentional holes:
 
 ## Martinaise's Assembly Functions
 
