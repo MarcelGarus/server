@@ -437,7 +437,7 @@ fun tokenize_zig(code: Str): Slice[Token] {
 
   var out = vec[Token]()
   for token in code.tokenize_programming_language(
-    "//", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+    "//", "@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
   do {
     out.&.push(Token {
       str = token,
@@ -448,9 +448,15 @@ fun tokenize_zig(code: Str): Slice[Token] {
         else if types.iter().&.contains(token) then TokenKind.type
         else if literals.iter().&.contains(token) then TokenKind.literal
         else if token.chars().get(0) == #" then TokenKind.literal
+        else if token.chars().get(0).is_digit() then TokenKind.literal
         else if token.chars().get(0).is_upper() then TokenKind.type
         else if token.chars().get(0).is_lower() then TokenKind.name
-        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else if token.chars().get(0) == #@ then {
+          if token.len == 1 then TokenKind.default
+          else if token.chars().get(1).is_upper() then TokenKind.type
+          else if token.chars().get(1).is_lower() then TokenKind.name
+          else TokenKind.default
+        }
         else TokenKind.default
     })
   }
