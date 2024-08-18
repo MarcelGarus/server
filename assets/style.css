@@ -20,6 +20,8 @@
     --sans: "IBM Plex Sans";
     --serif: "IBM Plex Serif";
     --mono: "IBM Plex Mono";
+
+    --box-border-radius: 1em;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,6 +38,7 @@
         --token-literal: #ff9752;
     }
 }
+@media (max-width: 50rem) { :root { --box-border-radius: 0; } }
 
 a { color: var(--fg); }
 
@@ -113,10 +116,6 @@ blockquote {
 }
 @media (max-width: 50rem) { blockquote { border-radius: 0; } }
 
-pre { margin: 0; padding: 1rem var(--padding); }
-code { font-family: var(--mono); }
-@media (max-width: 50rem) { pre { border-radius: 0; } }
-
 hr {
     width: 50%;
     height: 4px;
@@ -178,6 +177,7 @@ audio {
 
 code, pre {
     background: none;
+    font-family: var(--mono);
     font-size: 0.9em;
     text-align: left;
     white-space: pre;
@@ -197,15 +197,15 @@ code, pre {
 }
 
 pre {
-    overflow: auto;
-    border-radius: 1em;
-}
-
-:not(pre)>code, pre {
     background: var(--box-bg);
+    border-radius: var(--box-border-radius);
+    margin: 0;
+    padding: 1rem var(--padding);
+    overflow: auto;
 }
 
 :not(pre)>code {
+    background: var(--box-bg);
     padding: 0.1em;
     border-radius: 0.3em;
     white-space: normal;
