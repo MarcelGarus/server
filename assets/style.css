@@ -10,11 +10,11 @@
     --selection-fg: white;
 
     /* for code highlighting */
-    --token-comment: #1a6400;
+    --token-comment: #374f2f;
     --token-declaration: #0000ff;
     --token-control: #af00db;
     --token-type: #e50000;
-    --token-name: #003c2e;
+    --token-name: #00755a;
     --token-literal: #795e28;
 
     --sans: "IBM Plex Sans";
