@@ -25,7 +25,7 @@ fun <=>(a: Date, b: Date): Ordering {
 }
 
 fun html_encode(str: Str): Str {
-  var b = string_builder().&
+  var b = str_builder().&
   for char in str.chars() do
     if char == #< then b."&lt;"
     else if char == #> then b."&gt;"
@@ -35,7 +35,7 @@ fun html_encode(str: Str): Str {
   b.to_str()
 }
 fun urlify(topic: Str): Str {
-  var b = string_builder().&
+  var b = str_builder().&
   for char in topic.chars() do
     if char == space then b."-"
     else if lowercase_chars.contains(char) then b."{char}"
@@ -45,7 +45,7 @@ fun urlify(topic: Str): Str {
 }
 
 fun syntax_highlight(code: MarkdownCode): Str {
-  var b = string_builder().&
+  var b = str_builder().&
   for token in tokenize(code.language, code.code) do
     b."<span class=\"token-{token.kind.debug()}\">{token.str.html_encode().replace(" ", "&nbsp;")}</span>"
   b.to_str()
@@ -54,12 +54,12 @@ fun syntax_highlight(code: MarkdownCode): Str {
 fun to_html(markdown: Markdown): Str {
   var footnote_defs = vec[Str]()
   markdown.collect_footnote_defs(footnote_defs.&)
-  var b = string_builder().&
+  var b = str_builder().&
   b.write_html(markdown, footnote_defs.to_slice())
   b.to_str()
 }
 fun to_html(markdown: MarkdownInline): Str {
-  var b = string_builder().&
+  var b = str_builder().&
   b.write_html(markdown, empty_slice[Str]())
   b.to_str()
 }
@@ -165,7 +165,7 @@ fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[Str]
 }
 
 fun unformatted(markdown: MarkdownInline): Str {
-  var b = string_builder().&
+  var b = str_builder().&
   b.write_unformatted(markdown)
   b.to_str()
 }
@@ -260,7 +260,7 @@ fun to_html(page: Page): Str {
   template("templates/page.html", map(
     "title" -> page.tab_title.html_encode(),
     "metadata" -> {
-      var b = string_builder().&
+      var b = str_builder().&
       b."<meta name=\"title\" content=\"{page.preview_title.html_encode()}\" />\n
         '<meta name=\"description\" content=\"{page.preview_description.html_encode()}\" />\n
         '<link rel=\"canonical\" href=\"{page.canonical_url}\" />\n
@@ -402,7 +402,7 @@ fun timeline(blog: Blog, articles: Slice[Article], title: Str, outro: Str): Str 
 }
 
 fun rss_page(blog: Blog): Str {
-  var xml = string_builder().&
+  var xml = str_builder().&
   for article in blog.articles do {
     article.state is published or continue
     xml."{template("templates/rss-article.xml", article.fills())}"

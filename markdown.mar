@@ -45,13 +45,13 @@ struct MarkdownError { doc: Str, cursor: Int, error: Str }
 
 fun write[W](writer: W, error: MarkdownError) {
   var lines = vec[Str]()
-  var current_line = string_builder().&
+  var current_line = str_builder().&
   var offset_in_line = 0
   for i in 0..error.doc.len do {
     if i == error.cursor then offset_in_line = current_line.len()
     if error.doc.get(i) == newline then {
       lines.&.push(current_line.to_str())
-      current_line = string_builder().&
+      current_line = str_builder().&
       if i >= error.cursor then break
     } else current_line.write(error.doc.get(i))
   }
@@ -131,7 +131,7 @@ fun next(parser: MarkdownParser): Maybe[Char] {
   }
 }
 fun consume(parser: MarkdownParser, n: Int): Str {
-  var b = string_builder().&
+  var b = str_builder().&
   for i in 0..n do b."{parser.next() or break}"
   b.to_str()
 }
@@ -147,7 +147,7 @@ fun consume(parser: MarkdownParser, prefix: Str): Bool {
   true
 }
 fun consume_until(parser: MarkdownParser, end: Str): Str {
-  var b = string_builder().&
+  var b = str_builder().&
   loop {
     if parser.peek(end.len) == end then { parser.advance_by(end.len) break }
     b."{parser.next() or break}"
@@ -253,7 +253,7 @@ fun parse_inline_rec(
   is_in_strikethrough: Bool,
 ): Result[MarkdownInline, Str] {
   var parts = vec[MarkdownInline]()
-  var text = string_builder().&
+  var text = str_builder().&
   loop {
     if parser.peek(1) == "" then break | End of input
     else if parser.peek(2) == "\n\n" then break | End of paragraph
@@ -324,10 +324,10 @@ fun parse_inline_rec(
     else MarkdownInline.multiple(parts.to_slice())
   )
 }
-fun flush_text(vec: &Vec[MarkdownInline], text: &StringBuilder) {
+fun flush_text(vec: &Vec[MarkdownInline], text: &StrBuilder) {
   if text.bytes.is_empty() then return {}
   vec.push(MarkdownInline.text(text.to_str()))
-  text.* = string_builder()
+  text.* = str_builder()
 }
 
 fun parse(parser: MarkdownParser): Result[Markdown, Str] {
