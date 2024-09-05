@@ -1,6 +1,7 @@
 topics: Candy, programming language design, code
 
 # Concurrency In Candy
+
 ## How Candy uses structured concurrency
 
 > As of 2023-08-10, concurrency in Candy works differently. See [this article](candy-slim-runtime) for the reasoning behind that.

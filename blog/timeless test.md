@@ -1,4 +1,5 @@
 # Testing this blog
+
 ## A little playground
 
 This article only exists to test the capabilities of the blog.

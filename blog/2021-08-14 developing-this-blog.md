@@ -1,6 +1,7 @@
 topics: this blog, Rust, code
 
 # On Developing This Blog
+
 ## Build stuff manually!
 
 I created the blogging server that hosts this page with my bare hands.

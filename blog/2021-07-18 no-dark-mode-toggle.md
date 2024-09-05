@@ -1,6 +1,7 @@
 topics: this blog
 
 # Why This Website Has No Dark-Mode Toggle
+
 ## How to incentivize change
 
 Maybe you're wondering why there's no dark-mode toggle on this website.

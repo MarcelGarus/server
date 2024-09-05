@@ -1,6 +1,7 @@
 topics: Candy, Rust, code
 
 # The Candy Compiler Pipeline
+
 ## The journey of a file from source code to byte code
 
 > See the [previous article](candy) for an introduction to Candy, a new programming language.

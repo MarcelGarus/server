@@ -1,6 +1,7 @@
 topics: programming language design, Candy, code
 
 # Types Considered Bloat?
+
 ## A critical look at static typing
 
 Nowadays, there are soooo many programming languages.

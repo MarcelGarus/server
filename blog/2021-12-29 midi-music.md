@@ -1,6 +1,7 @@
 topics: music
 
 # My Music Setup
+
 ## How I make MIDI music with my electric piano and iPad
 
 I've played piano for a long time, but only recently discovered that my electric piano has a MIDI port at the back!

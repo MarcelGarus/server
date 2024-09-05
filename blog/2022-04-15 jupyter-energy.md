@@ -1,6 +1,7 @@
 topics: university stuff, code
 
 # Jupyter Energy
+
 ## Increasing awareness of energy consumption in Jupyter Notebooks
 
 [Jupyter Notebooks](https://jupyter.org) are becoming an increasingly popular tool: These Python-based notebooks run in your browser and combine running code with writing explanatory documentation.

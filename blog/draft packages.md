@@ -1,4 +1,5 @@
 # Package Ecosystems
+
 ## A sketch of a package manager for Candy
 
 program dependencies are pinned by default

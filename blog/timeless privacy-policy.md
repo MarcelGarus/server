@@ -1,4 +1,5 @@
 # Imprint & Privacy Policy
+
 ## TLDR: I don't collect data about you
 
 This is the personal website of me, Marcel Garus.

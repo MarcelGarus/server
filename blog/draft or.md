@@ -1,6 +1,7 @@
 topics: programming language design, Martinaise, code
 
 # Or
+
 ## An underrated language construct
 
 In [my programming language Martinaise](/martinaise), I don't have a predetermined set of operators that are built into the language.

@@ -165,10 +165,10 @@ fun parse_heading(parser: MarkdownParser): Result[Maybe[MarkdownHeading], Str] {
     return ok[Maybe[MarkdownHeading], Str](none[MarkdownHeading]())
   parser.consume(" ")
     or return error[Maybe[MarkdownHeading], Str]("Expected space.")
-  var str = parser.consume_until_newline()
+  var heading = parser.parse_inline()?
   parser.consume("\n")
   ok[Maybe[MarkdownHeading], Str](some(MarkdownHeading {
-    content = MarkdownInline.text(str).put_on_heap(),
+    content = heading.put_on_heap(),
     level
   }))
 }

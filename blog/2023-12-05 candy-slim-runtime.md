@@ -1,6 +1,7 @@
 topics: Candy, programming language design, code
 
 # Goodbye, Fibers!
+
 ## Why Candy doesn't have built-in concurrency anymore
 
 Until recently, we supported primitives for structured concurrency in our programming language Candy.

@@ -1,7 +1,8 @@
 topics: Martinaise, programming language design, code
 
 # In Defense of Leaky Abstractions
-## They cna be a good thing
+
+## They can be a good thing
 
 In programming, a leaky abstraction refers to an abstraction that leaks implementation details that it is supposed to abstract away.
 [Joel Spolsky' Law of Leaky Abstractions](https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/) theorizes the following:
