@@ -298,12 +298,12 @@ fun tokenize_martinaise(code: Str): Slice[Token] {
   var declaration_keywords = vec("fun", "var", "struct", "enum", "opaque")
   var control_keywords = vec("if", "then", "else", "switch", "case", "default",
     "orelse", "and", "or", "loop", "for", "in", "do", "break", "continue",
-    "return")
+    "return") + vec("is")
   var operator_chars = "%!~@^\\/`.&*+$-<>="
 
   var out = vec[Token]()
   for token in code.tokenize_programming_language(
-    "|", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    "|", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
   do {
     out.&.push(Token {
       str = token,
@@ -348,17 +348,20 @@ fun tokenize_path(path: Str): Slice[Token] {
 
 fun tokenize_python(code: Str): Slice[Token] {
   var declaration_keywords = vec("from", "import", "as", "class")
+  var control_keywords = vec("if", "else", "while", "for", "in", "break",
+    "continue", "return", "and", "or")
 
   var out = vec[Token]()
   for token in code.tokenize_programming_language(
-    "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
   do {
     out.&.push(Token {
       str = token,
       kind =
         if token.starts_with("#") then TokenKind.comment
         else if declaration_keywords.iter().&.contains(token) then TokenKind.declaration
-        else if token.chars().get(0).is_letter() then TokenKind.name
+        else if control_keywords.iter().&.contains(token) then TokenKind.control
+        else if token.chars().get(0).is_letter() or token.chars().get(0) == #_ then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
         else TokenKind.default
     })
