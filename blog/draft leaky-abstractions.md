@@ -24,58 +24,46 @@ Rust has an `rust:unsafe` keyword for that.
 ```rust
 fn foo() {
     unsafe {
-        
+        ...
     }
 }
 ```
 
-![a cross-section of a boat with an engine room](files/boat.webp)
-
-
-...
-
-Here are two examples where abstractions have intentional holes:
+Even though `rust:unsafe` increases the complexity of the Rust language, it brings a huge benefit:
+Efficient data structures can be implemented directly in Rust.
 
 ## Martinaise's Assembly Functions
 
-In Martinaise, you can write functions in assembly instead of the language itself.
-
-
+In Martinaise, you can write functions in [a custom assembly](/soil) instead of the language itself:
 
 ```mar
-struct Slice[T] { data: &T, len: U64 }
+opaque Int = 8 bytes big, 8 bytes aligned
 
-fun copy_to[T](from: Slice[T], to: Slice[T]) {
-  assert(from.len == to.len, "copy_to slice lens don't match")
-  memcopy(
-    from.data.to_address(),
-    to.data.to_address(),
-    from.len * stride_size_of[T](),
-  )
+fun +(left: Int, right: Int): Int asm {
+  moveib a 8  add a sp load a a | left
+  moveib b 16 add b sp load b b | right
+  load c sp | return value address
+  add a b store c a ret
 }
-
-fun memcopy(from: Address, to: Address, amount: U64) asm {
-  moveib a 16 add a sp load a a | from
-  moveib b 24 add b sp load b b | to
-  moveib c 32 add c sp load c c | amount
-  moveib e 1
-  cmp a b isless cjump .right_to_left
-  .left_to_right: ..loop:
-  move st c isequal cjump .done
-  loadb d a storeb b d
-  add a e add b e sub c e
-  jump ..loop
-  .right_to_left:
-  add a c add b c sub a e sub b e | make a and b point to the last byte
-  ..loop:
-  move st c isequal cjump .done
-  loadb d a storeb b d
-  sub a e sub b e sub c e
-  jump ..loop
-  .done: ret
+fun -(left: Int, right: Int): Int asm {
+  moveib a 8  add a sp load a a | left
+  moveib b 16 add b sp load b b | right
+  load c sp | return value address
+  sub a b store c a ret
 }
 ```
 
-## Conclusion
+It's a custom assembly variant where each instruction gets compiled to a single byte code instruction.
+Interfacing with assembly works seamlessly because types have a deterministic memory layout and Martinaise has a pre-defined calling convention.
 
-TODO
+Even though Martinaise expliticly leaks the underlying byte code compilation target, the language itself gets simpler:
+Instead of many types like `mar:Int` or `mar:Float` being magically implemented by the compiler, the only "magic" are the assembly functions.
+
+## A cozy language feeling
+
+Leaky abstractions gives me a cozy feeling.
+When writing assembly functions or unsafe code, it kind of feels like working in the engine room of a boat:
+You get to peek behind the curtain of the usual language and work on a lower level.
+When diving into the implementation of code, you never hit a wall of compiler-magic – you just get dropped one level lower.
+
+![a cross-section of a boat with an engine room](files/boat.webp)
