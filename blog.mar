@@ -1,12 +1,12 @@
 import make.mar
 
-struct Blog { articles: Slice[Article], topics: Slice[Str] }
+struct Blog { articles: Slice[Article], topics: Slice[String] }
 struct Article {
-  id: Str,
+  id: String,
   state: ArticleState,
   title: MarkdownInline,
   subtitle: MarkdownInline,
-  topics: Slice[Str],
+  topics: Slice[String],
   content: Markdown,
   teaser: Markdown,
 }
@@ -18,40 +18,40 @@ fun blog(articles: Slice[Article]): Blog {
     articles,
     | Set the topics to a list of all topics in descending occurrence count.
     topics = {
-      var topic_counts = map[Str, Int]()
+      var topic_counts = map[String, Int]()
       for article in articles do
         for topic in article.topics do
           topic_counts.&.get_ref_or_put_default(topic, 0) += 1
 
-      var found_topics = vec[FoundTopic]()
+      var found_topics = list[FoundTopic]()
       for entry in topic_counts do
         found_topics.&.push(FoundTopic { topic = entry.key, count = entry.value })
 
       found_topics.to_slice().&.sort()
 
-      var topics = vec[Str]()
+      var topics = list[String]()
       for topic in found_topics do topics.&.push(topic.topic)
       topics.to_slice()
     }
   }
 }
-struct FoundTopic { topic: Str, count: Int }
+struct FoundTopic { topic: String, count: Int }
 fun <=>(a: FoundTopic, b: FoundTopic): Ordering { {a.count <=> b.count}.flip() }
 
-fun get(blog: Blog, id: Str): Article {
+fun get(blog: Blog, id: String): Article {
   for article in blog.articles do
     if article.id == id then return article
   panic("No article with ID {id}")
 }
 
 | Panics for published articles, prints a warning for draft ones.
-fun found_inconsistency(state: ArticleState, inconsistency: Str) {
+fun found_inconsistency(state: ArticleState, inconsistency: String) {
   if state is draft
   then println("  WARNING: {inconsistency}")
   else panic(inconsistency)
 }
 
-fun parse_article(filename: Str, content: Str): Article {
+fun parse_article(filename: String, content: String): Article {
   var filename = filename.&
   filename.trim_suffix(".md")
   var state_and_id = filename.split(" ")
@@ -64,7 +64,7 @@ fun parse_article(filename: Str, content: Str): Article {
   if content.chars().iter().&.contains(carriage_return) then
     found_inconsistency(state, "Blog article contains carriage return.")
 
-  var topics = vec[Str]()
+  var topics = list[String]()
   if content.starts_with("topics: ") then {
     var newline_pos = content.chars().iter().&.find(newline) or
       panic("Article only contains topics, no actual content")
@@ -76,7 +76,7 @@ fun parse_article(filename: Str, content: Str): Article {
 
   var content = content.parse_markdown() or(err) {
     found_inconsistency(state, "When parsing markdown:\n{err}")
-    Markdown.multiple(vec(
+    Markdown.multiple(list(
       Markdown.heading(MarkdownHeading {
         content = MarkdownInline.text("TODO: Fix markdown").put_on_heap(), level = 1,
       }),
@@ -96,7 +96,7 @@ fun parse_article(filename: Str, content: Str): Article {
 
   Article { id, state, title, subtitle, topics, content, teaser }
 }
-fun parse_state(state: Str): ArticleState {
+fun parse_state(state: String): ArticleState {
   if state == "draft" then return ArticleState.draft
   if state == "timeless" then return ArticleState.timeless
   var parts = state.split("-")
@@ -162,7 +162,7 @@ fun extract_title_and_subtitle(
 fun extract_teaser(markdown: Markdown): Markdown {
   switch markdown
   case multiple(multiple) {
-    var items = vec[Markdown]()
+    var items = list[Markdown]()
     for item in multiple do {
       if item is teaser_break then break
       items.&.push(item)

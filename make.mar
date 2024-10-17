@@ -45,7 +45,7 @@ fun main(): Never {
 }
 
 fun load_blog(): Blog {
-  var articles = vec[Article]()
+  var articles = list[Article]()
   var files = read_dir("blog") or panic("Couldn't read blog articles.")
   files.&.sort()
   for file in files do {
@@ -53,7 +53,7 @@ fun load_blog(): Blog {
     var content = read_file("blog/{file.name}")
       or panic("Couldn't read article {file.name}")
     println("Parsing {file.name}")
-    articles.&.push(parse_article(file.name, content.to_str()))
+    articles.&.push(parse_article(file.name, content.to_string()))
   }
   blog(articles.to_slice())
 }
@@ -61,7 +61,7 @@ fun <=>(a: DirEntry, b: DirEntry): Ordering {
   a.name <=> b.name
 }
 
-fun copy_dir(from: Str, to: Str) {
+fun copy_dir(from: String, to: String) {
   for file in read_dir(from) or panic("Couldn't read {from}.") do {
     file.kind is file or continue
     var file = file.name
@@ -71,7 +71,7 @@ fun copy_dir(from: Str, to: Str) {
   }
 }
 
-fun output(path: Str, content: Str) {
+fun output(path: String, content: String) {
   write_file("out/{path}", content.bytes())
     or panic("Couldn't write out/{path}")
 }

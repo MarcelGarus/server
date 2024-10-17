@@ -24,46 +24,46 @@ fun <=>(a: Date, b: Date): Ordering {
   a.day <=> b.day
 }
 
-fun html_encode(str: Str): Str {
-  var b = str_builder().&
+fun html_encode(str: String): String {
+  var b = string_builder().&
   for char in str.chars() do
     if char == #< then b."&lt;"
     else if char == #> then b."&gt;"
     else if char == #& then b."&amp;"
     else if char == #" then b."&quot;"
     else b."{char}"
-  b.to_str()
+  b.to_string()
 }
-fun urlify(topic: Str): Str {
-  var b = str_builder().&
+fun urlify(topic: String): String {
+  var b = string_builder().&
   for char in topic.chars() do
     if char == space then b."-"
     else if lowercase_chars.contains(char) then b."{char}"
     else if uppercase_chars.contains(char) then b.write_byte(char.byte - #A.byte + #a.byte)
     else panic("Found non-URL-ifiable char: {char}")
-  b.to_str()
+  b.to_string()
 }
 
-fun syntax_highlight(code: MarkdownCode): Str {
-  var b = str_builder().&
+fun syntax_highlight(code: MarkdownCode): String {
+  var b = string_builder().&
   for token in tokenize(code.language, code.code) do
     b."<span class=\"token-{token.kind.debug()}\">{token.str.html_encode().replace(" ", "&nbsp;")}</span>"
-  b.to_str()
+  b.to_string()
 }
 
-fun to_html(markdown: Markdown): Str {
-  var footnote_defs = vec[Str]()
+fun to_html(markdown: Markdown): String {
+  var footnote_defs = list[String]()
   markdown.collect_footnote_defs(footnote_defs.&)
-  var b = str_builder().&
+  var b = string_builder().&
   b.write_html(markdown, footnote_defs.to_slice())
-  b.to_str()
+  b.to_string()
 }
-fun to_html(markdown: MarkdownInline): Str {
-  var b = str_builder().&
-  b.write_html(markdown, empty_slice[Str]())
-  b.to_str()
+fun to_html(markdown: MarkdownInline): String {
+  var b = string_builder().&
+  b.write_html(markdown, empty_slice[String]())
+  b.to_string()
 }
-fun collect_footnote_defs(markdown: Markdown, defs: &Vec[Str]) {
+fun collect_footnote_defs(markdown: Markdown, defs: &List[String]) {
   switch markdown
   case footnote_definition(def) defs.push(def.key)
   case multiple(multiple)
@@ -72,7 +72,7 @@ fun collect_footnote_defs(markdown: Markdown, defs: &Vec[Str]) {
   case quote(quote) quote.collect_footnote_defs(defs)
   default {}
 }
-fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[Str]) {
+fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[String]) {
   switch markdown
   case multiple(multiple)
     for item in multiple do writer.write_html(item, footnote_defs)
@@ -130,7 +130,7 @@ fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[Str]) {
       '</div>"
   }
 }
-fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[Str]) {
+fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[String]) {
   switch markdown
   case multiple(multiple)
     for item in multiple do writer.write_html(item, footnote_defs)
@@ -164,10 +164,10 @@ fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[Str]
   }
 }
 
-fun unformatted(markdown: MarkdownInline): Str {
-  var b = str_builder().&
+fun unformatted(markdown: MarkdownInline): String {
+  var b = string_builder().&
   b.write_unformatted(markdown)
-  b.to_str()
+  b.to_string()
 }
 fun write_unformatted[W](writer: W, markdown: MarkdownInline) {
   switch markdown
@@ -183,14 +183,14 @@ fun write_unformatted[W](writer: W, markdown: MarkdownInline) {
   case footnote_reference {}
 }
 
-fun template(path: Str, fills: Map[Str, Str]): Str {
-  var content = {read_file(path) or panic("Couldn't read template {path}")}.to_str()
+fun template(path: String, fills: Map[String, String]): String {
+  var content = {read_file(path) or panic("Couldn't read template {path}")}.to_string()
   for entry in fills do
     content = content.replace("\{\{{entry.key}\}\}", entry.value)
   content
 }
 
-fun fills(article: Article): Map[Str, Str] {
+fun fills(article: Article): Map[String, String] {
   var info =
     switch article.state
       case draft "draft"
@@ -207,9 +207,9 @@ fun fills(article: Article): Map[Str, Str] {
   )
 }
 
-fun suggestion_for(blog: Blog, current: Article, random: &Random): Str {
+fun suggestion_for(blog: Blog, current: Article, random: &Random): String {
   | Suggest an article with the same topic as the current one.
-  var articles_with_the_same_topic = vec[Str]()
+  var articles_with_the_same_topic = list[String]()
   for article in blog.articles do {
     if article.id == current.id then continue
     var has_same_topic = false
@@ -225,7 +225,7 @@ fun suggestion_for(blog: Blog, current: Article, random: &Random): Str {
     return random.choose(articles_with_the_same_topic.to_slice())
 
   | If no articles are about the same topic, just choose a totally random one.
-  var other_articles = vec[Str]()
+  var other_articles = list[String]()
   for article in blog.articles do
     if article.id != current.id then
       other_articles.&.push(article.id)
@@ -244,23 +244,23 @@ fun find_title(markdown: Markdown): Maybe[MarkdownInline] {
 }
 
 struct Page {
-  site_type: Str,
-  canonical_url: Str,
-  tab_title: Str,
+  site_type: String,
+  canonical_url: String,
+  tab_title: String,
   | Preview stuff that is shown when sending a link to the website in
   | messengers such as Signal, WhatsApp, or Telegram.
-  preview_title: Str,
-  preview_description: Str,
+  preview_title: String,
+  preview_description: String,
   preview_image: Maybe[PreviewImage],
   | Actual page content as HTML.
-  content: Str,
+  content: String,
 }
-struct PreviewImage { src: Str, alt: Str }
-fun to_html(page: Page): Str {
+struct PreviewImage { src: String, alt: String }
+fun to_html(page: Page): String {
   template("templates/page.html", map(
     "title" -> page.tab_title.html_encode(),
     "metadata" -> {
-      var b = str_builder().&
+      var b = string_builder().&
       b."<meta name=\"title\" content=\"{page.preview_title.html_encode()}\" />\n
         '<meta name=\"description\" content=\"{page.preview_description.html_encode()}\" />\n
         '<link rel=\"canonical\" href=\"{page.canonical_url}\" />\n
@@ -282,17 +282,17 @@ fun to_html(page: Page): Str {
           '<meta property=\"twitter:image\" content=\"{img.src}\" />\n
           '<meta property=\"twitter:image:alt\" content=\"{img.alt}\" />"
       }
-      b.to_str()
+      b.to_string()
     },
     "content" -> page.content,
   ))
 }
 
-fun article_teaser(article: Article): Str {
+fun article_teaser(article: Article): String {
   template("templates/article-teaser.html", article.fills())
 }
 
-fun index_page(blog: Blog): Str {
+fun index_page(blog: Blog): String {
   Page {
     site_type = "website",
     canonical_url = "https://marcelgarus.dev",
@@ -304,9 +304,9 @@ fun index_page(blog: Blog): Str {
       src = "https://marcelgarus.dev/me.png",
       alt = "A portrait of me.",
     }),
-    content = template("templates/me.html", map[Str, Str](
+    content = template("templates/me.html", map[String, String](
       "topics" -> {
-        var topics = vec[Str]()
+        var topics = list[String]()
         for topic in blog.topics do
           topics.&.push("<a href=\"articles-about-{topic.urlify()}\">{topic}</a>")
         comma_separated(topics).format()
@@ -315,7 +315,7 @@ fun index_page(blog: Blog): Str {
   }.to_html()
 }
 
-fun article_page(blog: Blog, article: Article, random: &Random): Str {
+fun article_page(blog: Blog, article: Article, random: &Random): String {
   var simple_title = article.title.unformatted()
   Page {
     site_type = "article",
@@ -330,7 +330,7 @@ fun article_page(blog: Blog, article: Article, random: &Random): Str {
   }.to_html()
 }
 
-fun timeline_page(blog: Blog): Str {
+fun timeline_page(blog: Blog): String {
   Page {
     site_type = "website",
     canonical_url = "https://marcelgarus.dev/articles",
@@ -341,7 +341,7 @@ fun timeline_page(blog: Blog): Str {
     content = timeline(
       blog,
       {
-        var articles = vec[Article]()
+        var articles = list[Article]()
         for article in blog.articles do
           if article.state is published then articles.&.push(article)
         articles.to_slice()
@@ -351,7 +351,7 @@ fun timeline_page(blog: Blog): Str {
     ),
   }.to_html()
 }
-fun timeline_page(blog: Blog, topic: Str): Str {
+fun timeline_page(blog: Blog, topic: String): String {
   Page {
     site_type = "website",
     canonical_url = "https://marcelgarus.dev/articles-about-{topic.urlify()}",
@@ -362,7 +362,7 @@ fun timeline_page(blog: Blog, topic: Str): Str {
     content = timeline(
       blog,
       {
-        var articles = vec[Article]()
+        var articles = list[Article]()
         for article in blog.articles do
           if article.state is published then
             if article.topics.iter().&.contains(topic) then
@@ -375,18 +375,18 @@ fun timeline_page(blog: Blog, topic: Str): Str {
     ),
   }.to_html()
 }
-fun timeline(blog: Blog, articles: Slice[Article], title: Str, outro: Str): Str {
+fun timeline(blog: Blog, articles: Slice[Article], title: String, outro: String): String {
   articles.&.sort()
   template("templates/timeline.html", map(
     "title" -> title,
     "intro" -> {
-      var topics = vec[Str]()
+      var topics = list[String]()
       for topic in blog.topics do
         topics.&.push("<a href=\"articles-about-{topic.urlify()}\">{topic}</a>")
       "I wrote about {comma_separated(topics)}."
     },
     "timeline" -> {
-      var entries = vec[Str]()
+      var entries = list[String]()
       for article in articles do
         entries.&.push(template("templates/timeline-article.html", map(
           "id" -> article.id,
@@ -401,16 +401,16 @@ fun timeline(blog: Blog, articles: Slice[Article], title: Str, outro: Str): Str 
   ))
 }
 
-fun rss_page(blog: Blog): Str {
-  var xml = str_builder().&
+fun rss_page(blog: Blog): String {
+  var xml = string_builder().&
   for article in blog.articles do {
     article.state is published or continue
     xml."{template("templates/rss-article.xml", article.fills())}"
   }
-  template("templates/rss-feed.xml", map("content" -> xml.to_str()))
+  template("templates/rss-feed.xml", map("content" -> xml.to_string()))
 }
 
-fun error_404_page(): Str {
+fun error_404_page(): String {
   Page {
     site_type = "website",
     canonical_url = "https://marcelgarus.dev/404",
@@ -418,6 +418,6 @@ fun error_404_page(): Str {
     preview_title = "404",
     preview_description = "Page not found",
     preview_image = none[PreviewImage](),
-    content = template("templates/404.html", map[Str, Str]()),
+    content = template("templates/404.html", map[String, String]()),
   }.to_html()
 }
