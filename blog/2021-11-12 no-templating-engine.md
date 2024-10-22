@@ -47,9 +47,9 @@ But I still think it's more elegant than using some [full-blown templating engin
         .await
     }
     ```
-
-   That's just marvelous! It takes a list of `rust:Article`s, then turns each of them into some small HTML snippet using the `rust:article_teaser` function and then it joins all of them and puts them in the body of a `rust:page`.
-   I can just apply my full knowledge of Rust's `rust:Iterator` protocol without doing any weird hacks in HTML.
+    
+    That's just marvelous! It takes a list of `rust:Article`s, then turns each of them into some small HTML snippet using the `rust:article_teaser` function and then it joins all of them and puts them in the body of a `rust:page`.
+    I can just apply my full knowledge of Rust's `rust:Iterator` protocol without doing any weird hacks in HTML.
 
 And it's not just me: Most modern UI frameworks – Flutter, React, Jetpack Compose, SwitftUI – try to move the power of constructing UI into the code itself instead of keeping it in a separate language.
 
