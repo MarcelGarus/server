@@ -39,6 +39,7 @@ fun is_supported_language(lang: String): Bool {
     lang == "path" or
     lang == "python" or
     lang == "rust" or
+    lang == "scopes" or
     lang == "soil" or
     lang == "zig"
 }
@@ -72,6 +73,7 @@ fun tokenize_unmerged(language: String, code: String): Slice[Token] {
   if language == "path" then return tokenize_path(code)
   if language == "python" then return tokenize_python(code)
   if language == "rust" then return tokenize_rust(code)
+  if language == "scopes" then return tokenize_scopes(code)
   if language == "soil" then return tokenize_soil(code)
   if language == "zig" then return tokenize_zig(code)
 
@@ -396,6 +398,17 @@ fun tokenize_rust(code: String): Slice[Token] {
         else TokenKind.default
     })
   }
+  out.to_slice()
+}
+
+fun tokenize_scopes(scopes: String): Slice[Token] {
+  var out = list[Token]()
+  for token
+  in
+    scopes.tokenize_programming_language(
+      "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    )
+  do out.&.push(Token { str = token, kind = TokenKind.name })
   out.to_slice()
 }
 
