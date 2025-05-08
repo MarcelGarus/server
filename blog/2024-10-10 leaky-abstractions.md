@@ -1,4 +1,4 @@
-topics: Martinaise, programming language design, code
+topics: Martinaise, Soil, programming language design, code
 
 # In Defense of Leaky Abstractions
 
