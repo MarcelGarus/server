@@ -37,6 +37,7 @@ fun is_supported_language(lang: String): Bool {
     lang == "mar" or
     lang == "mehl" or
     lang == "path" or
+    lang == "plum" or
     lang == "python" or
     lang == "rust" or
     lang == "scopes" or
@@ -71,6 +72,7 @@ fun tokenize_unmerged(language: String, code: String): Slice[Token] {
   if language == "mar" then return tokenize_martinaise(code)
   if language == "mehl" then return tokenize_mehl(code)
   if language == "path" then return tokenize_path(code)
+  if language == "plum" then return tokenize_plum(code)
   if language == "python" then return tokenize_python(code)
   if language == "rust" then return tokenize_rust(code)
   if language == "scopes" then return tokenize_scopes(code)
@@ -346,6 +348,26 @@ fun tokenize_mehl(code: String): Slice[Token] {
 
 fun tokenize_path(path: String): Slice[Token] {
   filled_slice[Token](1, Token { str = path, kind = TokenKind.default })
+}
+
+fun tokenize_plum(code: String): Slice[Token] {
+  var out = list[Token]()
+  for token in code.tokenize_programming_language(
+    "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+  do {
+    out.&.push(Token {
+      str = token,
+      kind =
+        if token.starts_with("#") then TokenKind.comment
+        else if token == "&" then TokenKind.declaration
+        else if token == "|" then TokenKind.declaration
+        else if token == "%" then TokenKind.control
+        else if token.chars().get(0).is_letter() or token.chars().get(0) == #_ then TokenKind.name
+        else if token.chars().get(0).is_digit() then TokenKind.literal
+        else TokenKind.default
+    })
+  }
+  out.to_slice()
 }
 
 fun tokenize_python(code: String): Slice[Token] {
