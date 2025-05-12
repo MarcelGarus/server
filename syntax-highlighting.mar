@@ -362,8 +362,10 @@ fun tokenize_plum(code: String): Slice[Token] {
         else if token == "&" then TokenKind.declaration
         else if token == "|" then TokenKind.declaration
         else if token == "%" then TokenKind.control
-        else if token.chars().get(0).is_letter() or token.chars().get(0) == #_ then TokenKind.name
         else if token.chars().get(0).is_digit() then TokenKind.literal
+        else if "ABCDEFGHIJKLMNOPQRSTUVWXYZ".contains(token.chars().get(0)) then TokenKind.type
+        else if token == "t" then TokenKind.type
+        else if "abcdefghijklmnopqrstuvwxyz_".contains(token.chars().get(0)) then TokenKind.name
         else TokenKind.default
     })
   }
