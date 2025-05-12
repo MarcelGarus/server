@@ -4,6 +4,10 @@ topics: Plum, programming language design, code
 
 ## Why the compiler models types as strings
 
+<style>
+img { max-height: 15rem; }
+</style>
+
 [Plum](/plum) is a programming language with structural typing:
 Types don't have an identity.
 Values of these two types can be used interchangably:
@@ -60,7 +64,7 @@ enum Type {
 
 Here, recursive types would result in recursive data structures in the compiler:
 
-![todo](files/types-as-recursive-trees.png)
+![A graph modeling a linked list using an enum pointing to a struct pointing to the original enum.](files/types-as-recursive-trees.png)
 
 > Note: In Plum, enum variants use an empty struct as the default payload type.
 
@@ -85,7 +89,7 @@ enum Type {
 
 Using this, the `plum:LinkedList Int` type is represented like this in the compiler:
 
-![TODO](files/types-as-trees.png)
+![A tree modeling a linked list using an enum pointing to a struct modeling to a recursive marker.](files/types-as-trees.png)
 
 The recursive type tells us that we should start two layers further up in the tree – at the original enum.
 
@@ -104,11 +108,11 @@ length list: (LinkedList t) -> Int =
 
 The `plum:%` switches on the `plum:LinkedList t` enum.
 In the `plum:more` case, we unpack the enum variant's payload, making it available as the `plum:node` variable.
-What is the type of of a single `plum:node`?
+What is the type of a single `plum:node`?
 
 If we would naively extract the payload's type from the internal `mar:Map[String, Type]`, that would leave us with this type:
 
-![TODO](files/type-is-not-self-contained.png)
+![A type that is not self-contained: A struct that points to a recursive marker, which tells us to look two levels up in the type tree.](files/type-is-not-self-contained.png)
 
 Oh no!
 This type is no longer self-contained:
@@ -116,7 +120,7 @@ The recursive type references a type two levels up in the type tree, but that pa
 
 What we want to happen instead is for the type to "wrap around" when navigating into it:
 
-![Todo](files/types-extended-at-bottom.png)
+![A struct pointing to an enum pointing to a recursive marker.](files/types-extended-at-bottom.png)
 
 I had a version of the compiler that worked like this.
 However, it was quite finnicky to use:
@@ -141,7 +145,7 @@ Currently, the compiler represents the linked list type as this string:
 Note that the string has a very strict structure to it – every type has parentheses around it and even the `plum:(&)` type for the `plum:empty` variant is explicit.
 
 You might think working with strings would be really difficult.
-However, many algorithms working with types actually got easier.
+However, many algorithms actually got easier.
 
 ## Type Algorithms
 
@@ -278,6 +282,7 @@ When types were modeled as trees, this function was one of the most complex piec
 - Subcalls return how many recursive types were in that subtree.
 - When we found the _i_ th recursive type, we had to replace the parent.
   There are two ways to do that:
+  
   - Return an enum from the recursive function that tells the parent to replace itself.
   - Check whether a child is the _i_ th recursive type before traversing down into it.
     This is the option I chose.
@@ -289,6 +294,7 @@ Imagine my surprise that using strings instead of trees makes this transformatio
 - Search for a closing parenthesis afterwards. That's the end of the recursive type.
 - Search for the opening and closing parenthes of the surronding types (this does require tracking the nesting as we encounter parentheses).
 - Concatenate these three strings:
+  
   - everything up to the start of the surrounding type
   - the recursive type
   - everything after the end of the surrounding type
