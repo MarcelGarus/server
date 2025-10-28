@@ -2,18 +2,17 @@ topics: Plum, programming language design, code
 
 # Switch Chains
 
-## Separating decision making from actions
+## Separating decisions from actions
 
 My programming language [Plum](/plum) has postfix syntax for switching on enums:
 
 ```plum
-number =
-  a_bool
-  % true -> 2
-    false -> 3
+a_bool
+% true -> 2
+  false -> 3
 ```
 
-It also has structural typing and infers types of expressions:
+It also has structural typing, enum literals like `plum:| variant`, and infers types of expressions:
 
 ```plum
 value =
@@ -29,7 +28,7 @@ Turns out, structural typing and postfix switches compose really well!
 
 In other languages, I'd often write code like this:
 
-```plum
+```mar
 if condition {
   // action 1
   ...
@@ -45,8 +44,7 @@ if condition {
 }
 ```
 
-The action comments would be a high-level description of what I'm doing.
-But note how I interleave the information gathering / decision making with actually doing the action?
+Note how I interleave the information gathering / decision making with actually doing the action?
 In Plum, I can cleanly separate them using this pattern:
 
 ```plum
@@ -66,7 +64,7 @@ Here, I construct a value of the type `plum:| action_1 action_2 action_3` and th
 The comments are gone!
 The code is now fully self-documenting.
 
-My first big data structure written in Plum was the standard library's hash map.
+The first complex data structure written in Plum was the standard library's hash map.
 It uses a typical implementation:
 A giant array stores the entries and you do linear searches to put entries into a free place and to find them.
 A key's hash determines where you start the search, so it works in an ammortized runtime of O(1).
