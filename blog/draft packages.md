@@ -12,7 +12,7 @@ Structure:
 - packages as immutable code: a package can't be changed from under you
 - sense of ownership
   - you're responsible for the updating of the package
-  - you're responsible for 
+  - you're responsible for
 - challenges
   - breaking changes
   - changing data types
@@ -27,4 +27,3 @@ Package ecosystems are getting ridiculous.
 - logging
 
 What does it mean to use a package?
-
