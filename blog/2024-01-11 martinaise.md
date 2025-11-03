@@ -12,11 +12,9 @@ Well – our initial version of Candy was typed, but we switched to a completely
 Having such a grand vision is exciting, but it bothered me that I didn't get to implement some of the compiler techniques I researched, such as a type solver.
 
 To scratch that itch, I created [Martinaise](https://github.com/MarcelGarus/martinaise), a new low-level, statically-typed, imperative language with function overloading.
-*Martinaise is a recreational hobby project by me, for me.*
+**Martinaise is a recreational hobby project by me, for me.**
 It doesn't aim to change the world.
 Its only goal is to be useful to solve simple problems such as from [Advent of Code](https://adventofcode.com).
-
-...
 
 As a consequence, I intentionally left out useful features that are boring to implement:
 The compiler only reports the first error it finds.

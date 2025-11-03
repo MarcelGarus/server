@@ -8,15 +8,13 @@ Nowadays, there are soooo many programming languages.
 One critical differentiation point among them is how their type systems work.
 You can sort programming languages into two camps:
 
-- *Statically-typed languages* determine what sort of values can be stored in variables just by looking at the program.
-- *Dynamically-typed languages* can't statically infer what sort of values can be stored in variables. They have to run the program to find out.
+- **Statically-typed languages** determine what sort of values can be stored in variables just by looking at the program.
+- **Dynamically-typed languages** can't statically infer what sort of values can be stored in variables. They have to run the program to find out.
 
 If given a choice, I prefer statically-typed languages. Because they know the types of variables, they can offer clever suggestions. Additionally, the compiler catches many errors while you write the code, so you get immediate feedback.
 
 On the other hand, most type systems limit what you can express in a language.
 In comparison, dynamic languages feel more flexible.
-
-...
 
 ## What's wrong with types?
 
@@ -27,15 +25,15 @@ Alright, so what's a set? Interestingly, it's one of the fundamental definitions
 > A set is a thing where each value is either in that thing or not.
 
 At first glance, this seems wishy-washy, so here are two examples:
-The *set of even numbers* contains the number 4, but not the number 1 or the banana emoji 🍌.
-The *set of positive numbers* contains the numbers 1 and 3, but not the number -9.
+The _set of even numbers_ contains the number 4, but not the number 1 or the banana emoji 🍌.
+The _set of positive numbers_ contains the numbers 1 and 3, but not the number -9.
 
-Static programming languages model sets using *types.* Typically, there are only a limited number of types available:
+Static programming languages model sets using _types._ Typically, there are only a limited number of types available:
 
-* A primitive type is built into language. Examples are `dart:Bool` or `dart:String` in most languages.
-* A composite type combines multiple other types into one new type. Most languages have an *and* combination called *struct* or *class*, some languages even have an *or* combination called *enum*.
+- A primitive type is built into language. Examples are `dart:Bool` or `dart:String` in most languages.
+- A composite type combines multiple other types into one new type. Most languages have an _and_ combination called _struct_ or _class_, some languages even have an _or_ combination called _enum_.
 
-Critically, because you can only create new types in these pre-defined ways, *you can't represent all sets as types!* If you want to write a function that only accepts positive numbers or only strings that are palindromes, you're out of luck.
+Critically, because you can only create new types in these pre-defined ways, _you can't represent all sets as types!_ If you want to write a function that only accepts positive numbers or only strings that are palindromes, you're out of luck.
 
 So, what happens in these cases? Well, we're back to runtime errors. Even in static languages like Java or Rust, the compiler won't warn you if you call the logarithm function with a negative input. Instead, you'll get a crash, exception, panic, or whatever else represents a runtime error in those languages.
 
@@ -44,7 +42,7 @@ So, what happens in these cases? Well, we're back to runtime errors. Even in sta
 I think so! Here's a two-step plan:
 
 1. Remove the rigid distinction between compile-time and runtime errors. Embrace how dynamic languages handle errors.
-2. Try to find most of those errors with *fuzzing,* the process of trying out lots and lots of inputs until one breaks the code.
+2. Try to find most of those errors with _fuzzing_, the process of trying out lots and lots of inputs until one breaks the code.
 
 Together with [Jonas](https://wanke.dev), I'm working on a new programming language called [Candy](https://github.com/candy-lang/candy), which uses fuzzing as a fundamental part of the developer experience. It'll still take some time to be useful, but take a look at the following function definition:
 
@@ -55,8 +53,7 @@ foo a b = add a b
 This code defines a function called `candy:foo` that takes the arguments `candy:a` and `candy:b` and returns their sum.
 As soon as you write this into your editor, it will try out different values and discover that the code fails for `candy:a = ""` and `candy:b = []` (because you can't add a `candy:String` and a `candy:List`). The editor will tell you the exact error case instead of reporting an abstract error like "`candy:String` does not implement addition for `candy:List`."
 
-To fix this error, you'll have to specify the function's `candy:needs`: Candy provides a `candy:needs` function that takes a `candy:Bool`. If this argument is `candy:False`, the program will crash in a way that signals "The program just crashed here. But it's not the fault of this function. Instead, whoever *called* this function gave it a wrong input."
-
+To fix this error, you'll have to specify the function's `candy:needs`: Candy provides a `candy:needs` function that takes a `candy:Bool`. If this argument is `candy:False`, the program will crash in a way that signals "The program just crashed here. But it's not the fault of this function. Instead, whoever _called_ this function gave it a wrong input."
 
 Using the `candy:needs` function, here's a fixed version of the code:
 
@@ -67,7 +64,7 @@ foo a b =
   add a b
 ```
 
-Now, if the compiler tries `candy:a = ""` and `candy:b = []`, the code still crashes, but the compiler knows that *it* did something wrong. Because the compiler can't find inputs that crash the function in any other way, it will report no errors.
+Now, if the compiler tries `candy:a = ""` and `candy:b = []`, the code still crashes, but the compiler knows that _it_ did something wrong. Because the compiler can't find inputs that crash the function in any other way, it will report no errors.
 
 I do admit that this looks similar to types in static languages. The difference is that you can put any regular code after the `candy:needs` instead of having a complex meta-language for defining types. As long as it evaluates to a `candy:Bool`, you're good to go.
 You can write functions that only accept even numbers, palindromes, valid JSON strings; you name it.
@@ -82,13 +79,13 @@ File.close file
 File.close file # error: the file is already closed here
 ```
 
-I'd even go as far as claiming that this is *better than writing unit tests.*
+I'd even go as far as claiming that this is _better than writing unit tests._
 Unit tests get you to think creatively about what values your program needs to handle.
-Fuzzing makes *the computer* come up with such values and it will report the tiniest edge cases – and you don't have to write a single line of extra code to get the benefit.
+Fuzzing makes _the computer_ come up with such values and it will report the tiniest edge cases – and you don't have to write a single line of extra code to get the benefit.
 
 ## Performance
 
-First off: *Fuzzing* has been around for quite some time now, and fuzzers have been researched and optimized for years to find bugs in existing pieces of software. Some data centers do nothing but fuzz complex software like browsers, operating systems, and compilers. You can quickly test thousands of inputs per second, even on desktop computers.
+First off: _Fuzzing_ has been around for quite some time now, and fuzzers have been researched and optimized for years to find bugs in existing pieces of software. Some data centers do nothing but fuzz complex software like browsers, operating systems, and compilers. You can quickly test thousands of inputs per second, even on desktop computers.
 
 Fuzzers also don't just randomly change inputs. Instead, they try to be clever about finding inputs to execute all code paths in the program. For example, fuzzers for compilers quickly "learn" to generate valid programs that activate some specific parts of the compiler.
 
@@ -105,8 +102,6 @@ The only innovation is to use it as a fundamental part of programming language d
 Let's hope something fancy comes out of this!
 I'm already excited about the result.
 
----
-
-Discussions about this article:
-
-- [On Reddit in r/ProgrammingLanguages](https://www.reddit.com/r/ProgrammingLanguages/comments/swglii/using_fuzzing_as_a_replacement_for_static_typing)
+> **Discussions about this article:**
+>
+> - [On Reddit in r/ProgrammingLanguages](https://www.reddit.com/r/ProgrammingLanguages/comments/swglii/using_fuzzing_as_a_replacement_for_static_typing)

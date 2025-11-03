@@ -96,7 +96,6 @@ fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[String]) {
     }
     writer."</{tag}>"
   }
-  case html(html) writer."{html}"
   case teaser_break {}
   case thematic_break writer."<hr />"
   case image(image) {
@@ -109,7 +108,12 @@ fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[String]) {
         'class=\"{if image.is_invertible then "invertible-image" else ""}\" />
       '</center>"
   }
-  case code(code) writer."<pre><code>{code.syntax_highlight()}</code></pre>"
+  case code(code) {
+    if code.language == "embed" then
+      writer.write(code.code)
+    else
+      writer."<pre><code>{code.syntax_highlight()}</code></pre>"
+  }
   case quote(quote) {
     writer."<blockquote>"
     writer.write_html(quote.*, footnote_defs)
@@ -156,7 +160,12 @@ fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[Stri
     writer.write_html(link.label.*, footnote_defs)
     writer."</a>"
   }
-  case code(code) writer."<code>{code.syntax_highlight()}</code>"
+  case code(code) {
+    if code.language == "embed" then
+      writer.write(code.code)
+    else
+      writer."<code>{code.syntax_highlight()}</code>"
+  }
   case footnote_reference(key) {
     var index = {footnote_defs.iter().&.find(key)
       or panic("Footnote def {key} doesn't exist.")} + 1

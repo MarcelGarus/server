@@ -21,7 +21,7 @@ value =
     false -> | bar: "Hi"
 ```
 
-Here, the value of `plum:| foo: 2` is `plum:| foo: Int` and the type of `plum:| bar: "Hi"` is `plum:| bar: String`.
+Here, the type of `plum:| foo: 2` is `plum:| foo: Int` and the type of `plum:| bar: "Hi"` is `plum:| bar: String`.
 The type of a switch expression is the union of its cases, so `plum:| foo: Int bar: String` (which you can read as "either it's `plum:foo` with an `plum:Int` payload, or `plum:bar` with a `plum:String` payload").
 
 Turns out, structural typing and postfix switches compose really well!

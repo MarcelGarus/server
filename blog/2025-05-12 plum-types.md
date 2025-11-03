@@ -281,11 +281,8 @@ When types were modeled as trees, this function was one of the most complex piec
 - A recursive function traverses the type, tracking how many recursive types we have seen so far.
 - Subcalls return how many recursive types were in that subtree.
 - When we found the _i_ th recursive type, we had to replace the parent.
-  There are two ways to do that:
-  
-  - Return an enum from the recursive function that tells the parent to replace itself.
-  - Check whether a child is the _i_ th recursive type before traversing down into it.
-    This is the option I chose.
+  I considered doing this by returning an enum from the recursive function that tells the parent to replace itself.
+  In the end, I instead checked whether a child is the _i_ th recursive type before traversing down into it.
 
 Imagine my surprise that using strings instead of trees makes this transformation way simpler:
 
@@ -293,11 +290,7 @@ Imagine my surprise that using strings instead of trees makes this transformatio
 - The opening parenthesis immediately before that is the start of the recursive type.
 - Search for a closing parenthesis afterwards. That's the end of the recursive type.
 - Search for the opening and closing parenthes of the surronding types (this does require tracking the nesting as we encounter parentheses).
-- Concatenate these three strings:
-  
-  - everything up to the start of the surrounding type
-  - the recursive type
-  - everything after the end of the surrounding type
+- Concatenate three strings: everything up to the start of the surrounding type, the recursive type, everything after the end of the surrounding type
 
 Rather than a complicated recursive function tracking several pieces of state, we have a straightforward function with three 5-line loops.
 Amazing!

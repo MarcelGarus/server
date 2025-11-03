@@ -19,11 +19,9 @@ That's why we opted to use structured concurrency.
 
 !invertible[concurrency with threads vs. structured concurrency](files/structured-concurrency.webp)
 
-...
-
 The idea of structured concurrency is to enforce that spawned control flows are joined eventually.
-In Candy, that happens with a new kind of scope, a *parallel scope*.
-Inside, you can use the given *nursery* to spawn new threads of execution, called *fibers*.
+In Candy, that happens with a new kind of scope, a **parallel scope**.
+Inside, you can use the given **nursery** to spawn new threads of execution, called _fibers_.
 Only once all fibers spawned on the nursery completed, does the parallel section itself end.
 
 ```candy
@@ -59,7 +57,7 @@ parallel { nursery ->
 ## Channels
 
 Concurrently executing fibers are only one part of the equation.
-They can communicate using *channels*.
+They can communicate using **channels**.
 Channels can store a number of values – you can send values to them on one end and receive them from the other end.
 
 !invertible[channels](files/channel.webp)

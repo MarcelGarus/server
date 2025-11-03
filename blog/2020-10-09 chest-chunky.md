@@ -4,10 +4,10 @@ topics: Chest, Dart, code
 
 ## A database layer
 
-Chest's lowest abstraction layer is called *Chunky*.
+Chest's lowest abstraction layer is called **Chunky**.
 In the end, Chest should somehow store all data in a file, something like `path:🌮.chest` (yes, the taco emoji is a great name for a database). The Chunky framework will take care of managing access to that file.
 
-A key question is how to deal with *mutating data*:
+A key question is how to deal with _mutating data_:
 If we need to insert some data "in the middle" of the database, we don't want to re-write everything that comes after it.
 Files are a linear stream of bytes, and that doesn't quite fit our use case. So, the Chunky layer offers an abstraction from that.
 
@@ -17,10 +17,10 @@ Files are a linear stream of bytes, and that doesn't quite fit our use case. So,
 
 Also, writing to the file might fail for various reasons – whether the OS kills our program, the user plugs out the storage medium, the power supply vanishes, or a black hole consumes the earth. Chunky also ensures that we handle such cases gracefully by fulfilling the four ACID goals:
 
-- *Atomicity*: If you do a change, it's either entirely written to the database file or not at all – partially written changes should never occur.
-- *Consistency*: The database should always be in a consistent state, going from one into another.
-- *Isolation*: To all clients, it should look like they are the only client of the database.
-- *Durability*: Changes written to the database should be persistent.
+- **Atomicity**: If you do a change, it's either entirely written to the database file or not at all – partially written changes should never occur.
+- **Consistency**: The database should always be in a consistent state, going from one into another.
+- **Isolation**: To all clients, it should look like they are the only client of the database.
+- **Durability**: Changes written to the database should be persistent.
 
 Before going into how Chunky achieves these goals internally, let's give a little API overview:
 
@@ -90,7 +90,7 @@ Then, it compares those chunks byte by bate with the original chunks – after a
 Because only one transaction is running at a time, Chunky automatically fulfills the isolation goal.
 
 Regarding atomicity, the only guarantees that the operating system gives us are that creating and removing files is atomic and changing a single bit in a file.
-That's why Chunky uses a *transaction file*:
+That's why Chunky uses a **transaction file**:
 
 1.  When a transaction finishes, a separate file is created, the naming scheme being something like `path:🌮.chest.transaction`. It contains only a single byte that acts as a single bit, differentiating between zero and non-zero. Initially, this byte is a zero.
 2.  The file is flushed (the OS writes the changes to disk).
@@ -102,13 +102,19 @@ That's why Chunky uses a *transaction file*:
 
 If the program gets killed at any point, on the next startup, Chunky can always restore a consistent state:
 
-- Does a transaction file exist?
-  
-  - *No*: The changes are consistent: We're either before step 1 (old state) or after step 7 (new state).
-  - *Yes*: Is the first bit of the transaction file non-zero?
-    
-    - *Yes*: We're after step 5 and can copy all changed chunks from the transaction file to the original one (new state).
-    - *No*: We're before step 5 and can delete the transaction file (old state).
+```text
+    Does a transaction file exist?
+    +---------- no yes ----------+
+    |                            |
+    v                            v
+before step 1 or    Is the first bit of the
+after step 7        transaction file non-zero?
+                    +-------- no yes --------+
+                    |                        |
+                    v                        v
+               before step 5;             after step 5;
+               delete transaction file    copy changes from transaction file
+```
 
 Because we either revert to the old state or the new one in all cases, the transactions are atomic.  
 A transaction byte of `text:1` guarantees that Chunky will persist the changes to disk, either while it's still running or during recovery.

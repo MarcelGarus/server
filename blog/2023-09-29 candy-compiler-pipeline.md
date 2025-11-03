@@ -14,8 +14,6 @@ In this article, I'll show a general outline of the different compilation stages
 
 !invertible[compiler pipeline mountain](files/compiler-mountain.webp)
 
-...
-
 ## Source Code
 
 We start with source code.
@@ -202,7 +200,7 @@ parenthesized(0, "(a") -> Some(("", Parenthesized {
 ```
 
 An interesting property about Candy in particular is that indentation is more important to the parser than any form of parentheses.
-This makes parsers *even more complicated* in some places, but it guarantees that invalid stuff in your code can only have local effects:
+This makes parsers **even more complicated** in some places, but it guarantees that invalid stuff in your code can only have local effects:
 
 ```candy
 foo a =
@@ -225,12 +223,12 @@ That makes the next stages easier to implement.
 
 ```candy
 assignment: struct
-  identifier $6@"int" = 
+  identifier $6@"int" =
   call identifier $0@"use" with these arguments:
     text
       textPart $2@"Core"
 assignment: struct
-  identifier $12@"add" = 
+  identifier $12@"add" =
   identifier $10@"int"
 assignment: $32@"inc" := function (fuzzable) { $33@"a" ->
   call identifier $16@"needs" with these arguments:
@@ -251,9 +249,9 @@ In the AST, it's instead converted to a definition of a function with an `candy:
 Deeply nested expressions are something computers don't natively understand.
 That's why we now turn expressions such as `candy:needs (int.is a)`, into a sequence of simple operations:
 
-1. Look up the `candy:Is` function from the `candy:int` struct
-2. Call the function
-3. Call `candy:needs` with the result
+1.  Look up the `candy:Is` function from the `candy:int` struct
+2.  Call the function
+3.  Call `candy:needs` with the result
 
 Because we need to introduce local temporary variables for the intermediary results, this is also a nice opportunity to track which variable names are in scope and relate those names to one another.
 
@@ -466,29 +464,24 @@ Of course, code like this is horribly inefficient.
 That's why we also apply several optimizations on the MIR.
 These are the most important ones:
 
-- *Module Folding*:
+- **Module Folding**:
   When there's a `candy:use`, we compile the corresponding file and input its code right here.
   The exports from the file are put in a struct.
-
-- *Constant Folding*:
+- **Constant Folding**:
   When the result of a call of a builtin function can be already determined at compile-time, we inline the result right away.
   For example, when using `candy:int.is` to get the `candy:is` function from the `candy:int` module, we know the arguments to the generated `candy:structGet` call – we know all the exports of the `candy:int` module and we know that you look for the `candy:is` key.
   So, rather than executing that lookup during runtime, we replace it with a direct reference to the function.
-
-- *Tree Shaking*:
+- **Tree Shaking**:
   If the result of a calculation is not used, it can be removed.
   This happens quite frequently.
   For example, when you import the `candy:Core` library, but only use a fraction of the functions, we only keep those around.
-
-- *Constant Lifting*:
+- **Constant Lifting**:
   If you have a function that creates lots of local variables (such as numbers, or `candy:True`, or `candy:False`), it's very likely that other functions use the same values.
   In that case, we move the value defintions out of the functions so that they don't need to create new objects on the heap every time they are called.
-
-- *Common Subtree Elimination*:
+- **Common Subtree Elimination**:
   When constants are lifted into an outer scope, it's likely that the same constants may appear multiple times.
   We only keep one of them around.
-
-- *Inlining*:
+- **Inlining**:
   Calls to other functions may be replaced with the function's code.
   We do that if the called function is very small.
   In the future, we probably need some better heuristics here; when done correctly, inlining is has the potential to enable the application of other optimizations.
@@ -547,7 +540,7 @@ $65 = [$15: $55]
 ## Low-Level Intermediate Representation
 
 While the MIR is already quite low-level, it still contains nested functions.
-Nested functions are necessary because they can *close over* (or *capture*) values from the outer scope.
+Nested functions are necessary because they can _close over_ (or _capture_) values from the outer scope.
 For example, check out the following function:
 
 ```candy
@@ -557,7 +550,7 @@ foo a = { b -> int.add a b }
 Here, `candy:foo 4` returns a function that always adds `candy:4` to its argument.
 Thus, the `candy:a` needs to continue existing even after `candy:foo` returns.
 
-In the next compiler stage, those *captured variables* are explicitly tracked.
+In the next compiler stage, those _captured variables_ are explicitly tracked.
 That also enables un-nesting functions.
 
 Technically, functions also capture all used other functions.

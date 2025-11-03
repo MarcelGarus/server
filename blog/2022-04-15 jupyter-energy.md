@@ -13,12 +13,10 @@ Hence, in my last semester, I developed [an extension](https://github.com/Marcel
 The most similar extension is called [Jupyter Resource Usage](https://github.com/jupyter-server/jupyter-resource-usage) and uses [`text:psutil`](https://pypi.org/project/psutil) to retrieve data from the kernel infrastructure.
 That allows it to monitor RAM and CPU usage, but other resources are not supported – [not even GPUs,](https://github.com/jupyter-server/jupyter-resource-usage/issues/12) which play a big part in training Machine Learning models.
 
-...
-
 ## Getting the energy consumption
 
 Unfortunately, there is no established unified way of getting information about energy consumption from the kernel.
-Inspired by [pinpoint](https://github.com/osmhpi/pinpoint), an energy measurement tool developed at the [*Operating Systems and Middleware* chair](https://osm.hpi.de) of my university, I implemented getting data from several sources.
+Inspired by [pinpoint](https://github.com/osmhpi/pinpoint), an energy measurement tool developed at the [**Operating Systems and Middleware** chair](https://osm.hpi.de) of my university, I implemented getting data from several sources.
 I'd also like to give a shoutout to [Sven Köhler](https://twitter.com/tzwenn), who not only developed this tool, but also looked after me and my project specifically.
 He was a big help in getting started with measuring energy and had deep knowledge about how energy is measured internally and what factors might influence measurements.
 
@@ -26,8 +24,8 @@ These are the measurement sources I integrated into the tool:
 
 ### Running Average Power Limit
 
-Linux offers a *Running Average Power Limit* (RAPL for short) on x86\_64 CPUs.
-This RAPL allows tracking of the power consumption of *CPU components,* such as the CPU, RAM, or built-in GPU.
+Linux offers a **Running Average Power Limit** (RAPL for short) on x86\*64 CPUs.
+This RAPL allows tracking of the power consumption of **CPU components**, such as the CPU, RAM, or built-in GPU.
 Notably, it doesn't include external components like external graphic cards, connected peripherals, etc.
 
 On Linux, for each trackable metric, there are several files in `path:/sys/bus/event_source/devices/power/events`. For example, on my laptop, the following files exist:
@@ -53,7 +51,7 @@ For each source, there are three files:
 - `path:.../<event>.scale`: A file containing a scaling factor. On my laptop, the `path:energy-cores.scale` file contains `text:2.3283064365386962890625e-10`.
 - `path:.../<event>.unit`: A file containing the unit in which the RAPL measures the energy consumption. Usually, this will be `text:Joules`.
 
-You can use these file contents to make the Linux kernel measure how much energy the sources use. In particular, you can perform a `c:perf_event_open` syscall with the event code. This syscall will return a filehandle that contains an *event counter* for that event – that's just a number you can multiply by the scale to get the energy consumption in the given unit.
+You can use these file contents to make the Linux kernel measure how much energy the sources use. In particular, you can perform a `c:perf_event_open` syscall with the event code. This syscall will return a filehandle that contains an **event counter** for that event – that's just a number you can multiply by the scale to get the energy consumption in the given unit.
 
 Here's what a minimal C program looks like that measures the energy consumption of a component:
 
@@ -93,7 +91,7 @@ printf("In 10 seconds, you used %0.3f %s.\n", used_energy, unit);
 
 ### Microchip MCP39F511N Power Monitor
 
-The Operating Systems and Middleware chair has a *Microchip MCP39F511N Power Monitor* (which we call MCP).
+The Operating Systems and Middleware chair has a **Microchip MCP39F511N Power Monitor** (which we call MCP).
 That's actual physical hardware that you can plug between the wall socket and the computer.
 It then measures the power consumption of the entire system with all components, including external peripherals like connected displays, disks, or USB drives.
 
@@ -123,7 +121,7 @@ Therefore, you need to continuously ask the MCP for measurements to gauge how mu
 
 ### Nvidia Management Library
 
-Finally, I looked at the *Nvidia Management Library* (NVML).
+Finally, I looked at the **Nvidia Management Library** (NVML).
 In Python, the `text:py3nvml` package allows us to request the self-reported energy usage of Nvidia GPUs:
 
 ```python
@@ -140,16 +138,16 @@ It doesn't get much easier than this!
 Now that we know how to get the energy from several sources, we need to somehow show that data in Jupyter Notebooks.
 Those support two types of extensions:
 
-- *server extensions:* These types of extensions run in the Juypter Notebook process itself – it's running on the machine that executes the Python code. Because the Jupyter Notebook server is written in Python, you install these extensions as Python modules.
-- *notebook extensions:* These extensions run in the client's browser. They are written in JavaScript and can interact with the notebook the same way that the user can.
+- **server extensions**: These types of extensions run in the Juypter Notebook process itself – it's running on the machine that executes the Python code. Because the Jupyter Notebook server is written in Python, you install these extensions as Python modules.
+- **notebook extensions**: These extensions run in the client's browser. They are written in JavaScript and can interact with the notebook the same way that the user can.
 
 To record the energy data and display it, we need both types of extensions.
 By the way: The Jupyter Resource Usage also uses this approach – it was a helpful reference.
 One difference to that extension is that the `c:perf_event_open` syscall can only be executed as root unless you change `path:proc/sys/kernel/perf_event_paranoid` to allow more processes to listen for hardware events.
-Therefore, I put the energy data gathering in a separate process, the *energy server.* This separation allows the energy server to run as root without also running the Jupyter Notebook server as root (and thereby all the code written inside notebooks).
+Therefore, I put the energy data gathering in a separate process, the **energy server**. This separation allows the energy server to run as root without also running the Jupyter Notebook server as root (and thereby all the code written inside notebooks).
 
 The energy server aggregates energy consumption data from multiple sources, saving both a short-term history of the power draw and a long-term recording of the energy usage.
-It communicates with sources in different ways: Accessing the RAPL and the MCP works best in C, so I wrote small C wrappers that can be compiled into shared libraries (with something like `bash:gcc --shared rapl.c -o rapl.so`). The energy server written in Python can then call the defined C functions using [*Foreign Function Interfaces*](https://en.wikipedia.org/wiki/Foreign_function_interface) (FFI).
+It communicates with sources in different ways: Accessing the RAPL and the MCP works best in C, so I wrote small C wrappers that can be compiled into shared libraries (with something like `bash:gcc --shared rapl.c -o rapl.so`). The energy server written in Python can then call the defined C functions using [**Foreign Function Interfaces**](https://en.wikipedia.org/wiki/Foreign_function_interface) (FFI).
 For the NVML, I directly used the existing Python library.
 
 The Jupyter Energy server extension runs in the Jupyter Notebook process and communicates with the energy server using HTTP.
@@ -174,14 +172,14 @@ Other comparisons I measured with the MCP at home (such as the power consumption
 
 If you switch to the long-term graph, the extension shows how that energy probably got generated.
 Of course, the extension doesn't know your current electricity contract and can only approximate the sources.
-All data comes from the *European Network of Transmission System Operators for Electricity* (ENTS-OE). That's a collection of companies that take care of transferring energy through Europe to meet demand.
+All data comes from the **European Network of Transmission System Operators for Electricity** (ENTS-OE). That's a collection of companies that take care of transferring energy through Europe to meet demand.
 All data is publicly available at [transparency.entsoe.eu](https://transparency.entsoe.eu/).
 The extension aggregates sources into four types:
 
-- *renewables:* solar, wind, biomass, geothermal, water, and waste
-- *non-renewables:* fossil and nuclear
-- *storage sources:* reservoirs
-- *other:* sources that could not be classified or that are unclear to the ENTS-OE
+- **renewables**: solar, wind, biomass, geothermal, water, and waste
+- **non-renewables**: fossil and nuclear
+- **storage sources**: reservoirs
+- **other**: sources that could not be classified or that are unclear to the ENTS-OE
 
 Currently, the extension is hardcoded to load data for Germany.
 In the future, it could support other countries (the data for EU countries is already public) and be more precise within a country.
@@ -208,10 +206,10 @@ This setup allows me to compare the internally reported energy consumption (from
 
 To put some load on the system, I used the following benchmarks:
 
-- *idle:* Just running a notebook with a `python:sleep(60)` as a baseline of energy usage.
-- *k-means:* A common clustering approach from data science that is memory-bound. I used an [implementation from the SciPy benchmark](https://github.com/scipy/scipy/blob/b5ffe9/benchmarks/benchmarks/cluster.py).
-- *BLAS/LAPACK:* The *Basic Linear Algebra Subprograms & Linear Algebra PACKage,* a set of linear algebra libraries implemented for many languages. The implementation is [from the SciPy benchmark](https://github.com/scipy/scipy/blob/b5ffe9/benchmarks/benchmarks/blas_lapack.py) as well.
-- *bible:* A benchmark querying n-grams as search terms against a rudimentary database index. This was especially interesting to me because this program comes from the *Information Retrieval* seminar from a previous semester when I first got in contact with Jupyter Notebooks at university.
+- **idle**: Just running a notebook with a `python:sleep(60)` as a baseline of energy usage.
+- **k-means**: A common clustering approach from data science that is memory-bound. I used an [implementation from the SciPy benchmark](https://github.com/scipy/scipy/blob/b5ffe9/benchmarks/benchmarks/cluster.py).
+- **BLAS/LAPACK**: The _Basic Linear Algebra Subprograms & Linear Algebra PACKage,_ a set of linear algebra libraries implemented for many languages. The implementation is [from the SciPy benchmark](https://github.com/scipy/scipy/blob/b5ffe9/benchmarks/benchmarks/blas_lapack.py) as well.
+- **bible**: A benchmark querying n-grams as search terms against a rudimentary database index. This was especially interesting to me because this program comes from the _Information Retrieval_ seminar from a previous semester when I first got in contact with Jupyter Notebooks at university.
 
 These are the results visualized in a graph (note that the time does not start at zero):
 
@@ -220,16 +218,16 @@ These are the results visualized in a graph (note that the time does not start a
 Each dot corresponds to a benchmark run that took a certain amount of time and energy.
 For those runs where the extension is activated, we have internal and external measurements; for those runs where it's deactivated, we only have external energy measurements.
 
-*Internal vs. external:*
+**Internal vs. external:**
 Comparing the internal (RAPL) vs. the external (MCP) measurements, we can see that the externally measured consumption is generally higher – about seven times higher in the idle state and 1.2 to 2.0 times higher in the other benchmarks.
 That's expected: The RAPL only measures the CPU component; the MCP measures the power consumption of the whole laptop, including keyboard illumination, display, wifi chip, etc.
 In the idle state, the CPU is not used a lot, so it's only a small part of the energy usage.
 
-*With vs. without extension:*
+**With vs. without extension:**
 The setup also allows us to compare the energy consumption and runtime with the extension enabled and disabled. This allows us to measure the overhead of measuring – measureception!
 Luckily, when enabling the extension, there are only minor changes in energy use (-0.7 %) and time (+0.6 %, excluding idle, +1.5 % excluding idle & bible). This indicates the extension supports everyday usage without massive energy or performance impacts.
 
-*Noisiness of benchmarks:*
+**Noisiness of benchmarks:**
 Another observation is that the benchmarks differ in how noisy they are.
 The idle state is not noisy – that's because it only consists of a call to `c:sleep`, and therefore, it's not CPU-bound, but time-bound; even differences in other computing loads won't affect the runtime of this benchmark a lot.
 The other benchmarks generally tend to get noisier the longer they take. That is also expected – a longer runtime leaves more opportunity for unpredictable slowdowns.
@@ -238,19 +236,16 @@ The other benchmarks generally tend to get noisier the longer they take. That is
 
 There are lots of areas where the extension can be improved:
 
-- *Give more information about energy generation:*
+- **Give more information about energy generation**:
   Data about how much energy comes from wind, solar, etc. is already available.
   Maybe it would make sense to display that in the extension.
   Also, the generation estimation is currently only for Germany as a whole.
   It may make sense to extend this to more countries and to improve the approximation by taking into account a more precise location or even the electricity contract.
-
-- *Highlight monetary motivation:*
+- **Highlight monetary motivation**:
   You could allow the user to enter an electricity price to automatically convert the amount of energy consumed into the added cost on the electricity bill.
-
-- *Make the installation easier:*
+- **Make the installation easier**:
   The installation experience can be improved by turning the extension into a package to be published on a Python package manager such as `bash:pip`.
-
-- *Conduct user studies:*
+- **Conduct user studies**:
   An under-explored aspect is whether the extension encourages people to use less energy.
   A study could be conducted by having a hidden version of the extension that measures the consumption silently but discloses the results only to the study investigators.
   We are already in the process of inquiring if we can conduct such a study in a data science seminar – stay tuned!
@@ -261,7 +256,7 @@ If you feel like contributing, feel welcome to have [a look at the repository.](
 
 Contrary to measuring CPU or RAM usage, measuring energy consumption is an area with less established standards – depending on the hardware, different libraries and services need to be consulted.
 
-In another lecture this semester, we measured the energy consumption of microcontrollers instead of complex software – that was *much* more predictable.
+In another lecture this semester, we measured the energy consumption of microcontrollers instead of complex software – that was _much_ more predictable.
 While you have total control over the hardware in an embedded setting, modern operating systems come with many power-saving strategies built in and you have to work against them to get reliable results. Otherwise, the operating system may seemingly randomly decide to change the CPU's clock frequency or turn on a fan.
 
 This unpredictability of behavior also makes it hard to attribute energy consumption to individual processes:

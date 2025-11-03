@@ -19,8 +19,6 @@ This is okay but makes strings with lots of special characters ugly. For example
 "\\w\\\\+"
 ```
 
-...
-
 Every level of abstraction doubles the number of escape characters: Regexes have escape characters, and strings escape those as well. If we wanted to write a program that outputs a regex in a JSON object, it would be even more ridiculous: `rust:"\\\\w\\\\\\\\+"`
 
 Some development environments like IntelliJ offer a meta-view of a string, where you can edit the raw string and you simultaneously edit the escaped version in your program code.
@@ -40,7 +38,7 @@ fn main() {
 }"##;
 ```
 
-This example also highlights that you can use raw strings inside of other raw strings as long as the outer one is *more meta* than the inner one.
+This example also highlights that you can use raw strings inside of other raw strings as long as the outer one is **more meta** than the inner one.
 
 We think about implementing something similar in [Candy](https://github.com/candy-lang/candy): If you start your string with `text:''"`, it can only be ended with `text:"''`. You can increase the number of single quotes as needed.
 

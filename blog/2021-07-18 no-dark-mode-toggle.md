@@ -6,17 +6,17 @@ topics: this blog
 
 Maybe you're wondering why there's no dark-mode toggle on this website.
 
-*Short answer*:
+**Short answer**:
 Misaligned incentives between layers of software result in an overall subpar experience.
 I want to put pressure on the browser offering to control the dark mode of individual websites.
 
-*Long answer*:
+**Long answer**:
 I recently streamed music from my laptop to a Bluetooth speaker and wanted to increase the volume.
 Naturally, I tried increasing the volume on the computer. Nope, it's already at the maximum.
 The Bluetooth speaker has volume buttons! Gotta try those! But except for the music being interrupted by one of these awful beeps, nothing happens.
 Oh, I know! Windows has an option to adjust the volume of individual programs that I use pretty frequently.
 I must have lowered the volume there. But nada.
-Finally, I checked *in the music app itself*, and fair enough, there's the volume slider, its knob almost on the left.
+Finally, I checked _in the music app itself_, and fair enough, there's the volume slider, its knob almost on the left.
 
 What happened here?
 
@@ -34,20 +34,20 @@ The crazy thing is that all these options to change the volume make sense indivi
 - And finally, shouldn't speakers have volume buttons? Changing the volume seems like such a fundamental part of listening to music on them.
 
 So, basic functionality gets re-implemented in several layers.
-I believe there should be *one way* to do these basic operations.
+I believe there should be _one way_ to do these basic operations.
 
 Identifying misaligned incentives and calling it a day is an easy way out.
-But is there a way we software developers can actually *achieve good UX in the long term*?
+But is there a way we software developers can actually _achieve good UX in the long term_?
 
 Yes!
-Just ask yourself: *Are you a part of a system or *are* you the system?*
+Just ask yourself: **Are you a part of a system or _are_ you the system?**
 
-If you *are* the system, let users make choices on a per-app basis.
+If you _are_ the system, let users make choices on a per-app basis.
 In turn, this enables these apps to omit the controls entirely.
 
 As a part of a system, it shouldn't be your job to offer the controls.
 I know there sometimes are business incentives to offer the controls because it helps some users while not directly negatively affecting others.
-But if you can afford it, *please* don't offer the controls.
+But if you can afford it, _please_ don't offer the controls.
 Or at least only offer it on platforms that don't have this functionality natively.
 Yes, some users will complain. Make them learn how to do it in the system or open issues on systems that don't provide that functionality.
 

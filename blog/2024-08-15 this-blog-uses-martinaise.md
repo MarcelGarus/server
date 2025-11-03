@@ -21,22 +21,15 @@ To me, that looks an awful lot like I have to write a compiler.
 Implementing a Markdown parser opened up some nice opportunities:
 Until now, I used the Rust crate `text:comrak` for parsing Markdown, so I had to use weird hacks to encode additional information in the [CommonMark](https://commonmark.org) Markdown syntax.
 
-- *Are images invertible?*
+- **Are images invertible?**
   Most of the images in this blog are black-and-white drawings.
   If you view this website in dark mode, those images will be inverted.
   To mark images as invertible, I'd use `text:invert:` at the beginning of the alt text:
-  
-  ```markdown
-  ![invert:alt text](url)
-  ```
-- *What's the language of inline code?*
+  `markdown:![invert:alt text](url)`
+- **What's the language of inline code?**
   It still baffles me that there is syntax for specifying the programming language of multi-line code blocks, but not of inline code.
-  So, I'd use something like `text:rust:` at the beginning of inline code snippets to enable syntax highlighting:
-  
-  ```markdown
-  A `rust:Vec<Value>` represents the solutions to the Kakuro.
-  ```
-- *Where's the end of the preview?*
+  So, I'd use something like `text:rust:` at the beginning of inline code snippets to enable syntax highlighting.
+- **Where's the end of the preview?**
   I'd use `markdown:--snip--` to mark the end of an article preview that's shown on the index site and strip out that directive before letting the Markdown parser do its work.
 
 The new site generator in Martinaise parses these ad-hoc extensions directly instead of when inspecting the parsed Markdown after-the-fact.
@@ -63,7 +56,7 @@ But now, code without a language or with an unknown language results in a compil
 ```text
 Parsing 2023-09-29 candy-compiler-pipeline.md
 When parsing markdown:
- 241 | 
+ 241 |
  242 | As you see, some syntax peculiarieties are also desugured.
  243 | In the CST, the `inc a := ...` definition was parsed as an assignment with a call on the left side.
                                      ^

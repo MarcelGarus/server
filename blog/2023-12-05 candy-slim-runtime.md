@@ -11,8 +11,6 @@ We compile Candy code into bytecode for our VM.
 Recently, [Clemens](https://tiedt.dev) started working on an LLVM backend as an alternative.
 As part of that, we started thinking more about how Candy interacts with the platform it runs on.
 
-...
-
 ## How Candy Interacted With The World Until Now
 
 Until now, Candy code interacts with the environment using [channels](candy-concurrency).
@@ -25,15 +23,15 @@ Inside your program, many fibers can run concurrently.
 Implementing fibers was pretty fun – an exciting challenge that took me some time to figure out.
 
 But why do we work on Candy in the first place?
-*We want to provide amazing tooling using fuzzing.*
+**We want to provide amazing tooling using fuzzing.**
 Our main goal is to explore this unique aspect of Candy.
 Built-in concurrency can be a cool language feature, but it's not what makes Candy special.
 
 To get back to the point:
 Clemens started working on an LLVM backend.
-As it turns out, having concurrency primitives in the language makes implementing a runtime *much* more complicated.
+As it turns out, having concurrency primitives in the language makes implementing a runtime _much_ more complicated.
 When you're compiling to machine code, adding support for multiple execution threads is difficult – it's certainly possible, but it introduces lots of complexity.
-To streamline Candy development, we decided to *narrow its scope* and removed fibers and channels in favor of handles.
+To streamline Candy development, we decided to **narrow its scope** and removed fibers and channels in favor of handles.
 
 ## Handles
 

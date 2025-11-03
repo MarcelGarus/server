@@ -5,7 +5,6 @@ enum Markdown {
   heading: MarkdownHeading,
   paragraph: &MarkdownInline,
   list: MarkdownList,
-  html: String,
   teaser_break,
   thematic_break,
   image: MarkdownImage,
@@ -122,7 +121,7 @@ fun next(parser: MarkdownParser): Maybe[Char] {
   }
   case quote(parser) {
     if parser.is_at_start then {
-      parser.parent.consume("> ") or return none[Char]()
+      parser.parent.consume(">") or return none[Char]()
       parser.is_at_start = false
     }
     var char = parser.parent.next() or return none[Char]()
@@ -196,11 +195,6 @@ fun parse_list(parser: MarkdownParser): Result[Maybe[MarkdownList], String] {
   }))
 }
 
-fun parse_html(parser: MarkdownParser): Maybe[String] {
-  parser.peek(1) == "<" or return none[String]()
-  some(parser.consume_until("\n\n"))
-}
-
 fun parse_image(parser: MarkdownParser): Result[Maybe[MarkdownImage], String] {
   parser.consume("!") or return ok[Maybe[MarkdownImage], String](none[MarkdownImage]())
   var is_invertible = parser.consume("invertible")
@@ -216,13 +210,14 @@ fun parse_code_block(parser: MarkdownParser): Result[Maybe[MarkdownCode], String
   parser.consume("```") or return ok[Maybe[MarkdownCode], String](none[MarkdownCode]())
   var language = parser.consume_until_newline()
   if language.is_empty() then return error[Maybe[MarkdownCode], String]("Code block without language.")
-  language.is_supported_language() or return error[Maybe[MarkdownCode], String]("Unknown language {language}.")
+  language == "embed" or language.is_supported_language()
+    or return error[Maybe[MarkdownCode], String]("Unknown language {language}.")
   var code = parser.consume_until("```")
   ok[Maybe[MarkdownCode], String](some(MarkdownCode { language, code }))
 }
 
 fun parse_quote(parser: MarkdownParser): Result[Maybe[Markdown], String] {
-  parser.consume("> ") or return ok[Maybe[Markdown], String](none[Markdown]())
+  parser.consume(">") or return ok[Maybe[Markdown], String](none[Markdown]())
   var quoted = MarkdownParser.quote(MarkdownQuoteParser {
     parent = parser, is_at_start = false
   }.put_on_heap()).parse()?
@@ -264,15 +259,15 @@ fun parse_inline_rec(
       parts.&.flush_text(text)
       parts.&.push(MarkdownInline.soft_break)
     }
-    else if parser.peek(1) == "*" then {
+    else if parser.peek(2) == "**" then {
       if is_in_strong then break
-      parser.advance_by(1)
+      parser.advance_by(2)
       parts.&.flush_text(text)
       var inner = parser.parse_inline_rec(true, is_in_emphasis, is_in_strikethrough)?
       if inner is multiple(items) then if items.is_empty() then
         return error[MarkdownInline, String]("Don't use ** for making stuff bold. A single * is enough.")
       parts.&.push(MarkdownInline.strong(inner.put_on_heap()))
-      parser.consume("*") or return error[MarkdownInline, String]("Expected end of strong.")
+      parser.consume("**") or return error[MarkdownInline, String]("Expected end of strong.")
       {}
     }
     else if parser.peek(1) == "_" then {
@@ -298,7 +293,8 @@ fun parse_inline_rec(
         or return error[MarkdownInline, String]("Inline code without language.")
       var language = code.substr(0..colon_pos)
       var code     = code.substr({colon_pos + 1}..code.len)
-      language.is_supported_language() or return error[MarkdownInline, String]("Unknown language {language}.")
+      language == "embed" or language.is_supported_language()
+        or return error[MarkdownInline, String]("Unknown language {language}.")
       parts.&.push(MarkdownInline.code(MarkdownCode { language, code }))
     }
     else if parser.consume("[") then {
@@ -340,7 +336,6 @@ fun parse(parser: MarkdownParser): Result[Markdown, String] {
       else if parser.parse_teaser_break() then Markdown.teaser_break
       else if parser.parse_thematic_break() then Markdown.thematic_break
       else if parser.parse_list()? is some(list) then Markdown.list(list)
-      else if parser.parse_html() is some(html) then Markdown.html(html)
       else if parser.parse_image()? is some(image) then Markdown.image(image)
       else if parser.parse_code_block()? is some(code) then Markdown.code(code)
       else if parser.parse_quote()? is some(quote) then Markdown.quote(quote.put_on_heap())
