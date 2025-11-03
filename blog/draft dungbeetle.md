@@ -1,3 +1,0 @@
-# Dungbeetle
-
-## A simple VM
