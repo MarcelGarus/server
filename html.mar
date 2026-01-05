@@ -47,7 +47,7 @@ fun urlify(topic: String): String {
 fun syntax_highlight(code: MarkdownCode): String {
   var b = string_builder().&
   for token in tokenize(code.language, code.code) do
-    b."<span class=\"token-{token.kind.debug()}\">{token.str.html_encode().replace(" ", "&nbsp;")}</span>"
+    b."<tok-{token.kind.debug()}>{token.str.html_encode().replace(" ", "&nbsp;")}</tok-{token.kind.debug()}>"
   b.to_string()
 }
 
@@ -84,7 +84,7 @@ fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[String]) {
   case paragraph(paragraph) {
     writer."<p>"
     writer.write_html(paragraph.*, footnote_defs)
-    writer."</p>"
+    writer."</p>\n"
   }
   case list(list) {
     var tag = switch list.type case ordered "ol" case bullet "ul"
@@ -92,32 +92,32 @@ fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[String]) {
     for item in list.items do {
       writer."<li>"
       writer.write_html(item, footnote_defs)
-      writer."</li>"
+      writer."</li>\n"
     }
-    writer."</{tag}>"
+    writer."</{tag}>\n"
   }
   case teaser_break {}
-  case thematic_break writer."<hr />"
+  case thematic_break writer."<hr />\n"
   case image(image) {
     writer."<center>
-      '<img 
-        'src=\"{image.url}\" 
-        'alt=\""
+      '<img
+        ' src=\"{image.url}\"
+        ' alt=\""
     writer.write_html(image.alt.*, footnote_defs)
-    writer."\" 
-        'class=\"{if image.is_invertible then "invertible-image" else ""}\" />
-      '</center>"
+    writer."\"
+        ' class=\"{if image.is_invertible then "invertible-image" else ""}\" />
+      '</center>\n"
   }
   case code(code) {
     if code.language == "embed" then
       writer.write(code.code)
     else
-      writer."<pre><code>{code.syntax_highlight()}</code></pre>"
+      writer."<pre><code>{code.syntax_highlight()}</code></pre>\n"
   }
   case quote(quote) {
     writer."<blockquote>"
     writer.write_html(quote.*, footnote_defs)
-    writer."</blockquote>"
+    writer."</blockquote>\n"
   }
   case footnote_definition(def) {
     var index = {footnote_defs.iter().&.find(def.key)
@@ -131,7 +131,7 @@ fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[String]) {
     writer.write_html(def.definition.*, footnote_defs)
     writer."
       '  </div>
-      '</div>"
+      '</div>\n"
   }
 }
 fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[String]) {
@@ -279,26 +279,17 @@ fun to_html(page: Page): String {
         '<meta property=\"og:site\" content=\"Marcel Garus\" />\n
         '<meta property=\"og:site_name\" content=\"Marcel Garus\" />\n
         '<meta property=\"og:locale\" content=\"en_US\" />\n
-        '<meta property=\"og:type\" content=\"{page.site_type}\" />\n
-        '<meta property=\"twitter:title\" content=\"{page.preview_title.html_encode()}\" />\n
-        '<meta property=\"twitter:description\" content=\"{page.preview_description.html_encode()}\" />\n
-        '<meta property=\"twitter:site\" content=\"@MarcelGarus\" />\n
-        '<meta property=\"twitter:url\" content=\"{page.canonical_url}\" />"
+        '<meta property=\"og:type\" content=\"{page.site_type}\" />"
       if page.preview_image is some(img) then {
-        b."<link rel=\"image_src\" href=\"{img.src}\" />\n
+        b."\n
+          '<link rel=\"image_src\" href=\"{img.src}\" />\n
           '<meta property=\"og:image\" content=\"{img.src}\" />\n
-          '<meta property=\"og:image:alt\" content=\"{img.alt}\" />\n
-          '<meta property=\"twitter:image\" content=\"{img.src}\" />\n
-          '<meta property=\"twitter:image:alt\" content=\"{img.alt}\" />"
+          '<meta property=\"og:image:alt\" content=\"{img.alt}\" />"
       }
       b.to_string()
     },
     "content" -> page.content,
   ))
-}
-
-fun article_teaser(article: Article): String {
-  template("templates/article-teaser.html", article.fills())
 }
 
 fun index_page(blog: Blog): String {
@@ -307,8 +298,8 @@ fun index_page(blog: Blog): String {
     canonical_url = "https://marcelgarus.dev",
     tab_title = "Blog",
     preview_title = "Blog",
-    preview_description = "Marcel Garus is a student at the Hasso Plattner Institute 
-      'in Potsdam and an open source developer mainly using Zig and Rust.",
+    preview_description = "Marcel Garus is a student at the Hasso Plattner Institute
+      ' in Potsdam and an open source developer mainly using Zig and Rust.",
     preview_image = some(PreviewImage {
       src = "https://marcelgarus.dev/me.png",
       alt = "A portrait of me.",
@@ -333,9 +324,7 @@ fun article_page(blog: Blog, article: Article, random: &Random): String {
     preview_title = simple_title,
     preview_description = article.subtitle.unformatted(),
     preview_image = none[PreviewImage](), | TODO: find first image in article?
-    content = template("templates/article-full.html", article.fills() + map(
-      "suggestion" -> article_teaser(blog.get(blog.suggestion_for(article, random))),
-    )),
+    content = template("templates/article.html", article.fills()),
   }.to_html()
 }
 
@@ -379,8 +368,7 @@ fun timeline_page(blog: Blog, topic: String): String {
         articles.to_slice()
       },
       "Articles about {topic}",
-      "Didn't find what you were looking for? 
-        'Check out <a href=\"/articles\">all articles.</a>"
+      "Didn't find what you were looking for? Check out <a href=\"/articles\">all articles.</a>"
     ),
   }.to_html()
 }
@@ -405,7 +393,7 @@ fun timeline(blog: Blog, articles: Slice[Article], title: String, outro: String)
           "topics" -> comma_separated(article.topics).format(),
         )))
       entries.to_slice()
-    }.join("\n"),
+    }.join(""),
     "outro" -> outro,
   ))
 }

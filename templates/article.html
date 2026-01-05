@@ -1,0 +1,86 @@
+<style>
+/* titles */
+h2, h3, h4, h5, h6 { margin-top: 2rem; margin-bottom: 1rem; line-height: 1; }
+
+/* Articles use boxes with a slightly different background color for block quotes and code snippets.
+  On big screens, those should have a corner radius. On small screens, they should stretch from edge to edge without a radius. */
+:root { --box-border-radius: 1em; }
+@media (max-width: 50rem) { :root { --box-border-radius: 0; } }
+.card { width: calc(100% - 2 * var(--padding)); margin: 0; padding: 1rem var(--padding); color: black; border-radius: 1rem; }
+@media (max-width: 50rem) { .card { border-radius: 0; } }
+.card ::selection { background: black; color: white; }
+
+/* block quotes are displayed in boxes */
+blockquote { margin: 0; padding: 0.1rem var(--padding); background: var(--box-bg); border-radius: 1em; }
+@media (max-width: 50rem) { blockquote { border-radius: 0; } }
+
+/* images */
+img { max-width: 100%; max-height: 30rem; border-radius: 1rem; }
+@media (prefers-color-scheme: dark) { .invertible-image { -webkit-filter: invert(100%); filter: invert(100%); } }
+
+/* videos */
+video { max-width: 100%; max-height: 30rem; border-radius: 1rem; }
+
+/* audio */
+audio { margin-top: 1rem; border-radius: 1rem; }
+
+/* horizontal ruler. TODO: do I use this? */
+hr { width: 50%; height: 4px; margin: 3rem auto; border: none; border-radius: 2px; background: var(--pink); }
+@media print { hr { background: none; border-radius: 0; border-top: 1px solid var(--pink); } }
+
+/* Footnotes become something like <a href="#footnote-id" class="footnote-key">2</a> in the text.
+  At the bottom, there's a list of all footnote definitions.
+  When printing, footnotes become stuff in brackets like this [0]. */
+@media screen {
+  .footnote-key { background: var(--pink); padding: 0.2rem; border-radius: 0.2rem; color: white; text-decoration: none; }
+}
+@media print {
+  .footnote-key { padding: 0; }
+  .footnote-key::before { content: "["; }
+  .footnote-key::after { content: "]"; }
+}
+.footnote-def { display: flex; margin-bottom: 1rem; }
+.footnote-def-key { min-width: 2rem; }
+.footnote-def-value > p { margin: 0; }
+
+/* Code */
+code, pre {
+  background: none;
+  font-family: monospace; font-size: 0.9em; text-align: left; line-height: 1.5;
+  white-space: pre; word-spacing: normal; word-break: normal; word-wrap: normal;
+  -moz-tab-size: 2; -o-tab-size: 2; tab-size: 2;
+  -webkit-hyphens: none; -moz-hyphens: none; -ms-hyphens: none; hyphens: none;
+}
+pre {
+  background: var(--box-bg); border-radius: var(--box-border-radius);
+  margin: 0; padding: 1rem var(--padding); overflow: auto;
+}
+:not(pre) > code { /* inline code snippets */
+  background: var(--box-bg); padding: 0.1em; border-radius: 0.3em; white-space: normal;
+}
+/* syntax highlighting of tokens */
+tok-default { color: var(--fg); }
+tok-comment { color: #374f2f; }
+tok-declaration { color: #0000ff; }
+tok-control { color: #af00db; }
+tok-type { color: #e50000; }
+tok-name { color: #00755a; }
+tok-literal { color: #795e28; }
+@media (prefers-color-scheme: dark) {
+  tok-comment { color: #7ece64; }
+  tok-declaration { color: #9bcbff; }
+  tok-control { color: #c59bff; }
+  tok-type { color: #f97191; }
+  tok-name { color: #64ceb5; }
+  tok-literal { color: #ff9752; }
+}
+</style>
+
+<h1 id="title">{{title}}</h1>
+<h2 style="margin-top: 1rem; color: var(--pink);">{{subtitle}}</h2>
+<div style="margin-bottom: 4rem; opacity: 0.5;">
+  <style media="screen"> available-at { display: none; } </style>
+  by <a href="/">Marcel Garus</a> · {{info}}<available-at> · available at www.marcelgarus.dev/{{id}}</available-at>
+</div>
+
+{{body}}

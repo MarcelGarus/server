@@ -3,7 +3,7 @@
 ## A tiny computer
 
 ```embed
-<div id="dungbeetle" style="font-family: var(--mono), monospace; line-height: 1.2">Loading...</div>
+<div id="dungbeetle" style="font-family: monospace; line-height: 1.2">Loading...</div>
 <br>
 <button onclick="loadExample('intro')">intro.dung</button>
 <button onclick="loadExample('edit')">edit.dung</button>
