@@ -8,7 +8,7 @@ fun +[K, V](a: Map[K, V], b: Map[K, V]): Map[K, V] {
 }
 
 fun write[W](writer: W, date: Date) {
-  writer."{date.year}-{date.month}-{date.day}"
+  writer."{date.year}-{date.month.format().pad_left(2, "0")}-{date.day.format().pad_left(2, "0")}"
 }
 fun <=>(a: Article, b: Article): Ordering {
   var a_date = a.state.published or
