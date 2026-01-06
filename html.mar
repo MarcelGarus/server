@@ -1,0 +1,420 @@
+import make.mar
+
+fun +[K, V](a: Map[K, V], b: Map[K, V]): Map[K, V] {
+  var map = map[K, V]()
+  for entry in a do map.&.put(entry.key, entry.value)
+  for entry in b do map.&.put(entry.key, entry.value)
+  map
+}
+
+fun write[W](writer: W, date: Date) {
+  writer."{date.year}-{date.month}-{date.day}"
+}
+fun <=>(a: Article, b: Article): Ordering {
+  var a_date = a.state.published or
+    return if b.state is published then Ordering.less else Ordering.equal
+  var b_date = b.state.published or return Ordering.greater
+  {a_date <=> b_date}.flip()
+}
+fun <=>(a: Date, b: Date): Ordering {
+  var year_ord = a.year <=> b.year
+  year_ord is equal or return year_ord
+  var month_ord = a.month <=> b.month
+  month_ord is equal or return month_ord
+  a.day <=> b.day
+}
+
+fun html_encode(str: String): String {
+  var b = string_builder().&
+  for char in str.chars() do
+    if char == #< then b."&lt;"
+    else if char == #> then b."&gt;"
+    else if char == #& then b."&amp;"
+    else if char == #" then b."&quot;"
+    else b."{char}"
+  b.to_string()
+}
+fun urlify(topic: String): String {
+  var b = string_builder().&
+  for char in topic.chars() do
+    if char == space then b."-"
+    else if lowercase_chars.contains(char) then b."{char}"
+    else if uppercase_chars.contains(char) then b.write_byte(char.byte - #A.byte + #a.byte)
+    else panic("Found non-URL-ifiable char: {char}")
+  b.to_string()
+}
+
+fun syntax_highlight(code: MarkdownCode): String {
+  var b = string_builder().&
+  for token in tokenize(code.language, code.code) do
+    b."<tok-{token.kind.debug()}>{token.str.html_encode().replace(" ", "&nbsp;")}</tok-{token.kind.debug()}>"
+  b.to_string()
+}
+
+fun to_html(markdown: Markdown): String {
+  var footnote_defs = list[String]()
+  markdown.collect_footnote_defs(footnote_defs.&)
+  var b = string_builder().&
+  b.write_html(markdown, footnote_defs.to_slice())
+  b.to_string()
+}
+fun to_html(markdown: MarkdownInline): String {
+  var b = string_builder().&
+  b.write_html(markdown, empty_slice[String]())
+  b.to_string()
+}
+fun collect_footnote_defs(markdown: Markdown, defs: &List[String]) {
+  switch markdown
+  case footnote_definition(def) defs.push(def.key)
+  case multiple(multiple)
+    for item in multiple do item.collect_footnote_defs(defs)
+  case list(list) for item in list.items do item.collect_footnote_defs(defs)
+  case quote(quote) quote.collect_footnote_defs(defs)
+  default {}
+}
+fun write_html[W](writer: W, markdown: Markdown, footnote_defs: Slice[String]) {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do writer.write_html(item, footnote_defs)
+  case heading(heading) {
+    writer."<h{heading.level}>"
+    writer.write_html(heading.content.*, footnote_defs)
+    writer."</h{heading.level}>"
+  }
+  case paragraph(paragraph) {
+    writer."<p>"
+    writer.write_html(paragraph.*, footnote_defs)
+    writer."</p>\n"
+  }
+  case list(list) {
+    var tag = switch list.type case ordered "ol" case bullet "ul"
+    writer."<{tag}>"
+    for item in list.items do {
+      writer."<li>"
+      writer.write_html(item, footnote_defs)
+      writer."</li>\n"
+    }
+    writer."</{tag}>\n"
+  }
+  case teaser_break {}
+  case thematic_break writer."<hr />\n"
+  case image(image) {
+    writer."<center>
+      '<img
+        ' src=\"{image.url}\"
+        ' alt=\""
+    writer.write_html(image.alt.*, footnote_defs)
+    writer."\"
+        ' class=\"{if image.is_invertible then "invertible-image" else ""}\" />
+      '</center>\n"
+  }
+  case code(code) {
+    if code.language == "embed" then
+      writer.write(code.code)
+    else
+      writer."<pre><code>{code.syntax_highlight()}</code></pre>\n"
+  }
+  case quote(quote) {
+    writer."<blockquote>"
+    writer.write_html(quote.*, footnote_defs)
+    writer."</blockquote>\n"
+  }
+  case footnote_definition(def) {
+    var index = {footnote_defs.iter().&.find(def.key)
+      or panic("Footnote def {def.key} doesn't exist.")} + 1
+    writer."
+      '<div id=\"footnote-{def.key}\" class=\"footnote-def\">
+      '  <div class=\"footnote-def-key\">
+      '    <span class=\"footnote-key\">{index}</span>
+      '  </div>
+      '  <div class=\"footnote-def-value\">"
+    writer.write_html(def.definition.*, footnote_defs)
+    writer."
+      '  </div>
+      '</div>\n"
+  }
+}
+fun write_html[W](writer: W, markdown: MarkdownInline, footnote_defs: Slice[String]) {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do writer.write_html(item, footnote_defs)
+  case text(text) writer."{text.html_encode()}"
+  case soft_break writer." "
+  case emphasis(child) {
+    writer."<em>"
+    writer.write_html(child.*, footnote_defs)
+    writer."</em>"
+  }
+  case strong(child) {
+    writer."<strong>"
+    writer.write_html(child.*, footnote_defs)
+    writer."</strong>"
+  }
+  case strikethrough(child) {
+    writer."<s>"
+    writer.write_html(child.*, footnote_defs)
+    writer."</s>"
+  }
+  case link(link) {
+    writer."<a href=\"{link.url}\">"
+    writer.write_html(link.label.*, footnote_defs)
+    writer."</a>"
+  }
+  case code(code) {
+    if code.language == "embed" then
+      writer.write(code.code)
+    else
+      writer."<code>{code.syntax_highlight()}</code>"
+  }
+  case footnote_reference(key) {
+    var index = {footnote_defs.iter().&.find(key)
+      or panic("Footnote def {key} doesn't exist.")} + 1
+    writer."<a href=\"#footnote-{key}\" class=\"footnote-key\">{index}</a>"
+  }
+}
+
+fun unformatted(markdown: MarkdownInline): String {
+  var b = string_builder().&
+  b.write_unformatted(markdown)
+  b.to_string()
+}
+fun write_unformatted[W](writer: W, markdown: MarkdownInline) {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do writer.write_unformatted(item)
+  case text(text) writer."{text}"
+  case soft_break writer." "
+  case emphasis(child) writer.write_unformatted(child.*)
+  case strong(child) writer.write_unformatted(child.*)
+  case strikethrough(child) writer.write_unformatted(child.*)
+  case link(link) writer.write_unformatted(link.label.*)
+  case code(code) writer."{code.code}"
+  case footnote_reference {}
+}
+
+fun template(path: String, fills: Map[String, String]): String {
+  var content = {read_file(path) or panic("Couldn't read template {path}")}.to_string()
+  for entry in fills do
+    content = content.replace("\{\{{entry.key}\}\}", entry.value)
+  content
+}
+
+fun fills(article: Article): Map[String, String] {
+  var info =
+    switch article.state
+      case draft "draft"
+      case timeless ""
+      case published(date) date.format()
+
+  map(
+    "id" -> article.id,
+    "title" -> article.title.to_html(),
+    "subtitle" -> article.subtitle.to_html(),
+    "info" -> info,
+    "teaser" -> article.teaser.to_html(),
+    "body" -> article.content.to_html(),
+  )
+}
+
+fun suggestion_for(blog: Blog, current: Article, random: &Random): String {
+  | Suggest an article with the same topic as the current one.
+  var articles_with_the_same_topic = list[String]()
+  for article in blog.articles do {
+    if article.id == current.id then continue
+    var has_same_topic = false
+    for topic in current.topics do
+      if article.topics.iter().&.contains(topic) then {
+        has_same_topic = true
+        break
+      }
+    if not(has_same_topic) then continue
+    articles_with_the_same_topic.&.push(article.id)
+  }
+  if articles_with_the_same_topic.is_not_empty() then
+    return random.choose(articles_with_the_same_topic.to_slice())
+
+  | If no articles are about the same topic, just choose a totally random one.
+  var other_articles = list[String]()
+  for article in blog.articles do
+    if article.id != current.id then
+      other_articles.&.push(article.id)
+  random.choose(other_articles.to_slice())
+}
+
+fun find_title(markdown: Markdown): Maybe[MarkdownInline] {
+  switch markdown
+  case multiple(multiple)
+    for item in multiple do
+      if item.find_title() is some(title) then return some(title)
+  case heading(heading)
+    if heading.level == 1 then return some(heading.content.*)
+  default {}
+  none[MarkdownInline]()
+}
+
+struct Page {
+  site_type: String,
+  canonical_url: String,
+  tab_title: String,
+  | Preview stuff that is shown when sending a link to the website in
+  | messengers such as Signal, WhatsApp, or Telegram.
+  preview_title: String,
+  preview_description: String,
+  preview_image: Maybe[PreviewImage],
+  | Actual page content as HTML.
+  content: String,
+}
+struct PreviewImage { src: String, alt: String }
+fun to_html(page: Page): String {
+  template("templates/page.html", map(
+    "title" -> page.tab_title.html_encode(),
+    "metadata" -> {
+      var b = string_builder().&
+      b."<meta name=\"title\" content=\"{page.preview_title.html_encode()}\" />\n
+        '<meta name=\"description\" content=\"{page.preview_description.html_encode()}\" />\n
+        '<link rel=\"canonical\" href=\"{page.canonical_url}\" />\n
+        '<meta property=\"og:title\" content=\"{page.preview_title.html_encode()}\" />\n
+        '<meta property=\"og:description\" content=\"{page.preview_description.html_encode()}\" />\n
+        '<meta property=\"og:url\" content=\"{page.canonical_url}\" />\n
+        '<meta property=\"og:site\" content=\"Marcel Garus\" />\n
+        '<meta property=\"og:site_name\" content=\"Marcel Garus\" />\n
+        '<meta property=\"og:locale\" content=\"en_US\" />\n
+        '<meta property=\"og:type\" content=\"{page.site_type}\" />"
+      if page.preview_image is some(img) then {
+        b."\n
+          '<link rel=\"image_src\" href=\"{img.src}\" />\n
+          '<meta property=\"og:image\" content=\"{img.src}\" />\n
+          '<meta property=\"og:image:alt\" content=\"{img.alt}\" />"
+      }
+      b.to_string()
+    },
+    "content" -> page.content,
+  ))
+}
+
+fun index_page(blog: Blog): String {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev",
+    tab_title = "Blog",
+    preview_title = "Blog",
+    preview_description = "Marcel Garus is a student at the Hasso Plattner Institute
+      ' in Potsdam and an open source developer mainly using Zig and Rust.",
+    preview_image = some(PreviewImage {
+      src = "https://marcelgarus.dev/me.png",
+      alt = "A portrait of me.",
+    }),
+    content = template("templates/me.html", map[String, String](
+      "topics" -> {
+        var topics = list[String]()
+        for topic in blog.topics do
+          topics.&.push("<a href=\"articles-about-{topic.urlify()}\">{topic}</a>")
+        comma_separated(topics).format()
+      }
+    )),
+  }.to_html()
+}
+
+fun article_page(blog: Blog, article: Article, random: &Random): String {
+  var simple_title = article.title.unformatted()
+  Page {
+    site_type = "article",
+    canonical_url = "https://marcelgarus.dev/{article.id}",
+    tab_title = simple_title,
+    preview_title = simple_title,
+    preview_description = article.subtitle.unformatted(),
+    preview_image = none[PreviewImage](), | TODO: find first image in article?
+    content = template("templates/article.html", article.fills()),
+  }.to_html()
+}
+
+fun timeline_page(blog: Blog): String {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev/articles",
+    tab_title = "Articles",
+    preview_title = "Articles",
+    preview_description = "A list of all articles",
+    preview_image = none[PreviewImage](),
+    content = timeline(
+      blog,
+      {
+        var articles = list[Article]()
+        for article in blog.articles do
+          if article.state is published then articles.&.push(article)
+        articles.to_slice()
+      },
+      "All articles",
+      ""
+    ),
+  }.to_html()
+}
+fun timeline_page(blog: Blog, topic: String): String {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev/articles-about-{topic.urlify()}",
+    tab_title = "Articles",
+    preview_title = "Articles",
+    preview_description = "A list of articles about {topic}",
+    preview_image = none[PreviewImage](),
+    content = timeline(
+      blog,
+      {
+        var articles = list[Article]()
+        for article in blog.articles do
+          if article.state is published then
+            if article.topics.iter().&.contains(topic) then
+              articles.&.push(article)
+        articles.to_slice()
+      },
+      "Articles about {topic}",
+      "Didn't find what you were looking for? Check out <a href=\"/articles\">all articles.</a>"
+    ),
+  }.to_html()
+}
+fun timeline(blog: Blog, articles: Slice[Article], title: String, outro: String): String {
+  articles.&.sort()
+  template("templates/timeline.html", map(
+    "title" -> title,
+    "intro" -> {
+      var topics = list[String]()
+      for topic in blog.topics do
+        topics.&.push("<a href=\"articles-about-{topic.urlify()}\">{topic}</a>")
+      "I wrote about {comma_separated(topics)}."
+    },
+    "timeline" -> {
+      var entries = list[String]()
+      for article in articles do
+        entries.&.push(template("templates/timeline-article.html", map(
+          "id" -> article.id,
+          "published" -> article.state.published.unwrap().format(),
+          "title" -> article.title.to_html(),
+          "subtitle" -> article.subtitle.to_html(),
+          "topics" -> comma_separated(article.topics).format(),
+        )))
+      entries.to_slice()
+    }.join(""),
+    "outro" -> outro,
+  ))
+}
+
+fun rss_page(blog: Blog): String {
+  var xml = string_builder().&
+  for article in blog.articles do {
+    article.state is published or continue
+    xml."{template("templates/rss-article.xml", article.fills())}"
+  }
+  template("templates/rss-feed.xml", map("content" -> xml.to_string()))
+}
+
+fun error_404_page(): String {
+  Page {
+    site_type = "website",
+    canonical_url = "https://marcelgarus.dev/404",
+    tab_title = "404",
+    preview_title = "404",
+    preview_description = "Page not found",
+    preview_image = none[PreviewImage](),
+    content = template("templates/404.html", map[String, String]()),
+  }.to_html()
+}

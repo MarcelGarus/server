@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<!--Hello, world! This is my website. -->
+
+<head prefix="og:http://ogp.me/ns#">
+
+<title>{{title}} – Marcel Garus</title>
+<meta charset="utf-8" />
+<meta name="theme-color" content="#f97191" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CclipPath id='c'%3E%3Ccircle cx='24' cy='24' r='24'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle fill='white' cx='24' cy='24' r='24'/%3E%3Cpath fill='%23f97191' d='M8 15 L8 48 L40 48 L40 15 L24 33 z' clip-path='url(%23c)'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="/icon.png" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+{{metadata}}
+
+<style>
+  :root { --pink: #f97191; --bg: white; --box-bg: #fffbed; --fg: black; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #222; --box-bg: #26292d; --fg: white; } }
+  html, body { margin: 0; padding: 0; background-color: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; }
+  main ::selection { background: var(--pink); color: white; }
+  a { color: var(--fg); }
+
+  /* Instead of putting the content in an HTML element with a fixed amount of margin on the left and right,
+    * we make the main part have no margin and add margin to everything inside (in CSS, main > *).
+    * This way, we can add exceptions so that code blocks and images stretch from edge to edge on small displays. */
+  main { position: relative; width: 100%; max-width: 50rem; margin: auto; margin-top: 6rem; --padding: 16px; line-height: 1.7; font-size: 1rem; }
+  main > * { margin: 0 var(--padding); }
+  @media (max-width: 750px) { main { margin-top: 1rem; } }
+  @media (max-width: 400px) { main { --padding: 8px; } }
+
+  h1 { font-size: 3rem; line-height: 1; margin-top: 2rem; margin-bottom: 0.5rem; }
+  @media (max-width: 750px) { h1 { font-size: 2rem; } }
+
+  p { margin-top: 1rem; margin-bottom: 1rem; }
+  ul, ol { margin: 1rem var(--padding); padding-left: 4rem; }
+  ul > *, ol > * { --padding: 0rem; }
+  @media (max-width: 600px) { ul, ol { padding-left: 2rem; } }
+
+  footer { margin: 4rem var(--padding) 2rem var(--padding); opacity: 0.5; }
+  @media print { footer { display: none; } }
+</style>
+
+</head>
+
+<body>
+<main>
+
+{{content}}
+
+<footer>
+  <a href="/">about me</a>,
+  <a href="/articles">all articles</a>,
+  <a href="/rss">RSS feed</a>,
+  <a href="https://github.com/MarcelGarus/server">source code</a>,
+  <a href="/privacy-policy">imprint</a>,
+  <a href="/privacy-policy">privacy policy</a>
+</footer>
+
+</main>
+</body>
+</html>

@@ -1,7 +1,2 @@
-target/
-shortcuts.json
-visits.jsonl
-visits_by_day.json
-Config.toml
-
+out/
 visits_production/

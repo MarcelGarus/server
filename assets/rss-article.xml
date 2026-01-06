@@ -1,5 +1,0 @@
-<item>
-    <title>{{title}}</title>
-    <link>https://marcelgarus.dev/{{key}}</link>
-    <pubDate>{{published}}</pubDate>
-</item>

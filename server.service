@@ -7,7 +7,7 @@ WantedBy=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/root/server/target/release/server
+ExecStart=caddy run
 WorkingDirectory=/root/server
 Restart=always
 RestartSec=5
