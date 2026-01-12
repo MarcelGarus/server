@@ -76,9 +76,9 @@ When I first learned about alignment, it felt weird, quirky, and unintuitive.
 The _absolute_ address matters?
 Whyy?
 But apparently, this makes things easier for the hardware and it's here to stay.
-Compilers deal with that by making everything that can be placed in memory have a size (how many bytes) and an alignment (an alignment of n means that the value can only be placed at addresses that are a multiple of n).
+Compilers usually deal with that by making types have a size and an alignment, where an alignment of n means that the value can only be placed at addresses that are a multiple of n.
 To achieve correct alignment of struct fields, compilers introduce padding (unused space).
-Here's the memory layout that a C compiler would use for our struct:
+Here's the memory layout that a C compiler would use for our `mar:Foo`:
 
 ```embed
 <div id="cLayout"></div>
@@ -93,8 +93,8 @@ cLayout.innerHTML = buildSvg([
 </script>
 ```
 
-If we place such a struct at an address that is a multiple of 8, the b field will also be at an address that is a multiple of 8, so we can load the `mar:Int` directly into a register.
-Note that the C compiler doesn't just add padding after the `mar:a` field, but also after `mar:c`, so that if you have an array of these structs, all of them are aligned to 8 bytes.
+If we place such a `mar:Foo` at an address that is a multiple of 8, the `mar:b` field will also be at an address that is a multiple of 8, so we can load the `mar:Int` directly into a register.
+Note that the C compiler doesn't just add padding after the `mar:a` field, but also after `mar:c`, so that if you have an array of `mar:Foo`s, all of them are aligned to 8 bytes.
 
 Other languages enable more compact layouts.
 For example, the Rust language gives no guarantees about the order of fields in memory (unless you use a special annotation, `rust:#[repr(C)]`).
@@ -174,12 +174,12 @@ For every sorting criteria I've come up with, there's a combination of fields th
 - Sorting fields by increasing size is not optimal:
   `embed:<div id="incSize"></div><script>incSize.innerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 8, alignment 4", size: 8}])</script>`
 
-Even though I haven't proven it, I suspect this problem is NP-complete – it feels a bit similar to bin-packing.
+Even though I haven't proven it, I suspect this problem is NP-complete – it feels a bit similar to [bin-packing](https://en.wikipedia.org/wiki/Bin_packing_problem).
+Perhaps it helps that the alignments are always powers of two?
 
-So, what to do?
-First of all, I noticed that lots of structs contain `mar:Int`s and pointers or other structs that only contain `mar:Int`s and pointers – those cause the maximum alignment to be 8 and because their size is a multiple of 8, I can safely move them to front of the struct.
+I took the hacky route:
+First, I noticed that lots of structs only contain `mar:Int`s and pointers and other structs that only contain `mar:Int`s and pointers – those cause the maximum alignment to be 8 and because their size is a multiple of 8, I can safely move them to front of the struct.
 For the (often few) remaining fields, I just bruteforce 1000 permutations and choose the best one.
-This feels wrong and hacky, but seems to work out in practice.
 
 In another language of mine, [Plum](/plum), I place fields from regularly-shaped ones to irregularly-shaped ones – first, fields where the size is a multiple of 8, then fields where the size is a multiple of 4, then 2, then 1.
 I also don't append a field at the end of the struct if it fits in a padding hole before.
