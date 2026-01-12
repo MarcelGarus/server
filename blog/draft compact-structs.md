@@ -2,7 +2,7 @@ topics: Martinaise, Plum, programming language design, code
 
 # Compact Structs
 
-## How I handle size and alignment
+## Memory layouting is fucking hard
 
 Many programming languages have product types, often called structs.
 For example, this is a struct in my language [Martinaise](/martinaise):
