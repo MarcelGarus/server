@@ -1,8 +1,8 @@
-topics: Martinaise, code
+topics: Martinaise, Plum, programming language design, code
 
-# Stride Size
+# Compact Memory Layouts
 
-## An exploration of size and alignment
+## How I handle size and alignment
 
 Many programming languages have product types, often called structs.
 For example, this is a struct in my language [Martinaise](/martinaise):
