@@ -1,3 +1,5 @@
+topics: programming language design, code
+
 # Dungbeetle
 
 ## A tiny computer
