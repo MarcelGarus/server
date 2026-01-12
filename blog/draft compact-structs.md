@@ -15,11 +15,13 @@ In Martinaise, `mar:Int`s take up 8 bytes (64 bits) and `mar:Byte`s take up 1 by
 So, for an instance of `mar:Foo`, these are the pieces of data that we somehow need to store in memory:
 
 ```embed
+<style>
+rect { fill: var(--box-bg); stroke: var(--fg); stroke-width: 2px; }
+text { font: 14px sans-serif; text-anchor: middle; fill: var(--fg); }
+.grid { stroke: var(--pink); stroke-width: 2px; }
+.padding { stroke: var(--fg); stroke-width: 1px; }
+</style>
 <svg xmlns="http://www.w3.org/2000/svg" width="304" height="67" viewBox="-2 -15 304 67">
-    <style>
-      rect { fill: white; stroke: black; stroke-width: 2px; }
-      text { font: 14px sans-serif; text-anchor: middle; }
-    </style>
     <rect x="0" width="20" height="20"></rect><text x="10" y="15">a</text>
     <rect x="80" y="30" width="160" height="20"></rect><text x="160" y="45">b</text>
     <rect x="280" y="10" width="20" height="20"></rect><text x="290" y="25">c</text>
@@ -36,13 +38,7 @@ function buildSvg(parts) {
   const grid = 20;
   let out = `<svg xmlns="http://www.w3.org/2000/svg"
       width="${size * grid + 4}" height="${17 + grid}"
-      viewBox="-2 -15 ${size * grid + 4} ${17 + grid}">
-    <style>
-      rect { fill: white; stroke: black; stroke-width: 2px; }
-      text { font: 14px sans-serif; text-anchor: middle; }
-      .grid { stroke: var(--pink); stroke-width: 2px; }
-      .padding { stroke: black; stroke-width: 1px; }
-    </style>`;
+      viewBox="-2 -15 ${size * grid + 4} ${17 + grid}">`;
   for (let i = 0; i <= size; i++)
     out += `<line class="grid" x1="${i * grid}" y1="${(i % 8 == 0) ? -15 : -7}" x2="${i * grid}" y2="${grid}" />`;
   var usedSoFar = 0;
@@ -210,6 +206,7 @@ Just look at how much smaller structs can be in Martinaise and Plum vs. C and Ru
 <div style="margin-left:0; margin-right: 0;">
 <textarea id="codeInput" rows="6" cols="80" style="
   border: 0; width=100%; background:var(--box-bg); padding:var(--padding); border-radius: var(--box-border-radius);
+  color: var(--fg);
   font-family: monospace; font-size: 0.9em; text-align: left; line-height: 1.5;
   white-space: pre; word-spacing: normal; word-break: normal; word-wrap: normal;
   -moz-tab-size: 2; -o-tab-size: 2; tab-size: 2;
@@ -220,8 +217,7 @@ opaque CInt = size 4, alignment 4
 opaque Int = size 8, alignment 8
 
 struct Foo { int: CInt, b: Byte }
-struct Bar { foo1: Foo, foo2: Foo, x: Byte }
-</textarea>
+struct Bar { foo1: Foo, foo2: Foo, x: Byte }</textarea>
 </div>
 <div id="errors" style="color: var(--pink); font-weight: bold;"></div>
 <b>In C:</b><div id="outputC"></div>
