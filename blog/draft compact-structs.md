@@ -1,6 +1,6 @@
 topics: Martinaise, Plum, programming language design, code
 
-# Compact Memory Layouts
+# Compact Structs
 
 ## How I handle size and alignment
 
