@@ -53,8 +53,8 @@ function buildSvg(parts) {
   return out;
 }
 </script>
-<script id="fieldsNextToEachOther">
-fieldsNextToEachOther.outerHTML = buildSvg([
+<script>
+document.currentScript.outerHTML = buildSvg([
   { kind: "field", name: "a", size: 1 },
   { kind: "field", name: "b", size: 8 },
   { kind: "field", name: "c", size: 1 },
@@ -76,8 +76,8 @@ To achieve correct alignment of struct fields, compilers introduce padding (unus
 Here's the memory layout that a C compiler would use for our `mar:Foo`:
 
 ```embed
-<script id="cLayout">
-cLayout.outerHTML = buildSvg([
+<script>
+document.currentScript.outerHTML = buildSvg([
   { kind: "field", name: "a", size: 1 },
   { kind: "padding", size: 7 },
   { kind: "field", name: "b", size: 8 },
@@ -95,8 +95,8 @@ For example, the Rust language gives no guarantees about the order of fields in 
 This allows the Rust compiler to reorder fields, and that's exactly what it does:
 
 ```embed
-<script id="rustLayout">
-rustLayout.outerHTML = buildSvg([
+<script>
+document.currentScript.outerHTML = buildSvg([
   { kind: "field", name: "b", size: 8 },
   { kind: "field", name: "a", size: 1 },
   { kind: "field", name: "c", size: 1 },
@@ -113,8 +113,8 @@ The size of a value doesn't have to be a multiple of its alignment.
 The `mar:Foo` struct has a size of just 10 bytes and an alignment of 8:
 
 ```embed
-<script id="martinaiseLayout">
-martinaiseLayout.outerHTML = buildSvg([
+<script>
+document.currentScript.outerHTML = buildSvg([
   { kind: "field", name: "b", size: 8 },
   { kind: "field", name: "a", size: 1 },
   { kind: "field", name: "c", size: 1 },
@@ -158,13 +158,13 @@ If your sizes are independent of the alignment, things are more complicated and 
 For every sorting criteria I've come up with, there's a combination of fields that cause the layout to contain unnecessary padding:
 
 - Sorting fields by decreasing alignment is not optimal:
-  `embed:<br><script id="decAlignment">decAlignment.outerHTML = buildSvg([{kind: "field", name: "size 9, alignment 8", size: 9}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
+  `embed:<br><script>document.currentScript.outerHTML = buildSvg([{kind: "field", name: "size 9, alignment 8", size: 9}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
 - Sorting fields by increasing alignment is not optimal:
-  `embed:<br><script id="incAlignment">incAlignment.outerHTML = buildSvg([{kind: "field", name: "size 4, al. 4", size: 4}, {kind: "padding", size: 4}, {kind: "field", name: "size 8, alignment 8", size: 8}])</script>`
+  `embed:<br><script>document.currentScript.outerHTML = buildSvg([{kind: "field", name: "size 4, al. 4", size: 4}, {kind: "padding", size: 4}, {kind: "field", name: "size 8, alignment 8", size: 8}])</script>`
 - Sorting fields by decreasing size is not optimal:
-  `embed:<br><script id="decSize">decSize.outerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
+  `embed:<br><script>document.currentScript.outerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
 - Sorting fields by increasing size is not optimal:
-  `embed:<br><script id="incSize">incSize.outerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 8, alignment 4", size: 8}])</script>`
+  `embed:<br><script>document.currentScript.outerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 8, alignment 4", size: 8}])</script>`
 
 Even though I haven't proven it, I suspect this problem is NP-complete – it feels a bit similar to [bin-packing](https://en.wikipedia.org/wiki/Bin_packing_problem).
 Perhaps it helps that the alignments are always powers of two?
@@ -178,8 +178,8 @@ I also don't append a field at the end of the struct if it fits in a padding hol
 This doesn't always find an optimal placement, for example here:
 
 ```embed
-<script id="badPlumLayout">
-badPlumLayout.outerHTML = buildSvg([
+<script>
+document.currentScript.outerHTML = buildSvg([
   { kind: "field", name: "size 4, al. 2", size: 4 },
   { kind: "padding", size: 4 },
   { kind: "field", name: "size 10, alignment 8", size: 10 },
