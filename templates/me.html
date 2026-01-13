@@ -1,4 +1,15 @@
-<img src="me.jpeg" style="float: right; max-width: 20rem; max-height: 30rem; margin-left: 2rem; border-radius: 1rem; background-color: black;" />
+<style>
+.me {
+  float: right; width: auto; height: auto; max-width: 20rem; max-height: 30rem;
+  margin-left: 2rem; margin-bottom: 2rem; border-radius: 1rem; background-color: black;
+}
+@media (max-width: 750px) { .me { max-width: 18rem; } }
+@media (max-width: 600px) { .me { max-width: 15rem; } }
+@media (max-width: 550px) { .me { max-width: 12rem; margin-left: 1rem; margin-bottom: 1rem; } }
+@media (max-width: 450px) { .me { max-width: 9rem; } }
+@media (max-width: 400px) { .me { display:block; float: none; margin: auto; max-width:12rem; } }
+</style>
+<img src="me.jpeg" width="1536" height="2048" class="me" />
 <h1>Marcel Garus</h1>
 <p>That's my name. This is my website. Here's a bit about myself:</p>
 
