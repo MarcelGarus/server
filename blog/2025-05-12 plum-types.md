@@ -1,5 +1,3 @@
-topics: Plum, programming language design, code
-
 # Types in Plum
 
 ## Why the compiler models types as strings

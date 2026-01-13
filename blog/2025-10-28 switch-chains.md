@@ -1,5 +1,3 @@
-topics: Plum, programming language design, code
-
 # Switch Chains
 
 ## Separating decisions from actions

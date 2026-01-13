@@ -1,5 +1,3 @@
-topics: Martinaise, Soil, programming language design, code
-
 # In Defense of Leaky Abstractions
 
 ## They can be a good thing

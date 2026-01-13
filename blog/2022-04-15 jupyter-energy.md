@@ -1,5 +1,3 @@
-topics: university stuff, code
-
 # Jupyter Energy
 
 ## Increasing awareness of energy consumption in Jupyter Notebooks

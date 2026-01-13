@@ -1,5 +1,3 @@
-topics: this blog
-
 # Why This Website Has No Dark-Mode Toggle
 
 ## How to incentivize change

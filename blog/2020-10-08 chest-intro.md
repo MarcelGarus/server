@@ -1,5 +1,3 @@
-topics: Chest, Dart, code
-
 # Chest
 
 ## A new database

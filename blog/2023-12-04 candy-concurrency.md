@@ -1,5 +1,3 @@
-topics: Candy, programming language design, code
-
 # Concurrency In Candy
 
 ## How Candy uses structured concurrency

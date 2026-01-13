@@ -1,5 +1,3 @@
-topics: Chest, Dart, code
-
 # Chunky
 
 ## A database layer

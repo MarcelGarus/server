@@ -1,5 +1,3 @@
-topics: Candy, programming language design, code
-
 # Goodbye, Fibers!
 
 ## Why Candy doesn't have built-in concurrency anymore

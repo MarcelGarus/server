@@ -1,5 +1,3 @@
-topics: music, university stuff, code
-
 # Coronoise
 
 ## Encouraging people to be more careful in situations with high infection risk

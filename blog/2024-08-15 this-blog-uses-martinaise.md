@@ -1,5 +1,3 @@
-topics: this blog, Martinaise, code
-
 # This Blog Uses Martinaise
 
 ## And why "My article doesn't compile" is now a valid statement
