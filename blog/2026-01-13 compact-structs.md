@@ -29,7 +29,6 @@ text { font: 14px sans-serif; text-anchor: middle; fill: var(--fg); }
 The most straightforward way is to store the fields next to each other:
 
 ```embed
-<div id="fieldsNextToEachOther"></div>
 <script>
 function buildSvg(parts) {
   const size = parts.reduce((sum, part) => sum + part.size, 0);
@@ -53,7 +52,9 @@ function buildSvg(parts) {
   out += "</svg>";
   return out;
 }
-fieldsNextToEachOther.innerHTML = buildSvg([
+</script>
+<script id="fieldsNextToEachOther">
+fieldsNextToEachOther.outerHTML = buildSvg([
   { kind: "field", name: "a", size: 1 },
   { kind: "field", name: "b", size: 8 },
   { kind: "field", name: "c", size: 1 },
@@ -75,9 +76,8 @@ To achieve correct alignment of struct fields, compilers introduce padding (unus
 Here's the memory layout that a C compiler would use for our `mar:Foo`:
 
 ```embed
-<div id="cLayout"></div>
-<script>
-cLayout.innerHTML = buildSvg([
+<script id="cLayout">
+cLayout.outerHTML = buildSvg([
   { kind: "field", name: "a", size: 1 },
   { kind: "padding", size: 7 },
   { kind: "field", name: "b", size: 8 },
@@ -95,9 +95,8 @@ For example, the Rust language gives no guarantees about the order of fields in 
 This allows the Rust compiler to reorder fields, and that's exactly what it does:
 
 ```embed
-<div id="rustLayout"></div>
-<script>
-rustLayout.innerHTML = buildSvg([
+<script id="rustLayout">
+rustLayout.outerHTML = buildSvg([
   { kind: "field", name: "b", size: 8 },
   { kind: "field", name: "a", size: 1 },
   { kind: "field", name: "c", size: 1 },
@@ -114,9 +113,8 @@ The size of a value doesn't have to be a multiple of its alignment.
 The `mar:Foo` struct has a size of just 10 bytes and an alignment of 8:
 
 ```embed
-<div id="martinaiseLayout"></div>
-<script>
-martinaiseLayout.innerHTML = buildSvg([
+<script id="martinaiseLayout">
+martinaiseLayout.outerHTML = buildSvg([
   { kind: "field", name: "b", size: 8 },
   { kind: "field", name: "a", size: 1 },
   { kind: "field", name: "c", size: 1 },
@@ -160,13 +158,13 @@ If your sizes are independent of the alignment, things are more complicated and 
 For every sorting criteria I've come up with, there's a combination of fields that cause the layout to contain unnecessary padding:
 
 - Sorting fields by decreasing alignment is not optimal:
-  `embed:<div id="decAlignment"></div><script>decAlignment.innerHTML = buildSvg([{kind: "field", name: "size 9, alignment 8", size: 9}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
+  `embed:<br><script id="decAlignment">decAlignment.outerHTML = buildSvg([{kind: "field", name: "size 9, alignment 8", size: 9}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
 - Sorting fields by increasing alignment is not optimal:
-  `embed:<div id="incAlignment"></div><script>incAlignment.innerHTML = buildSvg([{kind: "field", name: "size 4, al. 4", size: 4}, {kind: "padding", size: 4}, {kind: "field", name: "size 8, alignment 8", size: 8}])</script>`
+  `embed:<br><script id="incAlignment">incAlignment.outerHTML = buildSvg([{kind: "field", name: "size 4, al. 4", size: 4}, {kind: "padding", size: 4}, {kind: "field", name: "size 8, alignment 8", size: 8}])</script>`
 - Sorting fields by decreasing size is not optimal:
-  `embed:<div id="decSize"></div><script>decSize.innerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
+  `embed:<br><script id="decSize">decSize.outerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 4, al. 4", size: 4}])</script>`
 - Sorting fields by increasing size is not optimal:
-  `embed:<div id="incSize"></div><script>incSize.innerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 8, alignment 4", size: 8}])</script>`
+  `embed:<br><script id="incSize">incSize.outerHTML = buildSvg([{kind: "field", name: "size 5, al. 4", size: 5}, {kind: "padding", size: 3}, {kind: "field", name: "size 8, alignment 4", size: 8}])</script>`
 
 Even though I haven't proven it, I suspect this problem is NP-complete – it feels a bit similar to [bin-packing](https://en.wikipedia.org/wiki/Bin_packing_problem).
 Perhaps it helps that the alignments are always powers of two?
@@ -180,9 +178,8 @@ I also don't append a field at the end of the struct if it fits in a padding hol
 This doesn't always find an optimal placement, for example here:
 
 ```embed
-<div id="badPlumLayout"></div>
-<script>
-badPlumLayout.innerHTML = buildSvg([
+<script id="badPlumLayout">
+badPlumLayout.outerHTML = buildSvg([
   { kind: "field", name: "size 4, al. 2", size: 4 },
   { kind: "padding", size: 4 },
   { kind: "field", name: "size 10, alignment 8", size: 10 },
@@ -234,8 +231,8 @@ function updateMemoryLayouts() {
     [layoutInMartinaise, outputMartinaise],
     [layoutInPlum, outputPlum],
   ]) {
-    let layoutsToRender = [];
     let layouts = new Map();
+    let out = "<table>";
     for (const def of parsed) {
       if (def.kind === "opaque") {
         layouts[def.name] = { size: def.size, alignment: def.alignment };
@@ -246,17 +243,10 @@ function updateMemoryLayouts() {
           fields.push({ name: field.name, size: fieldLayout.size, alignment: fieldLayout.alignment });
         }
         const layout = layouter(fields);
-        layout.size = layout.parts.reduce((sum, part) => sum + part.size, 0);
-        layouts[def.name] = layout;
-        layoutsToRender.push({ name: def.name, layout });
+        const size = layout.parts.reduce((sum, part) => sum + part.size, 0);
+        layouts[def.name] = { size, alignment: layout.alignment };
+        out += `<tr><td>${def.name} (<i>${size}B</i>)</td><td>${buildSvg(layout.parts)} </td></tr>`;
       }
-    }
-    let out = "<table>";
-    for (const layout of layoutsToRender) {
-      out += `<tr>
-          <td>${layout.name} (<i>${layout.layout.size}B</i>)</td>
-          <td>${buildSvg(layout.layout.parts)} </td>
-        </tr>`;
     }
     out += "</table>";
     output.innerHTML = out;
