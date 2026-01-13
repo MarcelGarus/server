@@ -198,7 +198,7 @@ Compared to the C/Rust approach, my more nuanced take on memory layouts adds som
 However, this complexity is localized to the implementation of slices and struct layouting.
 
 The upside is that all the structs that aren't in arrays/slices (my gut feeling says this is the majority) get more efficient layouts.
-Just look at how much smaller structs can be in Martinaise and Plum vs. C and Rust:
+To get a feel for that, here is an editable code area, with the memory layouts shown live below:
 
 ```embed
 <div style="margin-left:0; margin-right: 0;">
@@ -214,7 +214,7 @@ opaque Byte = size 1, alignment 1
 opaque CInt = size 4, alignment 4
 opaque Int = size 8, alignment 8
 
-struct Foo { int: CInt, b: Byte }
+struct Foo { a: Byte, b: CInt, c: Byte }
 struct Bar { foo1: Foo, foo2: Foo, x: Byte }</textarea>
 </div>
 <div id="errors" style="color: var(--pink); font-weight: bold;"></div>
@@ -516,8 +516,6 @@ codeInput.addEventListener("change", updateMemoryLayouts);
 updateMemoryLayouts()
 </script>
 ```
-
-You should be able to edit the code and see the memory layout update live.
 
 ## Big Picture
 
