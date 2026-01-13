@@ -1,10 +1,16 @@
 <style>
   timeline { line-height: 1.2; }
-  tl-entry { display: flex; margin-left: var(--padding); margin-right: var(--padding); margin-bottom: 1rem; }
+  tl-entry {
+    display: flex;
+    padding-left: var(--padding); padding-right: var(--padding); padding-bottom: 0.5rem; padding-top: 0.5rem;
+    text-decoration: none;
+    border-radius: 1em;
+  }
+  @media (max-width: 50rem) { tl-entry { border-radius: 0; } }
+  tl-entry:hover { background-color: color-mix(in srgb, var(--pink), transparent 50%); }
   tl-date { width: 7rem; min-width: 7rem; }
   tl-content { margin: 0; }
-  tl-content > a { margin-right: 1rem; text-decoration: none; font-weight: bold; }
-  tl-content > a:hover { text-decoration: underline; }
+  tl-content > b { margin-right: 1rem; }
 </style>
 <h1>{{title}}</h1>
 <timeline>{{timeline}}</timeline>
