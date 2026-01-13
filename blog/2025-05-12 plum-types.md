@@ -2,9 +2,9 @@
 
 ## Why the compiler models types as strings
 
-<style>
-img { max-height: 15rem; }
-</style>
+```embed
+<style>img { max-height: 15rem; }</style>
+```
 
 [Plum](/plum) is a programming language with structural typing:
 Types don't have an identity.
