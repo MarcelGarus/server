@@ -1,5 +1,3 @@
-topics: this blog, Rust, code
-
 # On Developing This Blog
 
 ## Build stuff manually!

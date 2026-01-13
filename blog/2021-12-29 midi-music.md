@@ -1,5 +1,3 @@
-topics: music
-
 # My Music Setup
 
 ## How I make MIDI music with my electric piano and iPad

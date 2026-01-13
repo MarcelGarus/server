@@ -11,7 +11,7 @@ fun main(): Never {
   var blog = load_blog()
 
   var random = random_number_generator()
-  
+
   for article in blog.articles do {
     | if article.state is draft then continue
     print("Creating {article.id}")
@@ -23,10 +23,6 @@ fun main(): Never {
   println("Creating index")
   output("index.html", index_page(blog))
 
-  for topic in blog.topics do {
-    println("Creating timeline for {topic}")
-    output("articles-about-{topic.urlify()}.html", timeline_page(blog, topic))
-  }
   output("articles.html", timeline_page(blog))
 
   println("Creating RSS feed")
@@ -55,7 +51,7 @@ fun load_blog(): Blog {
     println("Parsing {file.name}")
     articles.&.push(parse_article(file.name, content.to_string()))
   }
-  blog(articles.to_slice())
+  Blog { articles = articles.to_slice() }
 }
 fun <=>(a: DirEntry, b: DirEntry): Ordering {
   a.name <=> b.name

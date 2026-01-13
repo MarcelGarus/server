@@ -1,5 +1,3 @@
-topics: Martinaise, Plum, programming language design, code
-
 # Compact Structs
 
 ## Memory layouting is fucking hard
@@ -519,7 +517,7 @@ updateMemoryLayouts()
 </script>
 ```
 
-You should be able to edit the code and see the memory layout update live (the code area only supports opaque types and structs).
+You should be able to edit the code and see the memory layout update live.
 
 ## Big Picture
 

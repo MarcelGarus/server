@@ -1,5 +1,3 @@
-topics: this blog, Rust, code
-
 # Templating engine? No thanks.
 
 ## Why this blog doesn't use a templating engine

@@ -1,5 +1,3 @@
-topics: Martinaise, programming language design, code
-
 # Martinaise
 
 ## A simple, imperative language

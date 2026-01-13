@@ -1,5 +1,3 @@
-topics: Candy, Rust, code
-
 # The Candy Compiler Pipeline
 
 ## The journey of a file from source code to byte code

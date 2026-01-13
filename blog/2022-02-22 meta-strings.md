@@ -1,5 +1,3 @@
-topics: programming language design, Candy, code
-
 # Meta Strings
 
 ## A unified syntax for raw strings and interpolation
