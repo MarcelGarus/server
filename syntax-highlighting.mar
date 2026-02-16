@@ -41,6 +41,7 @@ fun is_supported_language(lang: String): Bool {
     lang == "python" or
     lang == "rust" or
     lang == "scopes" or
+    lang == "smalltalk" or
     lang == "soil" or
     lang == "zig"
 }
@@ -76,6 +77,7 @@ fun tokenize_unmerged(language: String, code: String): Slice[Token] {
   if language == "python" then return tokenize_python(code)
   if language == "rust" then return tokenize_rust(code)
   if language == "scopes" then return tokenize_scopes(code)
+  if language == "smalltalk" then return tokenize_smalltalk(code)
   if language == "soil" then return tokenize_soil(code)
   if language == "zig" then return tokenize_zig(code)
 
@@ -433,6 +435,20 @@ fun tokenize_scopes(scopes: String): Slice[Token] {
       "#", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     )
   do out.&.push(Token { str = token, kind = TokenKind.name })
+  out.to_slice()
+}
+
+fun tokenize_smalltalk(code: String): Slice[Token] {
+  var out = list[Token]()
+  for token
+  in
+    code.tokenize_programming_language(
+      "\"", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    )
+  do
+    out.&.push(Token {
+      str = token, kind = if token.chars().get(0).is_upper() then TokenKind.type else TokenKind.name
+    })
   out.to_slice()
 }
 
