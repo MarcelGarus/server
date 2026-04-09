@@ -22,18 +22,21 @@ tile-box {
   clip-path: polygon(50% -50%,100% 50%, 50% 150%, 0 50%);
   cursor: grab;
   user-select: none;
+  touch-action: none;
   background: #2b1046;
+  overflow: hidden;
+  font-size: 18px;
 }
 tile-box:active { cursor: grabbing; }
 tile-line {
   display: inline-block;
   position: absolute;
-  height: 64px;
+  height: 70px;
   width: 10px;
 }
 .line-a { top: 0px; left: 32px; }
-.line-b { top: 1px; left: 32px; rotate: 60deg; }
-.line-c { top: 1px; left: 32px; rotate: -60deg; }
+.line-b { top: -2px; left: 32px; rotate: 60deg; }
+.line-c { top: -2px; left: 32px; rotate: -60deg; }
 .line-1 { background: #939696; }
 .line-2 { background: #b99c70; }
 .line-3 { background: #d73e62; }
@@ -42,13 +45,14 @@ tile-line {
 .line-6 { background: #c40404; }
 .line-7 { background: #199c19; }
 .line-8 { background: #ed8c05; }
-.line-9 { background: #e4cc07; }
+.line-9 { background: #ceaf08; }
 tile-text { position: absolute; color: white; font-weight: bold; }
 .tile-text-a { top: 4px; left: 0; width: 74px; text-align: center; }
 .tile-text-b { top: 34px; left: 13px; text-align: left; }
 .tile-text-c { top: 34px; right: 13px; text-align: right; }
 tiles-container { display: block; text-align: center }
 tile-container {
+  position: relative;
   display: inline-block;
   width: 100px;
   height: 68px;
@@ -69,8 +73,11 @@ tile-hole {
   aspect-ratio: 1/cos(30deg);
   clip-path: polygon(50% -50%,100% 50%, 50% 150%, 0 50%);
   background: #fff0bb;
-  text-align: center;
   overflow: hidden;
+  text-align: center;
+  font-size: larger;
+  color: #c5a73e;
+  line-height: 64px;
 }
 .hole-0 { left: 0; top: 72px }
 .hole-1 { left: 0; top: calc(2*72px) }
@@ -135,12 +142,14 @@ function createTileElement(tile, initialHole) {
   box.appendChild(bText);
   box.appendChild(cText);
   box.appendChild(aText);
-  box.addEventListener("mousedown", (e) => {
+  box.addEventListener("pointerdown", (e) => {
     console.log(`Dragging ${tileToStr(tile)}`);
     if (owningHole) {
       owningHole.onLeave(tile);
       owningHole = null;
     }
+    const pointerId = e.pointerId;
+    box.setPointerCapture(pointerId);
     const rect = wrapper.getBoundingClientRect();
     let startX = e.clientX - rect.left;
     let startY = e.clientY - rect.top;
@@ -153,10 +162,11 @@ function createTileElement(tile, initialHole) {
       wrapper.style.left = `${e.clientX - startX}px`;
       wrapper.style.top = `${e.clientY - startY}px`;
     };
-    document.addEventListener("mousemove", move);
-    document.addEventListener("mouseup", (e) => {
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", (e) => {
       console.log(`Dragged ${tileToStr(tile)}`);
-      document.removeEventListener("mousemove", move);
+      box.releasePointerCapture(pointerId);
+      document.removeEventListener("pointermove", move);
       const x = e.clientX - startX + window.scrollX;
       const y = e.clientY - startY + window.scrollY;
       wrapper.style.position = 'absolute';
@@ -378,15 +388,34 @@ Every tiles is a 2-byte numbers using a many-hot-encoding:
 A tile with a 1, 2, and 4 becomes `text:0000010110` (a number where the bits at indices 1, 2, and 4 are set).
 The lowest bit is unused, but that makes the math easier later on.
 
+```embed
+<tiles-container>
+  <tile-container style="width: 235px; height: 100px">
+    <div style="position: absolute; top: 30px;">
+      <script>
+      document.currentScript.parentNode.appendChild(createTileElement(tileFromStr("927"), null));
+      </script>
+    </div>
+    <div style="position: absolute; top: 9; left: 70px">
+      <script>
+      document.currentScript.parentNode.appendChild(createTileElement(tileFromStr("978"), null));
+      </script>
+    </div>
+    <div style="position: absolute; top: 10px; left: 160px">
+      <script>
+      document.currentScript.parentNode.appendChild(createTileElement(tileFromStr("923"), null));
+      </script>
+    </div>
+  </tile-container>
+</tiles-container>
+```
+
 What math, you wonder?
 By bitwise-and-ing tiles together, we get a number that only has 1s in the places that occur in all tiles.
 To illustrate how to use that to calculate the score, let's look at a single vertical column:
 
 ```embed
 <tiles-container>
-  <tile-container>
-    <script>
-  </tile-container>
   <tile-board style="width: 75px; height: 208px">
     <tile-hole id="bar0" style="left: 0; top: 0">0</tile-hole>
     <tile-hole id="bar1" style="left: 0; top: 72px">1</tile-hole>
@@ -458,7 +487,7 @@ function numberToBitStr(number) {
     + (number >> 3 & 1)
     + (number >> 2 & 1)
     + (number >> 1 & 1)
-    + "0";
+    + (number >> 0 & 1);
 }
 function updateBar() {
   const mask = tileToNumber(bar[0]) & tileToNumber(bar[1]) & tileToNumber(bar[2]);
@@ -636,7 +665,7 @@ Next, let's automatically place tiles based on probability distributions.
 
 I read in [TODO: a book](foo) that a human is not a homo oeconomicus.
 You might never consider drinking a bottle of wine worth 100€, but if you got a bottle for cheap and the price rose to 100€ over time, you are more easily tempted to drink it rather than sell it.
-We value not-losing-100€ more than we value winning-100€.
+We value not losing 100€ more than we value winning 100€.
 
 Maybe this explains the difference between the AI's and human's behavior.
 And it makes sense.
