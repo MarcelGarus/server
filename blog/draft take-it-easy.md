@@ -114,6 +114,11 @@ board-line { position: absolute; width: 10px; }
 .line-0-4-9-14-18 { rotate:-60deg; top: -9px; left: 156px; height: 372px }
 .line-3-8-13-17 { rotate:-60deg; top: -26px; left: 187px; height: 298px }
 .line-7-12-16 { rotate:-60deg; top: -43px; left: 218px; height: 224px }
+@media (prefers-color-scheme: dark) {
+  tile-wrapper { filter: drop-shadow(0 5px 0 #ffffff21) }
+  tile-box { background: #695d74 }
+  tile-hole { background: #160f19; color: #b26dae }
+}
 </style>
 
 <script>
