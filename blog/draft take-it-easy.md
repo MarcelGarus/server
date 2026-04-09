@@ -183,11 +183,12 @@ function createTileElement(tile, initialHole) {
         const tileX = tileRect.left + window.scrollX;
         const tileY = tileRect.top + window.scrollY;
         if (Math.abs(x - tileX) <= 32 && Math.abs(y - tileY) <= 32) {
-          element.appendChild(wrapper);
-          wrapper.style.left = '0';
-          wrapper.style.top = '0';
-          hole.onEnter(tile);
-          owningHole = hole;
+          if (hole.onEnter(tile)) {
+            element.appendChild(wrapper);
+            wrapper.style.left = '0';
+            wrapper.style.top = '0';
+            owningHole = hole;
+          }
         }
       }
     }, { once: true });
@@ -282,7 +283,7 @@ let foo = [
   tileFromStr("528"), tileFromStr("524"), tileFromStr("563"), tileFromStr("578"),
   tileFromStr("973"), tileFromStr("964"), tileFromStr("574"),
 ];
-function updateLines(tiles, boardName) {
+function updateFoo() {
   let fooLines = [];
   for (const combination of [
     { matters: [1, 5, 9], holes: [0, 1, 2] },
@@ -306,7 +307,7 @@ function updateLines(tiles, boardName) {
     for (const digit of combination.matters) {
       let allMatch = true;
       for (const hole of combination.holes) {
-        const tile = tiles[hole];
+        const tile = foo[hole];
         if (tile) {
           if (tile.a == digit || tile.b == digit || tile.c == digit) {
             // matches
@@ -353,28 +354,26 @@ function updateLines(tiles, boardName) {
   }
   scoresParagraph.innerHTML = text;
 }
-let fooHoles = [];
 for (let i = 0; i < 19; i++) {
   const hole = {
     element: document.getElementById(`foo${i}`),
     onEnter: (tile) => {
+      if (foo[i]) return false;
       console.log(`Tile ${tileToStr(tile)} entered hole ${i}.`);
       foo[i] = tile;
-      updateLines(foo, "foo");
+      updateFoo();
+      return true;
     },
     onLeave: () => {
       console.log(`Tile left hole ${i}.`);
       foo[i] = null;
-      updateLines(foo, "foo");
+      updateFoo();
     },
   };
-  fooHoles.push(hole);
+  createTileElement(foo[i], hole);
   allHoles.push(hole);
 }
-for (let i = 0; i < 19; i++) {
-  createTileElement(foo[i], fooHoles[i]);
-}
-updateLines(foo, "foo");
+updateFoo();
 </script>
 ```
 
@@ -397,7 +396,7 @@ The lowest bit is unused, but that makes the math easier later on.
   <tile-container style="width: 235px; height: 100px">
     <div style="position: absolute; top: 30px;">
       <script>
-      document.currentScript.parentNode.appendChild(createTileElement(tileFromStr("927"), null));
+      document.currentScript.parentNode.appendChild(createTileElement(tileFromStr("928"), null));
       </script>
     </div>
     <div style="position: absolute; top: 9; left: 70px">
@@ -465,7 +464,6 @@ score =   (mask >> 1 & 1) * 1 * 3
 ```embed
 <script>
 let bar = [tileFromStr("564"), tileFromStr("528"), tileFromStr("524")];
-let barHoles = [];
 function tileToNumber(tile) {
   if (tile) {
     return 0
@@ -520,9 +518,11 @@ for (let i = 0; i < 3; i++) {
   const hole = {
     element: document.getElementById(`bar${i}`),
     onEnter: (tile) => {
+      if (bar[i]) return false;
       console.log(`Tile ${tileToStr(tile)} entered hole ${i}.`);
       bar[i] = tile;
       updateBar();
+      return true;
     },
     onLeave: () => {
       console.log(`Tile left hole ${i}.`);
