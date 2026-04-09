@@ -150,6 +150,8 @@ function createTileElement(tile, initialHole) {
     }
     const pointerId = e.pointerId;
     box.setPointerCapture(pointerId);
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
     const rect = wrapper.getBoundingClientRect();
     let startX = e.clientX - rect.left;
     let startY = e.clientY - rect.top;
@@ -166,6 +168,8 @@ function createTileElement(tile, initialHole) {
     document.addEventListener("pointerup", (e) => {
       console.log(`Dragged ${tileToStr(tile)}`);
       box.releasePointerCapture(pointerId);
+      document.body.style.userSelect = 'auto';
+      document.body.style.webkitUserSelect = 'auto';
       document.removeEventListener("pointermove", move);
       const x = e.clientX - startX + window.scrollX;
       const y = e.clientY - startY + window.scrollY;
@@ -330,7 +334,7 @@ function updateLines(tiles, boardName) {
   } else if (fooLines.length == 1) {
     const len = fooLines[0].length;
     const digit = fooLines[0].digit;
-    text += `there is a line of {amountToStr(len)} {digit}s, resulting in a score of ${length * digit} points.`
+    text += `there is a line of ${amountToStr(len)} ${digit}s, resulting in a score of ${len * digit} points.`
   } else {
     let score = 0;
     text += "there are lines of";
@@ -435,6 +439,8 @@ mask = game[0] & game[1] & game[2]
      = 0000100000
 </code></pre>
 ```
+
+Also try replacing the tiles with the 9s above!
 
 We can then test this mask for the numbers that can occur along the vertical axis (1, 5, 9) by shifting it to the right and and-ing with 1 (`zig:mask >> digit & 1`).
 This will result in 1 for digits that are present in all tiles, and 0 otherwise.
@@ -543,7 +549,7 @@ fn score(game: Game) usize {
         + (game[3] & game[4] & game[5] & game[6] >> 1 & 1) * 4 * 1
         + (game[3] & game[4] & game[5] & game[6] >> 5 & 1) * 4 * 5
         + (game[3] & game[4] & game[5] & game[6] >> 9 & 1) * 4 * 9
-        ...;
+        + ...;
 }
 ```
 
