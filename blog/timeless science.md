@@ -111,6 +111,10 @@ From my perspective, this are more concrete ways how we can work towards that vi
 </tl-entry>
 <tl-entry>
   <tl-date>2026</tl-date>
+  <tl-content>Best Poster Award at the Joint Meeting of the German Research Training Groups at Dagstuhl <a href="files/2026-fast-feedback-through-program-execution--Garus.pdf">pdf</a></tl-content>
+</tl-entry>
+<tl-entry>
+  <tl-date></tl-date>
   <tl-content>publicity chair at ‹Programming› 2026</tl-content>
 </tl-entry>
 <tl-entry>
