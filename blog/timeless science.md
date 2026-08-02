@@ -42,11 +42,11 @@ From my perspective, this are more concrete ways how we can work towards that vi
 </tl-entry>
 <tl-entry>
   <tl-big-date>2022 – 2025</tl-big-date>
-  <tl-content>M.Sc. IT-Systems Engineering at Hasso-Plattner-Institut, University of Potsdam</tl-content>
+  <tl-content>M.Sc. IT-Systems Engineering at Hasso Plattner Institute, University of Potsdam</tl-content>
 </tl-entry>
 <tl-entry>
   <tl-big-date>2018 – 2021</tl-big-date>
-  <tl-content>B.Sc. IT-Systems Engineering at Hasso-Plattner-Institut, University of Potsdam</tl-content>
+  <tl-content>B.Sc. IT-Systems Engineering at Hasso Plattner Institute, University of Potsdam</tl-content>
 </tl-entry>
 </timeline>
 ```
