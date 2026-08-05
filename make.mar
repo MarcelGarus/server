@@ -17,7 +17,11 @@ fun main(): Never {
     print("Creating {article.id}")
     var simple_title = article.title.unformatted()
     println(": {simple_title}")
-    output("{article.id}.html", article_page(blog, blog.get(article.id), random.&))
+    switch article.content
+    case markdown(content) output(
+      "{article.id}.html", article_page(blog, blog.get(article.id), random.&)
+    )
+    case html(content) output("{article.id}.html", content)
   }
 
   println("Creating index")
@@ -46,10 +50,14 @@ fun load_blog(): Blog {
   files.&.sort()
   for file in files do {
     file.kind is file or continue
+    if not(file.name.ends_with(".md")) and not(file.name.ends_with(".html"))
+      then continue
     var content = read_file("blog/{file.name}")
       or panic("Couldn't read article {file.name}")
     println("Parsing {file.name}")
-    articles.&.push(parse_article(file.name, content.to_string()))
+    if file.name.ends_with(".md")
+    then articles.&.push(parse_article(file.name, content.to_string()))
+    else articles.&.push(parse_html_article(file.name, content.to_string()))
   }
   Blog { articles = articles.to_slice() }
 }

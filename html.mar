@@ -54,6 +54,11 @@ fun to_html(markdown: MarkdownInline): String {
   b.write_html(markdown, empty_slice[String]())
   b.to_string()
 }
+fun to_html(content: ArticleContent): String {
+  switch content
+  case markdown(markdown) markdown.to_html()
+  case html(html) html
+}
 fun collect_footnote_defs(markdown: Markdown, defs: &List[String]) {
   switch markdown
   case footnote_definition(def) defs.push(def.key)

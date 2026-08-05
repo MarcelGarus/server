@@ -6,8 +6,9 @@ struct Article {
   state: ArticleState,
   title: MarkdownInline,
   subtitle: MarkdownInline,
-  content: Markdown,
+  content: ArticleContent,
 }
+enum ArticleContent { markdown: Markdown, html: String }
 enum ArticleState { draft, timeless, published: Date }
 struct Date { year: Int, month: Int, day: Int }
 
@@ -24,14 +25,9 @@ fun found_inconsistency(state: ArticleState, inconsistency: String) {
 }
 
 fun parse_article(filename: String, content: String): Article {
-  var filename = filename.&
-  filename.trim_suffix(".md")
-  var state_and_id = filename.split(" ")
-  state_and_id.len == 2 or panic("blog article files should have two
-    'components in the filename, but {filename} has {state_and_id.len}")
-
-  var state = state_and_id.get(0).parse_state()
-  var id = state_and_id.get(1)
+  var article_info = parse_article_filename(filename, ".md")
+  var state = article_info.a
+  var id = article_info.b
 
   if content.chars().iter().&.contains(carriage_return) then
     found_inconsistency(state, "Blog article contains carriage return.")
@@ -54,7 +50,57 @@ fun parse_article(filename: String, content: String): Article {
   var subtitle = extracted_titles.b
   content = extracted_titles.c
 
-  Article { id, state, title, subtitle, content }
+  Article { id, state, title, subtitle, content = ArticleContent.markdown(content) }
+}
+
+fun parse_html_article(filename: String, content: String): Article {
+  var article_info = parse_article_filename(filename, ".html")
+  var state = article_info.a
+  var id = article_info.b
+  var title = extract_html_metadata(state, content, "TITLE")
+  var subtitle = extract_html_metadata(state, content, "SUBTITLE")
+
+  Article {
+    id,
+    state,
+    title = MarkdownInline.text(title),
+    subtitle = MarkdownInline.text(subtitle),
+    content = ArticleContent.html(content),
+  }
+}
+
+fun extract_html_metadata(
+  state: ArticleState, content: String, name: String
+): String {
+  var prefix = "<!--{name}:"
+  var parts = content.split(prefix)
+  parts.len == 2 or {
+    found_inconsistency(
+      state, "HTML article should contain one {prefix}...--> comment."
+    )
+    return "TODO: Add {name}"
+  }
+
+  var parts = parts.get(1).split("-->")
+  parts.len >= 2 or {
+    found_inconsistency(state, "HTML article's {prefix} comment isn't closed.")
+    return "TODO: Add {name}"
+  }
+  parts.get(0)
+}
+
+fun parse_article_filename(
+  filename: String, extension: String
+): Tuple2[ArticleState, String] {
+  var filename = filename.&
+  filename.trim_suffix(extension)
+  var state_and_id = filename.split(" ")
+  state_and_id.len == 2 or panic("blog article files should have two
+    'components in the filename, but {filename} has {state_and_id.len}")
+
+  var state = state_and_id.get(0).parse_state()
+  var id = state_and_id.get(1)
+  tuple(state, id)
 }
 fun parse_state(state: String): ArticleState {
   if state == "draft" then return ArticleState.draft
