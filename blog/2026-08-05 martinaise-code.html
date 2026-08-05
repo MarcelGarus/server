@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<!--TITLE:Martinaise Source Code-->
+<!--SUBTITLE:The tour, standard library, and self-hosted compiler-->
+<head prefix="og:http://ogp.me/ns#">
+<title>The Martinaise Compiler – Marcel Garus</title>
+<meta charset="utf-8" />
+<meta name="theme-color" content="#f97191" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/svg+xml"
+  href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CclipPath id='c'%3E%3Ccircle cx='24' cy='24' r='24'/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle fill='white' cx='24' cy='24' r='24'/%3E%3Cpath fill='%23f97191' d='M8 15 L8 48 L40 48 L40 15 L24 33 z' clip-path='url(%23c)'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="/icon.png" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<meta name="title" content="The Martinaise Compiler" />
+<meta name="description" content="The entire source code" />
+<link rel="canonical" href="https://marcelgarus.dev/martinaise-code" />
+<meta property="og:title" content="The Martinaise Compiler" />
+<meta property="og:description" content="The entire source code" />
+<meta property="og:url" content="https://marcelgarus.dev/martinaise-code" />
+<meta property="og:site" content="Marcel Garus" />
+<meta property="og:site_name" content="Marcel Garus" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:type" content="article" />
+
+<style>
+:root { --pink: #f97191; --bg: #fffbed; --fg: black; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #26292d; --fg: white; }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+
+main { position: relative; width: 100%; max-width: 50rem; margin: auto; margin-top: 2rem; }
+main > * { margin: 0 var(--padding); }
+main ::selection { background: var(--pink); color: white; }
+
+my-code {
+  display: block;
+  float: left;
+  padding: 1em;
+  font-family: monospace;
+  line-height: 1.5;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  tab-size: 2;
+  hyphens: none;
+}
+
+/* syntax highlighting of tokens */
+tok-default { color: var(--fg); }
+tok-comment { color: #374f2f; }
+tok-declaration { color: #0000ff; }
+tok-control { color: #af00db; }
+tok-type { color: #e50000; }
+tok-name { color: #00755a; }
+tok-literal { color: #795e28; }
+
+@media (prefers-color-scheme: dark) {
+  tok-comment { color: #7ece64; }
+  tok-declaration { color: #9bcbff; }
+  tok-control { color: #c59bff; }
+  tok-type { color: #f97191; }
+  tok-name { color: #64ceb5; }
+  tok-literal { color: #ff9752; }
+}
+a.code-heading { color: inherit; text-decoration: none; }
+
+table-of-contents { position: fixed; padding-top: 1em; }
+toc-entry { display: block; }
+toc-entry > a { color: inherit; text-decoration: none; }
+toc-entry > a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main>
+<my-code id="myCode"></my-code>
+<table-of-contents id="toc"></table-of-contents>
+</main>
+<script type="module">
+const response = await fetch("files/martinaise.mar")
+if (!response.ok) {
+  throw new Error(`Failed to load Martinaise source: ${response.status}`)
+}
+const source = await response.text()
+const codeElement = document.querySelector("#myCode")
+const toc = document.querySelector("#toc")
+
+const declarationKeywords = new Set([
+  "asm", "enum", "fallback", "fun", "import", "opaque", "struct", "use",
+  "var", "with",
+])
+const controlKeywords = new Set([
+  "and", "break", "case", "continue", "default", "do", "else", "for",
+  "if", "in", "is", "loop", "or", "return", "switch", "then", "try",
+])
+
+const escapeHTML = text => text
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+
+const tokenHTML = (kind, text) =>
+  `<tok-${kind}>${escapeHTML(text)}</tok-${kind}>`
+
+const tokens = []
+const headings = []
+const headingCounts = new Map()
+let cursor = 0
+
+const headingHTML = text => {
+  const label = text.slice(1).trim()
+  const baseID = label
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "section"
+  const count = (headingCounts.get(baseID) || 0) + 1
+  const id = count === 1 ? baseID : `${baseID}-${count}`
+  headingCounts.set(baseID, count)
+  headings.push({ id, label })
+  return `<a class="code-heading" id="${id}" href="#${id}">` +
+    `${tokenHTML("comment", text)}</a>`
+}
+
+const takeWhile = predicate => {
+  const start = cursor
+  while (cursor < source.length && predicate(source[cursor])) cursor++
+  return source.slice(start, cursor)
+}
+
+while (cursor < source.length) {
+  const char = source[cursor]
+
+  if (char === "|") {
+    const commentStart = cursor
+    const comment = takeWhile(c => c !== "\n")
+    const lineStart = source.lastIndexOf("\n", commentStart - 1) + 1
+    const isCommentLine = /^\s*$/.test(source.slice(lineStart, commentStart))
+    tokens.push(isCommentLine && / {2,}$/.test(comment)
+      ? headingHTML(comment)
+      : tokenHTML("comment", comment))
+    continue
+  }
+
+  if (char === '"') {
+    const start = cursor++
+    while (cursor < source.length) {
+      if (source[cursor] === "\\") {
+        cursor += Math.min(2, source.length - cursor)
+      } else if (source[cursor++] === '"') {
+        break
+      }
+    }
+    tokens.push(tokenHTML("literal", source.slice(start, cursor)))
+    continue
+  }
+
+  if (char === "#") {
+    const start = cursor++
+    if (cursor < source.length) cursor++
+    tokens.push(tokenHTML("literal", source.slice(start, cursor)))
+    continue
+  }
+
+  if (/[0-9]/.test(char)) {
+    const start = cursor
+    takeWhile(c => /[0-9_]/.test(c))
+    if (source[cursor] === "#") {
+      cursor++
+      takeWhile(c => /[0-9A-Fa-f_]/.test(c))
+    }
+    if (source[cursor] === "." && /[0-9]/.test(source[cursor + 1] || "")) {
+      cursor++
+      takeWhile(c => /[0-9A-Fa-f_]/.test(c))
+    }
+    tokens.push(tokenHTML("literal", source.slice(start, cursor)))
+    continue
+  }
+
+  if (/[A-Za-z_]/.test(char)) {
+    const word = takeWhile(c => /[A-Za-z0-9_]/.test(c))
+    let kind = "name"
+    if (declarationKeywords.has(word)) kind = "declaration"
+    else if (controlKeywords.has(word)) kind = "control"
+    else if (/^[A-Z]/.test(word)) kind = "type"
+    tokens.push(tokenHTML(kind, word))
+    continue
+  }
+
+  tokens.push(tokenHTML("default", takeWhile(c =>
+    c !== "|" && c !== '"' && !/[#0-9A-Za-z_]/.test(c)
+  )))
+}
+
+codeElement.innerHTML = tokens.join("")
+
+toc.innerHTML = headings.map(({ id, label }) =>
+  `<toc-entry><a href="#${id}">${escapeHTML(label)}</a></toc-entry>`
+).join("")
+</script>
+</body>
+</html>
