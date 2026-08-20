@@ -41,7 +41,7 @@ Sadly, the black is not pure black – apparently, the toner printer struggled a
 
 ![A new cover printed on thick paper](files/book-binding-printed-cover.jpg)
 
-I cut the cover using a cutting machine and when holding it to the book block, already looks like a real book again.
+I cut the cover using a cutting machine and when holding it to the book block, it already looks like a real book again.
 
 ![The new cover held to the book block](files/book-binding-covered.jpg)
 
