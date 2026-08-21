@@ -5,8 +5,7 @@
 ### 2026-08-20
 
 Morgen geht der Flug los.
-Hab heute noch mit Ansgar Einreisepapiere ausgefüllt, etwas gepackt und meine Wohnung runtergefahren (Kühlschrank ausgeräumt uns ausgemacht, etc).
+Hab heute online Einreisepapiere ausgefüllt, noch etwas gepackt und meine Wohnung etwas auf Sparflamme gestellt (Kühlschrank ausgeräumt und ausgemacht, etc).
 Bin hyped!
-
 
 
