@@ -7,8 +7,9 @@
 Los geht's (nach einem gemütlichen Morgenkaffee)!
 Ich war noch nie am BER, insofern hab ich das erste mal Bekanntschaft mit den Self-Check-In-Terminals gemacht, die anscheinend auf einem sehr langsamen Webbrowser laufen.
 Unser Flug nach Helsinki hat sich natürlich verspätet, aber dafür mussten wir auf den Anschlussflug nach Tokyo nicht so lange warten.
-Der Flug dauerte 14 Stunden und die meiste Zeit hab ich geschlafen.
 Highlights: Blaubeersaft, Live-Kameras am Flugzeug, Minecraft-Movie, Ansgar trinkt zum ersten mal Kaffee (Flugbegleiterin: "Okay, I'm gonna add a loooot of milk and sugar").
+Nach ganzen 14 Stunden sind wir in Tokyo angekommen (wir mussten Russland umfliegen), aber die meiste Zeit davon hab ich geschlafen.
+Morgen mehr.
 
 ### 2026-08-20
 
